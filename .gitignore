@@ -1,0 +1,22 @@
+.var/
+__pycache__/
+*.pyc
+.pytest_cache/
+coverage/
+dist/
+build/
+*.log
+
+# Local evidence and runtime material
+audit-bundles/
+runtime-state/
+sessions/
+rollouts/
+backups/
+*.secret
+*.token
+
+# Local environment files
+.env
+.env.*
+!.env.example

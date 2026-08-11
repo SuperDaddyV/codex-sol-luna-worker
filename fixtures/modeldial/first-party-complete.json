@@ -1,0 +1,20 @@
+{
+  "kind": "first_party_snapshot",
+  "status": "complete",
+  "batch_id": "fixture-first-party-001",
+  "published_at": "2026-08-10T16:00:00Z",
+  "question_pack_id": "coding-fast",
+  "question_pack_version": "fixture-v1",
+  "grader_version": "fixture-grader-v1",
+  "evaluation_profile": "full",
+  "score_baseline_id": "fixture-baseline-v1",
+  "batch_sha256": "sha256:fixture",
+  "provenance": {"public_official_snapshot": true},
+  "entries": [
+    {"model_configuration": {"canonical_model_id": "gpt-5.6-luna", "reasoning_effort": "low"}, "advisor_eligible": true, "score_integrity": "first_party_controlled", "score": 10, "source_evidence_group_id": "fixture-run-1"},
+    {"model_configuration": {"canonical_model_id": "gpt-5.6-luna", "reasoning_effort": "medium"}, "advisor_eligible": true, "score_integrity": "first_party_controlled", "score": 20, "source_evidence_group_id": "fixture-run-1"},
+    {"model_configuration": {"canonical_model_id": "gpt-5.6-luna", "reasoning_effort": "high"}, "advisor_eligible": true, "score_integrity": "first_party_controlled", "score": 30, "source_evidence_group_id": "fixture-run-1"},
+    {"model_configuration": {"canonical_model_id": "gpt-5.6-luna", "reasoning_effort": "xhigh"}, "advisor_eligible": true, "score_integrity": "first_party_controlled", "score": 40, "source_evidence_group_id": "fixture-run-1"},
+    {"model_configuration": {"canonical_model_id": "gpt-5.6-luna", "reasoning_effort": "max"}, "advisor_eligible": true, "score_integrity": "first_party_controlled", "score": 50, "source_evidence_group_id": "fixture-run-1"}
+  ]
+}

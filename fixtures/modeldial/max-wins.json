@@ -1,0 +1,11 @@
+{
+  "snapshot_id": "fixture-max-002",
+  "published_at": "2026-08-11T16:00:00Z",
+  "rows": [
+    {"model": "gpt-5.6-luna", "effort": "low", "score": 70.0},
+    {"model": "gpt-5.6-luna", "effort": "medium", "score": 75.0},
+    {"model": "gpt-5.6-luna", "effort": "high", "score": 80.0},
+    {"model": "gpt-5.6-luna", "effort": "xhigh", "score": 85.0},
+    {"model": "gpt-5.6-luna", "effort": "max", "score": 90.0}
+  ]
+}
