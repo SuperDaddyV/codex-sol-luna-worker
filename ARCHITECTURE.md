@@ -27,7 +27,7 @@ GPT-5.6 Sol
 ## Explicit non-goals
 
 - No Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine.
-- No global Codex mutation. The installer remains dry-run-only and does not write `<CODEX_HOME>`.
+- No unapproved global Codex mutation. Installer writes require an explicit target, and repository-local validation is restricted to `.tmp/installer-validation/`; RC1 lifecycle tests use fake homes only.
 - CI and static checks are supporting evidence; Native Runtime Tests 1-5 are the runtime gate.
 
 ## Runtime status
@@ -44,7 +44,7 @@ The generic record intentionally contains no session IDs, usernames, absolute pa
 
 ## Release boundary
 
-`v4.0.0-rc1` is not stable `v4.0.0`. The GitHub -> installer -> clean global validation path remains required before a stable release. Because the installer is still dry-run-only, clean global validation remains a separate gate and no global Codex state is changed by this repository.
+`v4.0.0-rc1` is not stable `v4.0.0`. An explicitly approved global migration plan and clean global validation remain required before a stable release. Sandbox lifecycle validation is a separate gate and does not change global Codex state.
 
 ## Official references
 

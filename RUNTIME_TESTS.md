@@ -10,7 +10,7 @@ Static validation and Native Runtime validation remain separate gates. The runti
 
 - The tests use a fresh project session and the current Beijing-date Daily Profile.
 - They do not alter global Codex configuration, global agents, Hooks, environment variables, or the frozen v3.2.1 installation.
-- The installer remains dry-run-only. The GitHub -> installer -> clean global validation path remains a required pre-stable-release gate.
+- Installer lifecycle writes are validated only in explicit fake homes. A separately approved global migration plan and clean global validation remain required pre-stable-release gates.
 
 ## Test results
 

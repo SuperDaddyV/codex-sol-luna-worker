@@ -2,7 +2,7 @@
 
 ## Release-candidate boundary
 
-This release candidate does not install itself, modify global Codex configuration, manage credentials, or provide a production security boundary.
+This release candidate does not perform an implicit installation, modify global Codex configuration during validation, manage credentials, or provide a production security boundary.
 
 ## Data and network behavior
 
@@ -13,7 +13,7 @@ This release candidate does not install itself, modify global Codex configuratio
 
 ## Installation safety
 
-`scripts/install.py` supports planning only. It performs conflict detection and describes a backup location but has no apply mode. Review any future installation implementation separately before allowing writes to `<CODEX_HOME>`; the GitHub -> installer -> clean global validation path remains a pre-stable-release gate.
+`scripts/install.py` defaults to planning. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create a centralized backup before install or upgrade writes. Repository-local writes additionally require `--validation-sandbox` below `.tmp/installer-validation/`. RC1 validation uses fake homes only; review and approve the global migration plan separately before allowing writes to a real `<CODEX_HOME>`.
 
 ## Reporting
 

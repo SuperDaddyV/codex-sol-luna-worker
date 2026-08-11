@@ -1,0 +1,33 @@
+{
+  "version": "3.2.1",
+  "config_owned_markers": [
+    "SOL_LUNA_DAILY_BEST_FEATURES",
+    "SOL_LUNA_DAILY_BEST_AGENTS"
+  ],
+  "owned_hook_events": [
+    "PreToolUse",
+    "SubagentStart",
+    "SubagentStop",
+    "SessionStart"
+  ],
+  "created_files": [
+    "hooks.json",
+    "agents/slr-<installation>-low.toml",
+    "agents/slr-<installation>-medium.toml",
+    "agents/slr-<installation>-high.toml",
+    "agents/slr-<installation>-xhigh.toml",
+    "agents/slr-<installation>-max.toml",
+    "hooks/sol_luna_router.py",
+    "sol-luna-router/selector.py",
+    "sol-luna-router/policy.json",
+    "sol-luna-router/rollback.py",
+    "sol-luna-router/install-manifest.json",
+    "sol-luna-router/state/daily-profile.json",
+    "sol-luna-router/state/last-good-profile.json",
+    "sol-luna-router/state/managed-children.json"
+  ],
+  "modified_files": [
+    "config.toml",
+    "AGENTS.md"
+  ]
+}

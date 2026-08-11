@@ -56,17 +56,18 @@ python -m unittest discover -s tests -v
 
 First-party discovery: [ModelDial Radar](https://modeldial.com/zh-CN/radar) and its [published snapshot JSON](https://modeldial.com/data/reference-snapshots/latest.json) .
 
-## Dry-run utilities
+## Installer validation
 
 ```powershell
 python scripts/probe_capabilities.py
 python scripts/install.py --dry-run
+python scripts/install.py --apply --codex-home .tmp/installer-validation/manual/.codex --validation-sandbox
 ```
 
-The installer remains dry-run-only: it creates a plan and does not mutate `<CODEX_HOME>` or any global Codex configuration.
+Dry-run remains the default. Mutating installer modes require an explicit `--codex-home`; targets inside the repository additionally require `--validation-sandbox` and must stay below `.tmp/installer-validation/`. Clean install, merge, idempotency, upgrade, manifest-owned legacy migration, backup, exact rollback, and uninstall are validated only against isolated fake homes. No global installation is performed or authorized by this release candidate.
 
 ## Release boundary
 
-`v4.0.0-rc1` is a release candidate, not stable `v4.0.0`. Before a stable release, the GitHub -> installer -> clean global validation path must still be completed. The current installer boundary remains dry-run-only, so that clean global validation is a separate future gate.
+`v4.0.0-rc1` is a release candidate, not stable `v4.0.0`. Before a stable release, an explicitly approved global migration plan and clean global validation must still be completed. Sandbox installer validation does not authorize writes to a user's real Codex home.
 
 See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for the evidence-calibrated runtime and architecture records.

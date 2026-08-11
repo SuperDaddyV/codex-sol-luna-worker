@@ -16,14 +16,24 @@ from scripts.install import (
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXED_TIME = datetime(2026, 8, 11, tzinfo=timezone.utc)
+VALIDATION_ROOT = ROOT / ".tmp" / "installer-validation" / "plan-tests"
+
+
+def validation_directory():
+    VALIDATION_ROOT.mkdir(parents=True, exist_ok=True)
+    return tempfile.TemporaryDirectory(dir=VALIDATION_ROOT)
 
 
 class InstallPlanTests(unittest.TestCase):
     def test_dry_run_plan_never_mutates_target(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with validation_directory() as directory:
             target = Path(directory) / ".codex"
             before = list(Path(directory).rglob("*"))
-            plan = build_plan(target, generated_at=FIXED_TIME)
+            plan = build_plan(
+                target,
+                generated_at=FIXED_TIME,
+                allow_validation_sandbox=True,
+            )
             after = list(Path(directory).rglob("*"))
             self.assertEqual(before, after)
             self.assertEqual(plan["mode"], "dry-run")
@@ -35,9 +45,13 @@ class InstallPlanTests(unittest.TestCase):
             )
 
     def test_future_inventory_is_rc1_minimum_and_excludes_legacy_layers(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with validation_directory() as directory:
             target = Path(directory) / ".codex"
-            plan = build_plan(target, generated_at=FIXED_TIME)
+            plan = build_plan(
+                target,
+                generated_at=FIXED_TIME,
+                allow_validation_sandbox=True,
+            )
 
             inventory = plan["future_artifacts"]
             self.assertEqual(len(inventory), 8)
@@ -65,7 +79,7 @@ class InstallPlanTests(unittest.TestCase):
                 "AGENTS.md": ("AGENTS.md", "merge-policy"),
                 "src/selector.py": (
                     "sol-luna-v4/selector.py",
-                    "copy-if-absent",
+                    "copy-if-owned",
                 ),
                 ".codex/config.toml": ("config.toml", "merge-agents-config"),
             }
@@ -100,13 +114,17 @@ class InstallPlanTests(unittest.TestCase):
             )
 
     def test_conflict_detection_is_read_only(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with validation_directory() as directory:
             target = Path(directory) / ".codex"
             agents = target / "agents"
             agents.mkdir(parents=True)
             conflict = agents / "luna-low.toml"
             conflict.write_text("user-owned content\n", encoding="utf-8")
-            plan = build_plan(target, generated_at=FIXED_TIME)
+            plan = build_plan(
+                target,
+                generated_at=FIXED_TIME,
+                allow_validation_sandbox=True,
+            )
             self.assertIn(str(conflict.resolve()), plan["conflicts"])
             self.assertEqual(conflict.read_text(encoding="utf-8"), "user-owned content\n")
 
@@ -117,7 +135,7 @@ class InstallPlanTests(unittest.TestCase):
             validate_target(ROOT / ".codex-home", ROOT)
 
     def test_codex_home_resolution_uses_only_named_setting(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with validation_directory() as directory:
             expected = Path(directory) / "codex-home"
             resolved = resolve_codex_home(
                 None,
@@ -127,11 +145,29 @@ class InstallPlanTests(unittest.TestCase):
             self.assertEqual(resolved, expected.resolve())
 
     def test_plan_does_not_leak_unrelated_environment_secrets(self):
-        with tempfile.TemporaryDirectory() as directory:
-            plan = build_plan(Path(directory) / ".codex", generated_at=FIXED_TIME)
+        with validation_directory() as directory:
+            plan = build_plan(
+                Path(directory) / ".codex",
+                generated_at=FIXED_TIME,
+                allow_validation_sandbox=True,
+            )
             rendered = json.dumps(plan)
             self.assertNotIn("API_KEY", rendered)
             self.assertNotIn("token", rendered.lower())
+
+    def test_plan_uses_cross_platform_path_abstraction(self):
+        with validation_directory() as directory:
+            target = Path(directory) / ".codex"
+            for platform_name in ("Windows", "Linux", "Darwin"):
+                with self.subTest(platform_name=platform_name):
+                    plan = build_plan(
+                        target,
+                        platform_name=platform_name,
+                        generated_at=FIXED_TIME,
+                        allow_validation_sandbox=True,
+                    )
+                    self.assertTrue(plan["platform_supported"])
+                    self.assertEqual(plan["platform"], platform_name)
 
 
 if __name__ == "__main__":

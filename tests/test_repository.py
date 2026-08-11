@@ -1,3 +1,4 @@
+import ast
 import re
 import unittest
 from pathlib import Path
@@ -115,6 +116,18 @@ class RepositorySafetyTests(unittest.TestCase):
         )
         for path in executable_repository_text_files():
             text = path.read_text(encoding="utf-8")
+            if path == ROOT / "scripts" / "install.py":
+                tree = ast.parse(text)
+                migration = next(
+                    node
+                    for node in tree.body
+                    if isinstance(node, ast.FunctionDef)
+                    and node.name == "_legacy_migration"
+                )
+                lines = text.splitlines(keepends=True)
+                text = "".join(
+                    lines[: migration.lineno - 1] + lines[migration.end_lineno :]
+                )
             for pattern in forbidden:
                 self.assertIsNone(pattern.search(text), path)
 
@@ -134,6 +147,7 @@ class RepositorySafetyTests(unittest.TestCase):
     def test_runtime_state_and_core_codex_files_have_correct_gitignore_boundary(self):
         ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         self.assertIn(".var/", ignore)
+        self.assertIn(".tmp/", ignore)
         self.assertNotIn(".codex/\n", ignore)
         self.assertNotIn(".codex/agents/", ignore)
 

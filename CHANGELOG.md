@@ -9,7 +9,8 @@
 - Validated native parallel delegation with Sol-authored acceptance.
 - Removed mandatory Hook architecture from the current runtime design.
 - Formalized the stable five-role Luna layout for `low`, `medium`, `high`, `xhigh`, and `max`.
-- Kept the installer dry-run-only. The GitHub -> installer -> clean global validation path remains required before stable `v4.0.0`.
+- Added explicit-target installer lifecycle validation for clean install, safe merges, idempotency, upgrade, manifest-owned legacy migration, backup, exact rollback, and uninstall.
+- Kept real global installation approval separate. Sandbox validation does not authorize writes to a user's Codex home, and clean global validation remains required before stable `v4.0.0`.
 
 ## v4.0.0-prototype (historical)
 

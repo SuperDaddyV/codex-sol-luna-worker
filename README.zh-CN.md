@@ -91,23 +91,24 @@ python scripts/probe_capabilities.py --execute
 
 它顺序测试五档 Luna，使用 `--ephemeral` 和 `--ignore-user-config`，分别记录客户端可用性与精确回声行为，只把不含响应正文的结果写入 `.var/capabilities.json`。这项 probe 不修改全局 Codex 配置。
 
-## Static validation
+## Installer validation
 
 项目只使用 Python 标准库：
 
 ```powershell
 python -m unittest discover -s tests -v
 python scripts/install.py --dry-run
+python scripts/install.py --apply --codex-home .tmp/installer-validation/manual/.codex --validation-sandbox
 ```
 
-`scripts/install.py` 只读取目标状态并生成 conflict/backup plan，没有 apply 模式，不会修改 `<CODEX_HOME>`。
+dry-run 仍是默认模式。任何写入模式都必须显式提供 `--codex-home`；repo 内目标还必须使用 `--validation-sandbox`，并位于 `.tmp/installer-validation/` 下。clean install、merge、幂等、upgrade、基于 manifest ownership 的旧版迁移、backup、exact rollback 与 uninstall 只在隔离 fake home 中验证；本候选版本没有执行或授权真实全局安装。
 
 ## Repository layout
 
 ```text
 .codex/                 project config and five custom Luna agents
 fixtures/               offline ModelDial inputs
-scripts/                dry-run installer and local capability probe
+scripts/                sandbox-validated installer and local capability probe
 src/selector.py         Daily Profile selection and first-party source adapter
 tests/                  standard-library static validation
 .var/                   ignored local runtime state
@@ -115,6 +116,6 @@ tests/                  standard-library static validation
 
 ## Release boundary
 
-`v4.0.0-rc1` 是 release candidate，不是 stable `v4.0.0`。稳定版之前仍必须完成 GitHub -> installer -> clean global validation 路径；当前 installer 仍只有 dry-run 边界，因此 clean global validation 是独立的后续 gate。
+`v4.0.0-rc1` 是 release candidate，不是 stable `v4.0.0`。稳定版之前仍须单独审批全局迁移计划并完成 clean global validation；sandbox installer validation 不授权写入用户真实 Codex home。
 
 完整的 runtime 与架构记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
