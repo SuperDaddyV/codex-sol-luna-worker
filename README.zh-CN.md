@@ -64,7 +64,9 @@ selector 先以 fixtures 验证纯算法，再显式接入在线 source：
 - source winner 本地不可用时，在本地支持集合中重新择优并写入 `capability_degraded=true`。
 - 北京时间自然日内只选择一次；跨日重新选择。
 - live snapshot 无效时使用 LKG；首次无 LKG 时 fail closed。
-- 状态只写入被忽略的 `.var/daily-profile.json` 与 `.var/last-good-profile.json`。
+- 项目开发状态可写入被忽略的 `.var/`；正式 global installation 使用显式 `<CODEX_HOME>/sol-luna-v4/state`，其中只有 `daily-profile.json`、`last-good-profile.json` 与 `selector.lock`。
+- 稳定 global CLI 为 `python <selector> --state-dir <state> --ensure-daily --print-role`；成功时只输出一个稳定 Luna role，无 profile 时以非零状态返回 `NO_LUNA_PROFILE_AVAILABLE`。
+- migration 不转换 v3 Daily Profile/LKG，不联网，也不生成 v4 profile；首次实际使用由 v4 selector 建立自己的 state lifecycle。
 
 2026-08-11 的实测确认 ModelDial 一方 Radar 页面公开声明机器可读 published snapshot。运行时先取严格校验的 JSON；失败后才解析同一一方 Radar HTML 的完整五档 published batch。两条路径只允许 `modeldial.com` 与 `reference.modeldial.com` 的 HTTPS，禁止 credentials、cookies、auth headers 和第三方镜像。在线 source 必须显式使用 `--live`，CI 不联网。
 
@@ -101,13 +103,14 @@ python scripts/install.py --dry-run
 python scripts/install.py --apply --codex-home .tmp/installer-validation/manual/.codex --validation-sandbox
 ```
 
-dry-run 仍是默认模式。任何写入模式都必须显式提供 `--codex-home`；repo 内目标还必须使用 `--validation-sandbox`，并位于 `.tmp/installer-validation/` 下。clean install、merge、幂等、upgrade、基于 manifest ownership 的旧版迁移、backup、exact rollback 与 uninstall 只在隔离 fake home 中验证；本候选版本没有执行或授权真实全局安装。
+dry-run 仍是默认模式。任何写入模式都必须显式提供 `--codex-home`；repo 内目标还必须使用 `--validation-sandbox`，并位于 `.tmp/installer-validation/` 下。global policy 来自专用 `templates/AGENTS.global.md`，不会安装 repo 根 policy 全文。migration 只精确接受 legacy schema `3.2`，保留不在 ownership 中的 audit bundles，并在所有 pre-commit 验证通过后原子写 v4 manifest 作为 commit marker；旧 manifest 仅在 commit 后清理，失败可幂等重试。clean install、migration、failpoint rollback 与 uninstall 只在隔离 fake home 中验证；本候选版本没有执行或授权真实全局安装。
 
 ## Repository layout
 
 ```text
 .codex/                 project config and five custom Luna agents
 fixtures/               offline ModelDial inputs
+templates/              dedicated global-safe AGENTS payload
 scripts/                sandbox-validated installer and local capability probe
 src/selector.py         Daily Profile selection and first-party source adapter
 tests/                  standard-library static validation

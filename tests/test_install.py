@@ -76,7 +76,7 @@ class InstallPlanTests(unittest.TestCase):
                     "agents/luna-max.toml",
                     "agent-conflict-check",
                 ),
-                "AGENTS.md": ("AGENTS.md", "merge-policy"),
+                "templates/AGENTS.global.md": ("AGENTS.md", "merge-policy"),
                 "src/selector.py": (
                     "sol-luna-v4/selector.py",
                     "copy-if-owned",

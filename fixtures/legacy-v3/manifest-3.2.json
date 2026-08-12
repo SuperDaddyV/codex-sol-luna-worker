@@ -1,0 +1,110 @@
+{
+  "version": "3.2",
+  "installation_id": "<redacted>",
+  "installed_at": "2026-01-01T00:00:00+00:00",
+  "source_spec": {
+    "path": "<redacted>",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "backup_root": "<redacted>",
+  "backup_files": {
+    "<CODEX_HOME>/AGENTS.md": "<fixture-backup>/AGENTS.md",
+    "<CODEX_HOME>/config.toml": "<fixture-backup>/config.toml"
+  },
+  "pre_install_hashes": {
+    "<CODEX_HOME>/AGENTS.md": "1111111111111111111111111111111111111111111111111111111111111111",
+    "<CODEX_HOME>/config.toml": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "created_files": [
+    "hooks.json",
+    "agents/slr-<installation>-low.toml",
+    "agents/slr-<installation>-medium.toml",
+    "agents/slr-<installation>-high.toml",
+    "agents/slr-<installation>-xhigh.toml",
+    "agents/slr-<installation>-max.toml",
+    "hooks/sol_luna_router.py",
+    "sol-luna-router/selector.py",
+    "sol-luna-router/policy.json",
+    "sol-luna-router/rollback.py",
+    "sol-luna-router/install-manifest.json",
+    "sol-luna-router/state/daily-profile.json",
+    "sol-luna-router/state/last-good-profile.json",
+    "sol-luna-router/state/refresh-status.json",
+    "sol-luna-router/state/managed-children.json",
+    "sol-luna-router/state/hook-collision-audit.json",
+    "sol-luna-router/tests/test_contract.py",
+    "sol-luna-router/tests/test_installation.py",
+    "sol-luna-router/tests/test_selector.py",
+    "sol-luna-router/tests/test_concurrency.py",
+    "sol-luna-router/tests/test_router.py",
+    "sol-luna-router/tests/test_rollback.py",
+    "sol-luna-router/__pycache__/selector.fixture.pyc",
+    "hooks/__pycache__/sol_luna_router.fixture.pyc"
+  ],
+  "modified_files": [
+    "config.toml",
+    "AGENTS.md"
+  ],
+  "config_owned_markers": [
+    "SOL_LUNA_DAILY_BEST_FEATURES",
+    "SOL_LUNA_DAILY_BEST_AGENTS"
+  ],
+  "owned_agent_roles": [
+    "<legacy-low>",
+    "<legacy-medium>",
+    "<legacy-high>",
+    "<legacy-xhigh>",
+    "<legacy-max>"
+  ],
+  "owned_hook_id": "<redacted>",
+  "owned_hook_events": [
+    "PreToolUse",
+    "SubagentStart",
+    "SubagentStop",
+    "SessionStart"
+  ],
+  "hook_representation": "command_groups",
+  "global_instruction_targets": [
+    "AGENTS.md"
+  ],
+  "agents_active_source": "config.toml",
+  "locally_supported_efforts": [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max"
+  ],
+  "codex_version_at_probe": "fixture",
+  "codex_surface": "fixture",
+  "multi_agent_version": "fixture",
+  "spawn_luna_supported": true,
+  "spawn_probe_error": "fixture",
+  "hook_trust": "fixture",
+  "validation": {
+    "validated_at": "2026-01-01T00:00:00+00:00",
+    "unit_tests": 0,
+    "unit_tests_passed": 0,
+    "contract_self_test": "fixture",
+    "config_parse": "fixture",
+    "capability_probe": "fixture",
+    "selector_fixtures": "fixture",
+    "concurrency_lock_atomic_write": "fixture",
+    "hook_protocol_rewrite": "fixture",
+    "task_payload_sentinel": "fixture",
+    "leaf_protocol": "fixture",
+    "managed_child_registry": "fixture",
+    "same_day_cache": "fixture",
+    "rollback_dry_run": "fixture",
+    "real_sol_to_luna": "fixture",
+    "real_control_plane": "fixture",
+    "real_parallel": "fixture",
+    "hook_collision_static": "fixture",
+    "hook_collision_runtime": "fixture",
+    "hook_trust": "fixture"
+  },
+  "current_status": "PARTIAL",
+  "reason_codes": [
+    "fixture"
+  ]
+}

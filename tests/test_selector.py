@@ -1,6 +1,10 @@
 import json
+import io
 import tempfile
+import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import redirect_stdout
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -8,11 +12,13 @@ from unittest.mock import patch
 from src.selector import (
     BJT,
     EFFORTS,
+    NO_PROFILE_STATUS,
     SelectionUnavailable,
     SnapshotInvalid,
     adapt_modeldial_snapshot,
     ensure_daily_profile,
     fetch_modeldial_snapshot,
+    main,
     parse_radar_html,
     select_snapshot,
     validate_snapshot,
@@ -126,6 +132,85 @@ class SelectorTests(unittest.TestCase):
                 live_fetcher=unexpected_fetch,
             )
             self.assertEqual(profile["snapshot_id"], "fixture-complete-001")
+
+    def test_stale_profile_refreshes_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            day_one = datetime(2026, 8, 11, 9, tzinfo=BJT)
+            day_two = datetime(2026, 8, 12, 9, tzinfo=BJT)
+            ensure_daily_profile(
+                load_fixture("complete.json"), state_dir=directory, now=day_one
+            )
+            calls = []
+
+            def fetch():
+                calls.append(1)
+                return load_fixture("max-wins.json")
+
+            profile = ensure_daily_profile(
+                None, state_dir=directory, now=day_two, live_fetcher=fetch
+            )
+            self.assertEqual(profile["selected_role"], "luna_max")
+            self.assertEqual(len(calls), 1)
+
+    def test_concurrent_first_use_refreshes_only_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            calls = 0
+            calls_lock = threading.Lock()
+
+            def fetch():
+                nonlocal calls
+                with calls_lock:
+                    calls += 1
+                return load_fixture("complete.json")
+
+            def select():
+                return ensure_daily_profile(
+                    None,
+                    state_dir=directory,
+                    now=datetime(2026, 8, 12, 9, tzinfo=BJT),
+                    live_fetcher=fetch,
+                )["selected_role"]
+
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                roles = list(pool.map(lambda _: select(), range(4)))
+            self.assertEqual(roles, ["luna_high"] * 4)
+            self.assertEqual(calls, 1)
+            self.assertTrue((Path(directory) / "selector.lock").is_file())
+
+    def test_global_cli_prints_only_role(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--snapshot",
+                        str(FIXTURES / "complete.json"),
+                        "--state-dir",
+                        directory,
+                        "--ensure-daily",
+                        "--print-role",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            self.assertEqual(output.getvalue(), "luna_high\n")
+
+    @patch("src.selector.fetch_modeldial_snapshot", side_effect=SnapshotInvalid("offline"))
+    def test_global_cli_fail_closed_status(self, _fetch):
+        with tempfile.TemporaryDirectory() as directory:
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--state-dir",
+                        directory,
+                        "--ensure-daily",
+                        "--print-role",
+                    ]
+                )
+            self.assertEqual(code, 3)
+            self.assertEqual(output.getvalue(), f"{NO_PROFILE_STATUS}\n")
+            self.assertFalse((Path(directory) / "daily-profile.json").exists())
+            self.assertFalse((Path(directory) / "last-good-profile.json").exists())
 
     def test_ultra_never_enters_allowlist(self):
         payload = load_fixture("complete.json")

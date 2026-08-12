@@ -10,6 +10,8 @@
 - Removed mandatory Hook architecture from the current runtime design.
 - Formalized the stable five-role Luna layout for `low`, `medium`, `high`, `xhigh`, and `max`.
 - Added explicit-target installer lifecycle validation for clean install, safe merges, idempotency, upgrade, manifest-owned legacy migration, backup, exact rollback, and uninstall.
+- Hardened global migration for the exact legacy `3.2` schema, a dedicated global-safe AGENTS payload, explicit v4 state and selector CLI contracts, concurrent first-use locking, and no legacy-state conversion.
+- Made the v4 manifest the atomic last-write commit marker; pre-commit failpoints roll back exactly, while post-commit legacy-manifest cleanup is independently retryable.
 - Kept real global installation approval separate. Sandbox validation does not authorize writes to a user's Codex home, and clean global validation remains required before stable `v4.0.0`.
 
 ## v4.0.0-prototype (historical)

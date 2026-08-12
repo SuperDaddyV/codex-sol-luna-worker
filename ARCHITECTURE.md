@@ -21,14 +21,24 @@ GPT-5.6 Sol
 - The five stable roles map `low`, `medium`, `high`, `xhigh`, and `max` to native custom agents running GPT-5.6 Luna at the selected effort. `ultra` is excluded.
 - Native `agent_type`/custom-agent selection is the only model and effort boundary. There is no direct model override.
 - Every formal Luna custom agent has `[agents] enabled = false`; Luna is a native leaf and cannot spawn or delegate.
-- The selector owns daily role choice and repo-local state. It does not spawn agents or perform acceptance.
-- Runtime state lives under `.var/` and is never committed.
+- The selector owns daily role choice. It does not spawn agents or perform acceptance.
+- Project development state lives under ignored `.var/`. Global state is explicitly rooted at `<CODEX_HOME>/sol-luna-v4/state` and contains only the daily profile, v4 LKG, and selector lock.
+- Global policy is rendered from `templates/AGENTS.global.md` with safely quoted selector and state paths; it does not install the repository policy verbatim.
 
 ## Explicit non-goals
 
 - No Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine.
 - No unapproved global Codex mutation. Installer writes require an explicit target, and repository-local validation is restricted to `.tmp/installer-validation/`; RC1 lifecycle tests use fake homes only.
 - CI and static checks are supporting evidence; Native Runtime Tests 1-5 are the runtime gate.
+
+## Global migration transaction
+
+- Only an exact legacy manifest version `3.2` is supported; unknown or malformed manifests fail closed.
+- Migration backs up every changed, removed, newly created, and commit-marker path. It does not convert legacy state or access the live selector source.
+- Five agents, selector, shared config/policy, exact legacy-owned groups, and exact legacy-owned files are applied and validated before commit.
+- `<CODEX_HOME>/sol-luna-v4/install-manifest.json` is atomically written last as the v4 commit marker.
+- The old manifest is cleaned up after commit. A cleanup-only failure records `LEGACY_MANIFEST_CLEANUP_PENDING` and is retried without rolling back valid v4 content.
+- Unowned `sol-luna-router/audit-bundles/` content is `PRESERVE_REVIEW_REQUIRED` and is never part of installer cleanup.
 
 ## Runtime status
 

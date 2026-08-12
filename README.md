@@ -44,7 +44,9 @@ The mandatory Hook-enforcement route is a historical v3 prototype path. It was n
 
 ## Selector
 
-The fixtures-first selector requires all five canonical Luna rows, chooses the highest score, resolves ties toward lower effort, degrades to the best locally supported effort, locks once per Beijing calendar day, uses an LKG for invalid live snapshots, and fails closed on first-install source failure.
+The fixtures-first selector requires all five canonical Luna rows, chooses the highest score, resolves ties toward lower effort, degrades to the best locally supported effort, locks once per Beijing calendar day, uses an LKG for invalid live snapshots, and fails closed on first-install source failure with `NO_LUNA_PROFILE_AVAILABLE`.
+
+Project development may use `.var/`. A global installation instead uses the explicit state root `<CODEX_HOME>/sol-luna-v4/state`, containing `daily-profile.json`, `last-good-profile.json`, and `selector.lock`. The stable global invocation is `python <selector> --state-dir <state> --ensure-daily --print-role`; it prints only one stable Luna role on success. The installer neither converts legacy v3 state nor contacts ModelDial during migration.
 
 The live adapter is opt-in. It prefers a complete first-party JSON publication and falls back to a complete five-effort batch extracted from the first-party Radar HTML under the same HTTPS allowlist. CI never accesses ModelDial.
 
@@ -64,7 +66,7 @@ python scripts/install.py --dry-run
 python scripts/install.py --apply --codex-home .tmp/installer-validation/manual/.codex --validation-sandbox
 ```
 
-Dry-run remains the default. Mutating installer modes require an explicit `--codex-home`; targets inside the repository additionally require `--validation-sandbox` and must stay below `.tmp/installer-validation/`. Clean install, merge, idempotency, upgrade, manifest-owned legacy migration, backup, exact rollback, and uninstall are validated only against isolated fake homes. No global installation is performed or authorized by this release candidate.
+Dry-run remains the default. Mutating installer modes require an explicit `--codex-home`; targets inside the repository additionally require `--validation-sandbox` and must stay below `.tmp/installer-validation/`. The global policy comes from the dedicated `templates/AGENTS.global.md`, not the repository policy. Migration recognizes only the exact legacy schema version `3.2`, preserves unowned audit bundles, and writes the v4 manifest atomically as the commit marker after every pre-commit validation. Legacy-manifest cleanup is post-commit and retryable. Clean install, migration, failpoint rollback, and uninstall are validated only against isolated fake homes. No global installation is performed or authorized by this release candidate.
 
 ## Release boundary
 

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import math
 import os
 import re
+import time
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -24,6 +26,8 @@ MODELDIAL_LATEST_URL = "https://modeldial.com/data/reference-snapshots/latest.js
 MODELDIAL_RADAR_URL = "https://modeldial.com/zh-CN/radar"
 MODELDIAL_ALLOWED_HOSTS = frozenset({"modeldial.com", "reference.modeldial.com"})
 MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024
+NO_PROFILE_STATUS = "NO_LUNA_PROFILE_AVAILABLE"
+LOCK_TIMEOUT_SECONDS = 30.0
 
 
 class SnapshotInvalid(ValueError):
@@ -380,6 +384,8 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
         with temporary.open("w", encoding="utf-8", newline="\n") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
         os.replace(temporary, path)
     finally:
         if temporary.exists():
@@ -404,6 +410,49 @@ def _same_bjt_day(profile: Any, now: datetime) -> bool:
     return parsed.astimezone(BJT).date() == now.date()
 
 
+@contextlib.contextmanager
+def _selector_lock(state_root: Path, timeout: float = LOCK_TIMEOUT_SECONDS):
+    """Serialize one state-root selection without a daemon or external dependency."""
+
+    state_root.mkdir(parents=True, exist_ok=True)
+    lock_path = state_root / "selector.lock"
+    deadline = time.monotonic() + timeout
+    with lock_path.open("a+b") as handle:
+        if handle.seek(0, os.SEEK_END) == 0:
+            handle.write(b"\0")
+            handle.flush()
+        acquired = False
+        try:
+            while not acquired:
+                try:
+                    handle.seek(0)
+                    if os.name == "nt":
+                        import msvcrt
+
+                        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    else:
+                        import fcntl
+
+                        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    acquired = True
+                except OSError as exc:
+                    if time.monotonic() >= deadline:
+                        raise SelectionUnavailable("selector state lock timed out") from exc
+                    time.sleep(0.05)
+            yield
+        finally:
+            if acquired:
+                handle.seek(0)
+                if os.name == "nt":
+                    import msvcrt
+
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def ensure_daily_profile(
     live_snapshot: Mapping[str, Any] | None,
     *,
@@ -419,49 +468,50 @@ def ensure_daily_profile(
     profile_path = state_root / "daily-profile.json"
     lkg_path = state_root / "last-good-profile.json"
 
-    if profile_path.is_file():
-        try:
-            existing = _read_json(profile_path)
-        except (OSError, json.JSONDecodeError):
-            existing = None
-        if _same_bjt_day(existing, selected_at):
-            return dict(existing)
+    with _selector_lock(state_root):
+        if profile_path.is_file():
+            try:
+                existing = _read_json(profile_path)
+            except (OSError, json.JSONDecodeError):
+                existing = None
+            if _same_bjt_day(existing, selected_at):
+                return dict(existing)
 
-    if live_snapshot is None and live_fetcher is not None:
-        try:
-            live_snapshot = live_fetcher()
-        except (OSError, SnapshotInvalid):
-            live_snapshot = None
+        if live_snapshot is None and live_fetcher is not None:
+            try:
+                live_snapshot = live_fetcher()
+            except (OSError, SnapshotInvalid):
+                live_snapshot = None
 
-    if live_snapshot is not None:
+        if live_snapshot is not None:
+            try:
+                profile = select_snapshot(
+                    live_snapshot,
+                    supported_efforts=supported_efforts,
+                    now=selected_at,
+                    fallback=False,
+                )
+            except SnapshotInvalid:
+                profile = None
+            else:
+                _write_json(lkg_path, {"snapshot": dict(live_snapshot)})
+                _write_json(profile_path, profile)
+                return profile
+
         try:
+            lkg_record = _read_json(lkg_path)
+            lkg_snapshot = lkg_record["snapshot"]
             profile = select_snapshot(
-                live_snapshot,
+                lkg_snapshot,
                 supported_efforts=supported_efforts,
                 now=selected_at,
-                fallback=False,
+                fallback=True,
             )
-        except SnapshotInvalid:
-            profile = None
-        else:
-            _write_json(lkg_path, {"snapshot": dict(live_snapshot)})
-            _write_json(profile_path, profile)
-            return profile
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, SnapshotInvalid) as exc:
+            raise SelectionUnavailable(NO_PROFILE_STATUS) from exc
 
-    try:
-        lkg_record = _read_json(lkg_path)
-        lkg_snapshot = lkg_record["snapshot"]
-        profile = select_snapshot(
-            lkg_snapshot,
-            supported_efforts=supported_efforts,
-            now=selected_at,
-            fallback=True,
-        )
-    except (OSError, json.JSONDecodeError, KeyError, TypeError, SnapshotInvalid) as exc:
-        raise SelectionUnavailable("no valid live snapshot or LKG; Luna is disabled") from exc
-
-    _write_json(profile_path, profile)
-    return profile
+        _write_json(profile_path, profile)
+        return profile
 
 
 def _load_optional_snapshot(path: str | None) -> Mapping[str, Any] | None:
@@ -491,6 +541,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--state-dir", default=".var", help="Repo-local state directory")
     parser.add_argument(
+        "--ensure-daily",
+        action="store_true",
+        help="Ensure one valid profile for the current Beijing calendar day",
+    )
+    parser.add_argument(
+        "--print-role",
+        action="store_true",
+        help="Print only the selected native custom-agent role",
+    )
+    parser.add_argument(
         "--supported",
         default=",".join(EFFORTS),
         help="Comma-separated locally supported efforts",
@@ -501,7 +561,8 @@ def main(argv: list[str] | None = None) -> int:
     supported = tuple(item.strip() for item in args.supported.split(",") if item.strip())
 
     live_snapshot = None if args.live else _load_optional_snapshot(args.snapshot)
-    live_fetcher = fetch_modeldial_snapshot if args.live else None
+    should_fetch = args.live or (args.ensure_daily and args.snapshot is None)
+    live_fetcher = fetch_modeldial_snapshot if should_fetch else None
 
     try:
         profile = ensure_daily_profile(
@@ -510,10 +571,14 @@ def main(argv: list[str] | None = None) -> int:
             supported_efforts=supported,
             live_fetcher=live_fetcher,
         )
-    except (SelectionUnavailable, ValueError) as exc:
-        parser.exit(2, f"selector: {exc}\n")
+    except (SelectionUnavailable, ValueError):
+        print(NO_PROFILE_STATUS)
+        return 3
 
-    print(json.dumps(profile, ensure_ascii=False, indent=2, sort_keys=True))
+    if args.print_role:
+        print(profile["selected_role"])
+    else:
+        print(json.dumps(profile, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

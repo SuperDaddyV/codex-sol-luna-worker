@@ -25,7 +25,7 @@ from scripts.install import (
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATION_ROOT = ROOT / ".tmp" / "installer-validation" / "lifecycle-tests"
 FIXED_TIME = datetime(2026, 8, 12, 0, 0, tzinfo=timezone.utc)
-LEGACY_FIXTURE = ROOT / "fixtures" / "installer" / "v3.2.1-sanitized.json"
+LEGACY_FIXTURE = ROOT / "fixtures" / "legacy-v3" / "manifest-3.2.json"
 
 
 def sandbox():
@@ -138,7 +138,12 @@ class InstallerLifecycleTests(unittest.TestCase):
                     agent = tomllib.load(handle)
                 self.assertEqual(agent["model"], "gpt-5.6-luna")
                 self.assertFalse(agent["agents"]["enabled"])
-            self.assertIn(AGENTS_BEGIN, (target / "AGENTS.md").read_text())
+            installed_policy = (target / "AGENTS.md").read_text()
+            self.assertIn(AGENTS_BEGIN, installed_policy)
+            self.assertIn(str(target.resolve()), installed_policy)
+            self.assertIn("--ensure-daily --print-role", installed_policy)
+            self.assertNotIn("<CODEX_HOME>", installed_policy)
+            self.assertNotIn(".var", installed_policy)
             self.assertIn(CONFIG_BEGIN, (target / "config.toml").read_text())
             self.assertTrue((target / "sol-luna-v4" / "selector.py").is_file())
             self.assertTrue((target / MANIFEST_RELATIVE).is_file())
@@ -309,6 +314,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertIn("User instruction stays.", (target / "AGENTS.md").read_text())
             self.assertNotIn("SOL_LUNA_DAILY_BEST", (target / "AGENTS.md").read_text())
             self.assertEqual(tomllib.loads((target / "config.toml").read_text())["user_model"], "preserve")
+            self.assertFalse((target / "sol-luna-v4" / "state").exists())
 
             rollback(
                 target,
@@ -317,6 +323,152 @@ class InstallerLifecycleTests(unittest.TestCase):
                 allow_validation_sandbox=True,
             )
             self.assertEqual(tree_hash(target), before)
+
+    def test_empty_legacy_created_hooks_file_is_removed(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            materialize_legacy_fixture(target)
+            old_group = {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python hooks/sol_luna_router.py",
+                    }
+                ]
+            }
+            write_text(
+                target / "hooks.json",
+                json.dumps(
+                    {
+                        "description": "Sol Luna managed hooks",
+                        "hooks": {
+                            "PreToolUse": [old_group],
+                            "SubagentStart": [old_group],
+                            "SubagentStop": [old_group],
+                            "SessionStart": [old_group],
+                        },
+                    },
+                    indent=2,
+                )
+                + "\n",
+            )
+            call_install(target, migrate_legacy=True)
+            self.assertFalse((target / "hooks.json").exists())
+
+    def test_audit_bundles_are_untouched_and_backup_covers_commit_markers(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            materialize_legacy_fixture(target)
+            audit = target / "sol-luna-router" / "audit-bundles" / "evidence.json"
+            write_text(audit, '{"preserve": true}\n')
+            audit_before = audit.read_bytes()
+
+            result = call_install(target, migrate_legacy=True)
+
+            self.assertEqual(audit.read_bytes(), audit_before)
+            snapshot = json.loads(
+                (Path(result["backup"]) / "snapshot.json").read_text(encoding="utf-8")
+            )
+            backed = {entry["path"] for entry in snapshot["entries"]}
+            self.assertIn(MANIFEST_RELATIVE.as_posix(), backed)
+            self.assertIn("sol-luna-router/install-manifest.json", backed)
+            self.assertIn("agents/luna-low.toml", backed)
+            self.assertIn("AGENTS.md", backed)
+            self.assertIn("config.toml", backed)
+            self.assertNotIn("sol-luna-router/audit-bundles/evidence.json", backed)
+
+    def test_precommit_failpoints_restore_exact_tree(self):
+        points = (
+            "after_agent_install",
+            "after_config_merge",
+            "after_hook_removal",
+            "after_old_file_deletion",
+            "before_v4_manifest_write",
+        )
+        for point in points:
+            with self.subTest(point=point), sandbox() as directory:
+                target = Path(directory) / ".codex"
+                materialize_legacy_fixture(target)
+                write_text(
+                    target / "sol-luna-router" / "audit-bundles" / "evidence.txt",
+                    "preserve\n",
+                )
+                before = tree_hash(target)
+
+                def failpoint(name, expected=point):
+                    if name == expected:
+                        self.assertFalse((target / MANIFEST_RELATIVE).exists())
+                        raise OSError(f"fixture failure at {name}")
+
+                with self.assertRaises(InstallerError) as raised:
+                    call_install(target, migrate_legacy=True, failpoint=failpoint)
+                self.assertEqual(raised.exception.reason_code, "APPLY_FAILED")
+                self.assertEqual(tree_hash(target), before)
+
+    def test_manifest_is_last_then_legacy_cleanup_is_postcommit(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            materialize_legacy_fixture(target)
+            observed = []
+
+            def observe(name):
+                observed.append(name)
+                if name != "legacy_manifest_cleanup":
+                    self.assertFalse((target / MANIFEST_RELATIVE).exists())
+                else:
+                    self.assertTrue((target / MANIFEST_RELATIVE).is_file())
+                    self.assertTrue(
+                        (target / "sol-luna-router" / "install-manifest.json").is_file()
+                    )
+
+            result = call_install(target, migrate_legacy=True, failpoint=observe)
+            self.assertEqual(result["status"], "INSTALLED")
+            self.assertEqual(
+                observed,
+                [
+                    "after_agent_install",
+                    "after_config_merge",
+                    "after_hook_removal",
+                    "after_old_file_deletion",
+                    "before_v4_manifest_write",
+                    "legacy_manifest_cleanup",
+                ],
+            )
+            manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
+            self.assertEqual(manifest["legacy_cleanup"]["status"], "complete")
+
+    def test_postcommit_legacy_manifest_cleanup_failure_is_retryable(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            materialize_legacy_fixture(target)
+
+            def fail_cleanup(name):
+                if name == "legacy_manifest_cleanup":
+                    raise OSError("fixture cleanup failure")
+
+            result = call_install(
+                target, migrate_legacy=True, failpoint=fail_cleanup
+            )
+            self.assertEqual(result["status"], "LEGACY_MANIFEST_CLEANUP_PENDING")
+            self.assertTrue((target / MANIFEST_RELATIVE).is_file())
+            self.assertTrue(
+                (target / "sol-luna-router" / "install-manifest.json").is_file()
+            )
+            manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
+            self.assertEqual(manifest["legacy_cleanup"]["status"], "pending")
+            self.assertTrue((target / "agents" / "luna-low.toml").is_file())
+
+            retried = call_install(
+                target,
+                migrate_legacy=True,
+                generated_at=FIXED_TIME + timedelta(days=1),
+            )
+            self.assertEqual(retried["status"], "LEGACY_CLEANUP_COMPLETED")
+            self.assertFalse(
+                (target / "sol-luna-router" / "install-manifest.json").exists()
+            )
+            manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
+            self.assertEqual(manifest["legacy_cleanup"]["status"], "complete")
 
     def test_foreign_luna_agent_is_ownership_conflict(self):
         with sandbox() as directory:
@@ -447,6 +599,29 @@ class InstallerLifecycleTests(unittest.TestCase):
             second_result = json.loads(second.stdout)
             self.assertEqual(second_result["status"], "IDEMPOTENT_PASS")
             self.assertEqual(second_result["effective_changes"], 0)
+
+    def test_cli_migrates_fake_legacy_32_without_creating_state(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            materialize_legacy_fixture(target)
+            command = [
+                sys.executable,
+                str(ROOT / "scripts" / "install.py"),
+                "--apply",
+                "--migrate-v3",
+                "--codex-home",
+                str(target),
+                "--validation-sandbox",
+            ]
+            completed = subprocess.run(
+                command, cwd=ROOT, capture_output=True, text=True
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            result = json.loads(completed.stdout)
+            self.assertEqual(result["status"], "INSTALLED")
+            self.assertEqual(result["migration"]["source_version"], "3.2")
+            self.assertEqual(result["migration"]["cleanup_status"], "complete")
+            self.assertFalse((target / "sol-luna-v4" / "state").exists())
 
 
 if __name__ == "__main__":
