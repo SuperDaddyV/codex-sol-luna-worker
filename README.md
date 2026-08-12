@@ -1,77 +1,241 @@
-# Codex Sol Brain + Luna Daily Best v4.0.0 Native
+# Codex Sol + Luna Worker
 
-Status: `v4.0.0 — STABLE / GLOBAL V4 RUNTIME PASS`
+[简体中文](README.zh-CN.md)
 
-This stable release uses Codex's native custom-agent runtime. The user selects `gpt-5.6-sol` for the primary session. Sol owns planning, architecture, orchestration, ambiguity resolution, and final acceptance. Clear bounded execution work is delegated only through the current Daily Profile's selected native Luna agent.
+[![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
+[![Release](https://img.shields.io/github/v/release/SuperDaddyV/codex-sol-luna-worker?label=release)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
+[![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
-Version `v4.0.0` was validated against the tested Codex Desktop/App Server environment. The evidence record intentionally omits session IDs, child IDs, usernames, absolute paths, backup paths, rollout IDs, and installation IDs. This validation does not promise compatibility with future Codex versions.
+Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and final acceptance while native GPT-5.6 Luna workers handle clear, bounded execution tasks.
 
-## Architecture
+> [!IMPORTANT]
+> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 ```text
 GPT-5.6 Sol
-  -> Global / Project AGENTS delegation policy
-  -> Daily Selector
-  -> Native custom Luna agent (native agent_type)
-  -> GPT-5.6 Luna / selected effort
-  -> Native leaf ([agents] enabled = false)
-  -> Sol Acceptance Gate
+      ↓
+AGENTS delegation policy
+      ↓
+Daily Selector
+      ↓
+Native Luna / daily selected effort
+      ↓
+Native leaf execution
+      ↓
+Sol Acceptance Gate
 ```
 
-Stable mappings are `low -> luna_low`, `medium -> luna_medium`, `high -> luna_high`, `xhigh -> luna_xhigh`, and `max -> luna_max`. Luna never uses `ultra`. The selected custom agent is the only model/effort selection boundary; there is no direct model override.
+No Hook Router is required. The selector chooses one of five Luna effort profiles once per Beijing calendar day, and same-day tasks reuse that choice. Ready to try it? Start with [Install with Codex](#install-with-codex).
 
-Sol remains the sole planner, orchestrator, ambiguity resolver, and final reviewer. Every formal Luna custom agent is a native leaf with `[agents] enabled = false`, so the child cannot spawn or delegate to another agent. At most three native Luna children may run concurrently.
+## Install with Codex
 
-## Explicit non-goals
+1. Start a new Codex task with GPT-5.6 Sol.
+2. Review the [setup contract](CODEX_SOL_LUNA_SETUP.md).
+3. Paste the prompt below.
+4. Let Codex discover the environment, run the dry-run, use the installer's transaction backup, install, and validate.
+5. Reload Codex when appropriate, start a new task, and run the smoke test. An already-open task is not a complete validation of newly loaded global configuration.
 
-The runtime contains no Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine. Native `agent_type`/custom-agent selection and Global / Project `AGENTS.md` policy are the only delegation mechanisms.
+```text
+Read and strictly execute the setup contract at:
 
-## Validated Runtime
+<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>
 
-| Global Runtime gate | Result |
-| --- | --- |
-| G1 Global Discovery | `PASS` |
-| G2 Selector + Explicit Luna | `PASS` |
-| G3 Automatic Delegation | `PASS` |
-| G4 Native Leaf | `PASS` |
-| G5 Native Parallel | `PASS` |
-| G6 Sol Acceptance | `PASS` |
-| G7 Legacy Absence | `PASS` |
+Adapt paths and commands to the current operating system and Codex environment.
+Use the existing installer for discovery, dry-run, backup, installation, and validation.
+Do not overwrite unrelated user configuration.
+If installation cannot be completed safely, stop and report the exact blocker instead of guessing a fix.
+After installation, tell me whether Codex must be reloaded and validate the result in a new task.
+```
 
-The Daily Selector passed same-day cache reuse and no-`ultra` runtime checks. Its LKG contract and fail-closed behavior are validated by tests. Release validation also covered project custom Luna discovery, native explicit Luna spawn, automatic `AGENTS.md` delegation, native leaf behavior, native parallelism, the Sol Acceptance Gate, the clean installer lifecycle, v3.2 migration simulation, exact rollback, a separately authorized real global v3.2-to-v4 migration, and isolated no-project Global Runtime G1-G7.
+> [!WARNING]
+> Review the contract before asking Codex to execute it. The final prompt uses an immutable commit-pinned URL so its instructions cannot silently change with `master`. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
-## Why v4
+## What this does
 
-The mandatory Hook-enforcement route is a historical v3 prototype path. It was not reliable for real collaboration spawns in the observed Codex Desktop V2 runtime, so v4 uses native custom agents plus Global / Project `AGENTS.md` delegation policy. There is no mandatory Hook Router or managed-child registry in the current architecture.
+Sol remains the only planner, architect, orchestrator, ambiguity resolver, and final reviewer. It decides whether a task is suitable for delegation. Luna handles bounded implementation, targeted search, file inspection, tests, lint/build, repetitive work, and clearly scoped batch tasks. Luna returns evidence; Sol accepts or rejects the result.
 
-## Selector
+The design keeps high-value reasoning and acceptance with Sol without spending Sol effort on every mechanical step. It does not promise a fixed cost or speed improvement.
 
-The fixtures-first selector requires all five canonical Luna rows, chooses the highest score, resolves ties toward lower effort, degrades to the best locally supported effort, locks once per Beijing calendar day, uses an LKG for invalid live snapshots, and fails closed on first-install source failure with `NO_LUNA_PROFILE_AVAILABLE`.
+## What it installs
 
-Project development may use `.var/`. A global installation instead uses the explicit state root `<CODEX_HOME>/sol-luna-v4/state`, containing `daily-profile.json`, `last-good-profile.json`, and `selector.lock`. The stable global invocation is `python <selector> --state-dir <state> --ensure-daily --print-role`; it prints only one stable Luna role on success. The installer neither converts legacy v3 state nor contacts ModelDial during migration.
+| Component | Global destination | Purpose |
+| --- | --- | --- |
+| Five Luna roles | `<CODEX_HOME>/agents/luna-{low,medium,high,xhigh,max}.toml` | Native GPT-5.6 Luna workers at five stable efforts |
+| Global policy | Managed block in `<CODEX_HOME>/AGENTS.md` | Sol/Luna delegation, Task Contract, Context Firewall, and acceptance policy |
+| Multi-agent settings | Managed block in `<CODEX_HOME>/config.toml` | Enables multi-agent work and caps direct children at 3 |
+| Daily Selector | `<CODEX_HOME>/sol-luna-v4/selector.py` | Resolves the Beijing-day Luna role |
+| Selector state | `<CODEX_HOME>/sol-luna-v4/state/` | Daily profile, last-known-good record, and lock, created on first use |
+| Install manifest | `<CODEX_HOME>/sol-luna-v4/install-manifest.json` | Records installer ownership for upgrades, rollback safety, and uninstall |
 
-The live adapter is opt-in. It prefers a complete first-party JSON publication and falls back to a complete five-effort batch extracted from the first-party Radar HTML under the same HTTPS allowlist. CI never accesses ModelDial.
+All five Luna roles use `model = "gpt-5.6-luna"`; their efforts are `low`, `medium`, `high`, `xhigh`, and `max`. Every role is a native leaf with `[agents] enabled = false`, so a Luna child cannot create another agent. `ultra` is deliberately excluded.
+
+The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a managed-child registry, daemon, database, scheduler, dashboard, plugin framework, or custom orchestration engine.
+
+## Core features
+
+- Sol is the sole brain and final acceptance owner.
+- Automatic delegation follows the effective `AGENTS.md` policy and today's Daily Profile; the user normally does not name a Luna role.
+- Five stable native Luna roles cover `low` through `max`; `ultra` never enters the selector allowlist.
+- The selector runs once per Beijing day, reuses the same-day profile, can fall back to a valid last-known-good snapshot, and fails closed when first use has no valid source or fallback.
+- A supplied local capability set can degrade an unavailable source winner to the best supported effort.
+- Luna is a native leaf. Sol may run at most three direct Luna children concurrently, and only for independent work.
+- Every delegation carries a bounded Task Contract and a minimal Context Firewall.
+- The installer uses explicit targets, managed ownership, atomic writes, transaction backups, exact rollback, safe uninstall, and exact-schema legacy `3.2` migration.
+- Global installation and project-scoped custom agents are both supported by Codex's native configuration layers.
+
+## Requirements and compatibility
+
+- A current Codex client with custom agents and multi-agent/subagent support.
+- Access to GPT-5.6 Sol for the primary task and GPT-5.6 Luna at all required efforts for workers.
+- Python 3.11 or newer with the standard-library `tomllib` module.
+- Git for the recommended immutable source checkout.
+- Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
+
+Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. Real Global Runtime G1-G7 passed in the recorded Codex Desktop/App Server environment. CI PASS does not imply that real Codex runtime validation was performed on every operating system or account.
+
+Official Codex behavior is documented in [AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), and the [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference). OpenAI lists the model IDs in its [model catalog](https://developers.openai.com/api/docs/models).
+
+## Daily use
+
+Use Codex normally. You do not need to choose `luna_low`, `luna_max`, or any other role in routine prompts. Sol decides whether work is bounded enough to delegate; not every prompt will create a child.
+
+### Coding
+
+```text
+Review this project, fix the failing tests, and verify the result.
+```
+
+### Inspection
+
+```text
+Check these modules for inconsistent configuration and summarize the findings.
+```
+
+### Independent work
+
+```text
+Review the frontend, backend, and tests independently, then give me one final assessment.
+```
+
+The last example invites parallel work, but Sol still decides whether the parts are independent and safe to delegate. After installation or an update, begin daily use in a new task so Codex reloads global instructions, agents, and configuration.
+
+## Daily Luna selection
+
+The selector validates a complete five-effort publication, chooses the highest score, and breaks ties toward the lower effort. When given a restricted supported-effort set, it selects the best supported alternative and marks capability degradation. It locks the result to the Beijing calendar day and reuses it for that day.
+
+If a live publication is invalid, the selector can use a valid last-known-good record. On first use, no valid source plus no valid fallback returns `NO_LUNA_PROFILE_AVAILABLE`; Sol keeps the task instead of guessing an effort. The installer itself does not contact ModelDial, and it never converts a legacy daily profile.
+
+## Safety and configuration protection
+
+- Mutating installer modes require an explicit `--codex-home`.
+- Existing `config.toml` and `AGENTS.md` content is preserved outside project-owned marker blocks.
+- A non-empty `AGENTS.override.md`, a same-name unowned agent, a changed owned file, malformed TOML, or unsupported manifest fails closed.
+- Every effective install or upgrade creates and verifies a centralized backup before writing the v4 manifest last.
+- Migration accepts only the exact legacy schema `3.2`, removes only manifest-owned legacy content, and preserves unowned audit evidence.
+- Publishing or updating this repository never installs into a user's Codex home automatically.
+- Native leaf configuration removes multi-agent tools from Luna children; it is a workflow boundary, not a server-side or cryptographic security boundary.
+
+See [SECURITY.md](SECURITY.md) for the complete boundary.
+
+## Rollback and uninstall
+
+Use the exact backup path returned by a successful install or upgrade:
 
 ```powershell
-python src/selector.py --snapshot fixtures/modeldial/complete.json
-python src/selector.py --live
+python scripts/install.py --rollback "<BACKUP_PATH>" --codex-home "<CODEX_HOME>"
+```
+
+Rollback verifies the installer-owned snapshot, restores the exact pre-install state, and consumes that backup after success. Uninstall is also manifest-owned and fails closed if installed content was changed:
+
+```powershell
+python scripts/install.py --uninstall --codex-home "<CODEX_HOME>"
+```
+
+Uninstall removes only v4-owned files and blocks while preserving unrelated user content. Reload Codex and start a new task after either operation. See the [setup contract](CODEX_SOL_LUNA_SETUP.md) before acting.
+
+## Validation status
+
+| Validation | Status |
+| --- | --- |
+| Native custom Luna | `PASS` |
+| Automatic AGENTS delegation | `PASS` |
+| Native leaf | `PASS` |
+| Native parallel | `PASS` |
+| Sol Acceptance | `PASS` |
+| Clean installer | `PASS` |
+| Legacy migration simulation | `PASS` |
+| Windows CI | `PASS` |
+| Ubuntu CI | `PASS` |
+| macOS CI | `PASS` |
+
+CI PASS does not imply real Codex runtime validation on every operating system. Detailed evidence boundaries are in [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## FAQ
+
+### Why not let Sol do every task?
+
+Sol can do everything itself, and it keeps trivial or ambiguous work. This policy reserves Sol's attention for requirements, decisions, orchestration, and acceptance when execution can be safely bounded.
+
+### Why not send every task to Luna?
+
+Luna is intentionally an execution worker. Architecture decisions, unresolved ambiguity, scope expansion, and final acceptance stay with Sol.
+
+### Do I select the Luna effort manually?
+
+Normally, no. The Daily Selector returns one stable role for the Beijing day, and Sol uses it only when delegation is worthwhile.
+
+### What if ModelDial is unavailable?
+
+The same-day profile is reused. A new-day selection can fall back to a valid last-known-good record. First use without a valid source or fallback fails closed, and Sol performs the work without guessing a Luna effort.
+
+### Why is `ultra` excluded?
+
+The frozen v4 policy defines five tested Luna roles from `low` through `max`. `ultra` is outside that stable selection and validation contract.
+
+### Can Luna create more agents?
+
+No. Every formal Luna role sets `[agents] enabled = false` and is a native leaf.
+
+### Will an already-open Codex task use the new installation?
+
+Do not rely on it. Codex builds its instruction chain when a run or task starts. Reload Codex Desktop/App Server when appropriate and start a new task for full validation.
+
+### What happens to a project's own `.codex/agents`?
+
+Global agents provide personal defaults; project-scoped agents and project `AGENTS.md` can coexist in the project context. Inspect the effective project configuration instead of assuming global files replace project-owned definitions or instructions.
+
+### Does v4 require Hooks?
+
+No. v4 uses native custom agents and `AGENTS.md` policy. Legacy Hook files may exist as historical evidence, but they are not a current runtime requirement.
+
+### Can I roll back or uninstall?
+
+Yes, when the v4 manifest and relevant backup are intact. Use the installer's real `--rollback` and `--uninstall` modes; do not hand-edit TOML to simulate either operation.
+
+## Advanced / manual inspection
+
+The Codex-driven path is recommended. For a human review, acquire an immutable commit, inspect the contract and source, and run only the read-only checks first:
+
+```powershell
+git clone https://github.com/SuperDaddyV/codex-sol-luna-worker.git
+cd codex-sol-luna-worker
+git checkout --detach <APPROVED_40_HEX_COMMIT>
+python scripts/install.py --help
+python scripts/install.py --dry-run --codex-home "<CODEX_HOME>"
 python -m unittest discover -s tests -v
 ```
 
-First-party discovery: [ModelDial Radar](https://modeldial.com/zh-CN/radar) and its [published snapshot JSON](https://modeldial.com/data/reference-snapshots/latest.json) .
+Do not use `--validation-sandbox` for a real global installation; that flag exists only for repository-local test targets. Apply, migration, rollback, and uninstall commands are specified in [CODEX_SOL_LUNA_SETUP.md](CODEX_SOL_LUNA_SETUP.md).
 
-## Installer validation
+## Technical documentation
 
-```powershell
-python scripts/probe_capabilities.py
-python scripts/install.py --dry-run
-python scripts/install.py --apply --codex-home .tmp/installer-validation/manual/.codex --validation-sandbox
-```
+- [Codex-executable setup contract](CODEX_SOL_LUNA_SETUP.md)
+- [Architecture](ARCHITECTURE.md)
+- [Runtime validation](RUNTIME_TESTS.md)
+- [Security](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+- [MIT License](LICENSE)
 
-Dry-run remains the default. Mutating installer modes require an explicit `--codex-home`; targets inside the repository additionally require `--validation-sandbox` and must stay below `.tmp/installer-validation/`. The global policy comes from the dedicated `templates/AGENTS.global.md`, not the repository policy. Migration recognizes only the exact legacy schema version `3.2`, preserves unowned audit bundles, and writes the v4 manifest atomically as the commit marker after every pre-commit validation. Legacy-manifest cleanup is post-commit and retryable. Routine clean-install, migration, failpoint rollback, and uninstall tests use isolated fake homes. The approved acceptance record separately includes a real global migration; source release promotion does not implicitly reinstall or update an existing installation manifest.
+## License
 
-## Stable scope
-
-`v4.0.0` is the stable release of the architecture and installer lifecycle validated in the tested Codex Desktop/App Server environment. Historical audit bundles, migration backups, and trusted Hook metadata, when present, are legacy evidence or non-runtime residual metadata; they are not v4 runtime dependencies and this release does not expand installer cleanup to remove them.
-
-See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for the evidence-calibrated runtime and architecture records.
+[MIT](LICENSE)

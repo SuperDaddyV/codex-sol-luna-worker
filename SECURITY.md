@@ -15,6 +15,8 @@ This stable source release does not perform an implicit installation, modify glo
 
 `scripts/install.py` defaults to planning. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. Global policy is rendered from a dedicated template. Legacy migration accepts only exact version `3.2`, does not convert state or access ModelDial, preserves unowned audit bundles, and writes the v4 manifest last with atomic replacement. Post-commit old-manifest cleanup is independently retryable. Repository-local writes additionally require `--validation-sandbox` below `.tmp/installer-validation/`. Routine lifecycle validation uses fake homes. Any real global migration remains a separate, explicitly approved maintenance action; publishing a source release never authorizes installation or cleanup of legacy evidence.
 
+`CODEX_SOL_LUNA_SETUP.md` is client-side automation guidance, not a server-side security boundary. Review the setup contract before execution and use the immutable commit-pinned raw URL from the README. The contract must not widen permissions, replace the installer's transaction, or guess ownership; unknown ownership remains a fail-closed condition.
+
 ## Reporting
 
 Do not include secrets, credentials, private session transcripts, or personal filesystem paths in a report. For a future public repository, use GitHub's private vulnerability reporting channel when enabled.

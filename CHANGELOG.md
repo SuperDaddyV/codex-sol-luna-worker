@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+
+- Added a Codex-executable setup contract around the existing transactional installer.
+- Added bilingual navigation, immutable installation quick starts, and product-oriented daily-use guidance.
+- Added validation, Release, and License badges plus documentation regression checks.
+
 ## v4.0.0
 
 - Promoted the v4 native architecture to stable.
