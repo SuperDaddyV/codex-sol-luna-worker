@@ -1,8 +1,8 @@
 # Security Policy
 
-## Release-candidate boundary
+## Stable release boundary
 
-This release candidate does not perform an implicit installation, modify global Codex configuration during validation, manage credentials, or provide a production security boundary.
+This stable source release does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary.
 
 ## Data and network behavior
 
@@ -13,7 +13,7 @@ This release candidate does not perform an implicit installation, modify global 
 
 ## Installation safety
 
-`scripts/install.py` defaults to planning. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. Global policy is rendered from a dedicated template. Legacy migration accepts only exact version `3.2`, does not convert state or access ModelDial, preserves unowned audit bundles, and writes the v4 manifest last with atomic replacement. Post-commit old-manifest cleanup is independently retryable. Repository-local writes additionally require `--validation-sandbox` below `.tmp/installer-validation/`. RC1 validation uses fake homes only; review and approve the global migration plan separately before allowing writes to a real `<CODEX_HOME>`.
+`scripts/install.py` defaults to planning. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. Global policy is rendered from a dedicated template. Legacy migration accepts only exact version `3.2`, does not convert state or access ModelDial, preserves unowned audit bundles, and writes the v4 manifest last with atomic replacement. Post-commit old-manifest cleanup is independently retryable. Repository-local writes additionally require `--validation-sandbox` below `.tmp/installer-validation/`. Routine lifecycle validation uses fake homes. Any real global migration remains a separate, explicitly approved maintenance action; publishing a source release never authorizes installation or cleanup of legacy evidence.
 
 ## Reporting
 

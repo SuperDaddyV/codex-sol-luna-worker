@@ -1,17 +1,17 @@
-# Codex Sol Brain + Luna Daily Best v4.0.0-rc1 Native
+# Codex Sol Brain + Luna Daily Best v4.0.0 Native
 
-Status: `v4.0.0-rc1 — NATIVE RUNTIME PASS`
+Status: `v4.0.0 — STABLE / GLOBAL V4 RUNTIME PASS`
 
-This release candidate uses Codex's native custom-agent runtime. The user selects `gpt-5.6-sol` for the primary session. Sol owns planning, architecture, orchestration, ambiguity resolution, and final acceptance. Clear bounded execution work is delegated only through the current Daily Profile's selected native Luna agent.
+This stable release uses Codex's native custom-agent runtime. The user selects `gpt-5.6-sol` for the primary session. Sol owns planning, architecture, orchestration, ambiguity resolution, and final acceptance. Clear bounded execution work is delegated only through the current Daily Profile's selected native Luna agent.
 
-Native Runtime Tests 1-5 have generic `PASS` results. The evidence record intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
+Version `v4.0.0` was validated against the tested Codex Desktop/App Server environment. The evidence record intentionally omits session IDs, child IDs, usernames, absolute paths, backup paths, rollout IDs, and installation IDs. This validation does not promise compatibility with future Codex versions.
 
 ## Architecture
 
 ```text
 GPT-5.6 Sol
-  -> project AGENTS.md delegation policy
-  -> Daily Profile selected role
+  -> Global / Project AGENTS delegation policy
+  -> Daily Selector
   -> Native custom Luna agent (native agent_type)
   -> GPT-5.6 Luna / selected effort
   -> Native leaf ([agents] enabled = false)
@@ -20,27 +20,29 @@ GPT-5.6 Sol
 
 Stable mappings are `low -> luna_low`, `medium -> luna_medium`, `high -> luna_high`, `xhigh -> luna_xhigh`, and `max -> luna_max`. Luna never uses `ultra`. The selected custom agent is the only model/effort selection boundary; there is no direct model override.
 
-Sol remains the sole planner, orchestrator, ambiguity resolver, and final reviewer. Every formal Luna custom agent is a native leaf with `[agents] enabled = false`, so the child cannot spawn or delegate to another agent.
+Sol remains the sole planner, orchestrator, ambiguity resolver, and final reviewer. Every formal Luna custom agent is a native leaf with `[agents] enabled = false`, so the child cannot spawn or delegate to another agent. At most three native Luna children may run concurrently.
 
 ## Explicit non-goals
 
-The runtime contains no Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine. Native `agent_type`/custom-agent selection and the project `AGENTS.md` policy are the only delegation mechanisms.
+The runtime contains no Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine. Native `agent_type`/custom-agent selection and Global / Project `AGENTS.md` policy are the only delegation mechanisms.
 
-## Runtime status
+## Validated Runtime
 
-| Native Runtime Test | Result | Scope of the generic evidence |
-| --- | --- | --- |
-| 1. Project custom-agent discovery | `PASS` | The five project custom agents were discoverable in a fresh project session. |
-| 2. Explicit native spawn | `PASS` | A named custom agent ran as GPT-5.6 Luna at its configured effort and returned the required sentinel. |
-| 3. `AGENTS.md` policy delegation | `PASS` | Sol read the current Daily Profile, delegated to its selected role, and performed acceptance. |
-| 4. Native leaf | `PASS` | `[agents] enabled = false` prevented child multi-agent/delegation tools. |
-| 5. Parallel native delegation | `PASS` | Two independent bounded checks used the selected role and Sol consolidated the result. |
+| Global Runtime gate | Result |
+| --- | --- |
+| G1 Global Discovery | `PASS` |
+| G2 Selector + Explicit Luna | `PASS` |
+| G3 Automatic Delegation | `PASS` |
+| G4 Native Leaf | `PASS` |
+| G5 Native Parallel | `PASS` |
+| G6 Sol Acceptance | `PASS` |
+| G7 Legacy Absence | `PASS` |
 
-The tests validate the native runtime architecture for this release candidate. They do not grant Luna planning, architecture, orchestration, or final-acceptance authority.
+The Daily Selector passed same-day cache reuse and no-`ultra` runtime checks. Its LKG contract and fail-closed behavior are validated by tests. Release validation also covered project custom Luna discovery, native explicit Luna spawn, automatic `AGENTS.md` delegation, native leaf behavior, native parallelism, the Sol Acceptance Gate, the clean installer lifecycle, v3.2 migration simulation, exact rollback, a separately authorized real global v3.2-to-v4 migration, and isolated no-project Global Runtime G1-G7.
 
 ## Why v4
 
-The mandatory Hook-enforcement route is a historical v3 prototype path. It was not reliable for real collaboration spawns in the observed Codex Desktop V2 runtime, so this release candidate uses native project custom agents plus the `AGENTS.md` delegation policy. There is no Hook-based dependency in the current architecture.
+The mandatory Hook-enforcement route is a historical v3 prototype path. It was not reliable for real collaboration spawns in the observed Codex Desktop V2 runtime, so v4 uses native custom agents plus Global / Project `AGENTS.md` delegation policy. There is no mandatory Hook Router or managed-child registry in the current architecture.
 
 ## Selector
 
@@ -66,10 +68,10 @@ python scripts/install.py --dry-run
 python scripts/install.py --apply --codex-home .tmp/installer-validation/manual/.codex --validation-sandbox
 ```
 
-Dry-run remains the default. Mutating installer modes require an explicit `--codex-home`; targets inside the repository additionally require `--validation-sandbox` and must stay below `.tmp/installer-validation/`. The global policy comes from the dedicated `templates/AGENTS.global.md`, not the repository policy. Migration recognizes only the exact legacy schema version `3.2`, preserves unowned audit bundles, and writes the v4 manifest atomically as the commit marker after every pre-commit validation. Legacy-manifest cleanup is post-commit and retryable. Clean install, migration, failpoint rollback, and uninstall are validated only against isolated fake homes. No global installation is performed or authorized by this release candidate.
+Dry-run remains the default. Mutating installer modes require an explicit `--codex-home`; targets inside the repository additionally require `--validation-sandbox` and must stay below `.tmp/installer-validation/`. The global policy comes from the dedicated `templates/AGENTS.global.md`, not the repository policy. Migration recognizes only the exact legacy schema version `3.2`, preserves unowned audit bundles, and writes the v4 manifest atomically as the commit marker after every pre-commit validation. Legacy-manifest cleanup is post-commit and retryable. Routine clean-install, migration, failpoint rollback, and uninstall tests use isolated fake homes. The approved acceptance record separately includes a real global migration; source release promotion does not implicitly reinstall or update an existing installation manifest.
 
-## Release boundary
+## Stable scope
 
-`v4.0.0-rc1` is a release candidate, not stable `v4.0.0`. Before a stable release, an explicitly approved global migration plan and clean global validation must still be completed. Sandbox installer validation does not authorize writes to a user's real Codex home.
+`v4.0.0` is the stable release of the architecture and installer lifecycle validated in the tested Codex Desktop/App Server environment. Historical audit bundles, migration backups, and trusted Hook metadata, when present, are legacy evidence or non-runtime residual metadata; they are not v4 runtime dependencies and this release does not expand installer cleanup to remove them.
 
 See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for the evidence-calibrated runtime and architecture records.

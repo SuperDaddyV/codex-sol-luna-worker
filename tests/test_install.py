@@ -44,7 +44,7 @@ class InstallPlanTests(unittest.TestCase):
                 list(STABLE_AGENT_FILES),
             )
 
-    def test_future_inventory_is_rc1_minimum_and_excludes_legacy_layers(self):
+    def test_future_inventory_is_stable_minimum_and_excludes_legacy_layers(self):
         with validation_directory() as directory:
             target = Path(directory) / ".codex"
             plan = build_plan(

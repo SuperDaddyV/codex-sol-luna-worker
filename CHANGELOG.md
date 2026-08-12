@@ -1,5 +1,19 @@
 # Changelog
 
+## v4.0.0
+
+- Promoted the v4 native architecture to stable.
+- Validated global custom Luna discovery.
+- Validated daily native Luna routing.
+- Validated automatic `AGENTS.md` delegation.
+- Validated native leaf behavior.
+- Validated native parallel execution.
+- Validated the Sol final Acceptance Gate.
+- Validated the clean installer lifecycle.
+- Validated legacy 3.2 migration and rollback.
+- Validated the real global migration.
+- Removed mandatory Hook-based routing from the current architecture.
+
 ## v4.0.0-rc1
 
 - Native Runtime Tests 1–5 passed.

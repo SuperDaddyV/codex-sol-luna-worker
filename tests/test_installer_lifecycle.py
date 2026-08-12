@@ -149,7 +149,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertTrue((target / MANIFEST_RELATIVE).is_file())
             manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.0.0-rc1")
+            self.assertEqual(manifest["version"], "v4.0.0")
             self.assertEqual(len(manifest["owned_files"]), 6)
             self.assertEqual(set(manifest["owned_blocks"]), {"AGENTS.md", "config.toml"})
             self.assertNotIn("installation_id", manifest)

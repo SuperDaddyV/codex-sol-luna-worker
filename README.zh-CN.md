@@ -1,17 +1,17 @@
-# Codex Sol Brain + Luna Daily Best v4.0.0-rc1 Native
+# Codex Sol Brain + Luna Daily Best v4.0.0 Native
 
-状态：`v4.0.0-rc1 — NATIVE RUNTIME PASS`
+状态：`v4.0.0 — STABLE / GLOBAL V4 RUNTIME PASS`
 
-本候选版本使用 Codex 原生 custom-agent runtime。用户在主会话选择 `gpt-5.6-sol`；Sol 负责规划、架构、编排、歧义处理与最终验收；明确且有边界的执行任务只能通过当天 Daily Profile 选中的原生 Luna agent 委派。
+本稳定版本使用 Codex 原生 custom-agent runtime。用户在主会话选择 `gpt-5.6-sol`；Sol 负责规划、架构、编排、歧义处理与最终验收；明确且有边界的执行任务只能通过当天 Daily Profile 选中的原生 Luna agent 委派。
 
-Native Runtime Test 1-5 均为通用 `PASS`。证据记录刻意不包含会话 ID、用户名、绝对路径、rollout ID 或安装 ID。
+`v4.0.0` 已在完成测试的 Codex Desktop/App Server 环境中通过验证。证据记录刻意不包含会话 ID、child ID、用户名、绝对路径、backup path、rollout ID 或安装 ID；该结果不承诺兼容未来 Codex 版本。
 
 ## Architecture
 
 ```text
 GPT-5.6 Sol
-  -> project AGENTS.md delegation policy
-  -> Daily Profile selected role
+  -> Global / Project AGENTS delegation policy
+  -> Daily Selector
   -> Native custom Luna agent（native agent_type）
   -> GPT-5.6 Luna / selected effort
   -> Native leaf（[agents] enabled = false）
@@ -20,27 +20,29 @@ GPT-5.6 Sol
 
 稳定映射为 `low -> luna_low`、`medium -> luna_medium`、`high -> luna_high`、`xhigh -> luna_xhigh`、`max -> luna_max`。Luna 永不使用 `ultra`。只有 native custom agent 配置负责 model/effort 选择，不存在 direct model override。
 
-Sol 始终是唯一的规划者、编排者、歧义处理者和最终复核者。五个正式 Luna custom agent 都是 `[agents] enabled = false` 的原生 leaf，因此 child 不能继续 spawn 或 delegation。
+Sol 始终是唯一的规划者、编排者、歧义处理者和最终复核者。五个正式 Luna custom agent 都是 `[agents] enabled = false` 的原生 leaf，因此 child 不能继续 spawn 或 delegation；同时运行的 native Luna child 最多为 3 个。
 
 ## Explicit non-goals
 
-当前 runtime 不包含 Hook Router、Hook Trust、managed-child registry、daemon、后台 scheduler、database、dashboard、IPC server、plugin framework 或 custom orchestration。唯一的 delegation 机制是 native `agent_type`/custom-agent 选择与项目 `AGENTS.md` policy。
+当前 runtime 不包含 Hook Router、Hook Trust、managed-child registry、daemon、后台 scheduler、database、dashboard、IPC server、plugin framework 或 custom orchestration。唯一的 delegation 机制是 native `agent_type`/custom-agent 选择与 Global / Project `AGENTS.md` policy。
 
-## Runtime status
+## Validated Runtime
 
-| Native Runtime Test | 结果 | 通用证据范围 |
-| --- | --- | --- |
-| 1．项目 custom-agent discovery | `PASS` | fresh project session 能发现五个项目 custom agent。 |
-| 2．显式 native spawn | `PASS` | 指定 custom agent 以 GPT-5.6 Luna 及其配置 effort 运行，并返回要求的 sentinel。 |
-| 3．`AGENTS.md` policy delegation | `PASS` | Sol 读取当日 Daily Profile，委派给 selected role，并完成验收。 |
-| 4．Native leaf | `PASS` | `[agents] enabled = false` 阻止 child 使用 multi-agent/delegation tools。 |
-| 5．Parallel native delegation | `PASS` | 两个独立窄检查使用 selected role，由 Sol 汇总并验收。 |
+| Global Runtime gate | 结果 |
+| --- | --- |
+| G1 Global Discovery | `PASS` |
+| G2 Selector + Explicit Luna | `PASS` |
+| G3 Automatic Delegation | `PASS` |
+| G4 Native Leaf | `PASS` |
+| G5 Native Parallel | `PASS` |
+| G6 Sol Acceptance | `PASS` |
+| G7 Legacy Absence | `PASS` |
 
-这些测试验证了本候选版本的 native runtime architecture，但不会授予 Luna 规划、架构、编排或最终验收权限。
+Daily Selector 的 same-day cache reuse 与 no-`ultra` 实测为 `PASS`；LKG contract 与 fail-closed 已由测试验证。发布验证还覆盖 project custom Luna discovery、native explicit Luna spawn、`AGENTS.md` automatic delegation、native leaf、native parallelism、Sol Acceptance Gate、clean installer lifecycle、v3.2 migration simulation、exact rollback、单独审批的真实 global v3.2-to-v4 migration，以及 isolated no-project Global Runtime G1-G7。
 
 ## Why v4
 
-强制 Hook-enforcement 路线属于历史上的 v3 prototype 路径；在此前观察的 Codex Desktop V2 runtime 中，它无法可靠截获真实 collaboration spawn。因此本候选版本改用原生项目 custom agents 与 `AGENTS.md` delegation policy，当前架构不依赖 Hook。
+强制 Hook-enforcement 路线属于历史上的 v3 prototype 路径；在此前观察的 Codex Desktop V2 runtime 中，它无法可靠截获真实 collaboration spawn。因此 v4 使用 native custom agents 与 Global / Project `AGENTS.md` delegation policy，当前架构没有 mandatory Hook Router 或 managed-child registry。
 
 ## 官方能力边界
 
@@ -68,7 +70,7 @@ selector 先以 fixtures 验证纯算法，再显式接入在线 source：
 - 稳定 global CLI 为 `python <selector> --state-dir <state> --ensure-daily --print-role`；成功时只输出一个稳定 Luna role，无 profile 时以非零状态返回 `NO_LUNA_PROFILE_AVAILABLE`。
 - migration 不转换 v3 Daily Profile/LKG，不联网，也不生成 v4 profile；首次实际使用由 v4 selector 建立自己的 state lifecycle。
 
-2026-08-11 的实测确认 ModelDial 一方 Radar 页面公开声明机器可读 published snapshot。运行时先取严格校验的 JSON；失败后才解析同一一方 Radar HTML 的完整五档 published batch。两条路径只允许 `modeldial.com` 与 `reference.modeldial.com` 的 HTTPS，禁止 credentials、cookies、auth headers 和第三方镜像。在线 source 必须显式使用 `--live`，CI 不联网。
+实测确认 ModelDial 一方 Radar 页面公开声明机器可读 published snapshot。运行时先取严格校验的 JSON；失败后才解析同一一方 Radar HTML 的完整五档 published batch。两条路径只允许 `modeldial.com` 与 `reference.modeldial.com` 的 HTTPS，禁止 credentials、cookies、auth headers 和第三方镜像。在线 source 必须显式使用 `--live`，CI 不联网。
 
 ```powershell
 python src/selector.py --snapshot fixtures/modeldial/complete.json
@@ -103,7 +105,7 @@ python scripts/install.py --dry-run
 python scripts/install.py --apply --codex-home .tmp/installer-validation/manual/.codex --validation-sandbox
 ```
 
-dry-run 仍是默认模式。任何写入模式都必须显式提供 `--codex-home`；repo 内目标还必须使用 `--validation-sandbox`，并位于 `.tmp/installer-validation/` 下。global policy 来自专用 `templates/AGENTS.global.md`，不会安装 repo 根 policy 全文。migration 只精确接受 legacy schema `3.2`，保留不在 ownership 中的 audit bundles，并在所有 pre-commit 验证通过后原子写 v4 manifest 作为 commit marker；旧 manifest 仅在 commit 后清理，失败可幂等重试。clean install、migration、failpoint rollback 与 uninstall 只在隔离 fake home 中验证；本候选版本没有执行或授权真实全局安装。
+dry-run 仍是默认模式。任何写入模式都必须显式提供 `--codex-home`；repo 内目标还必须使用 `--validation-sandbox`，并位于 `.tmp/installer-validation/` 下。global policy 来自专用 `templates/AGENTS.global.md`，不会安装 repo 根 policy 全文。migration 只精确接受 legacy schema `3.2`，保留不在 ownership 中的 audit bundles，并在所有 pre-commit 验证通过后原子写 v4 manifest 作为 commit marker；旧 manifest 仅在 commit 后清理，失败可幂等重试。日常 clean install、migration、failpoint rollback 与 uninstall 测试只使用隔离 fake home；已审批的 acceptance record 另行包含一次真实 global migration，source release promotion 不会隐式重装或更新现有 installation manifest。
 
 ## Repository layout
 
@@ -117,8 +119,8 @@ tests/                  standard-library static validation
 .var/                   ignored local runtime state
 ```
 
-## Release boundary
+## Stable scope
 
-`v4.0.0-rc1` 是 release candidate，不是 stable `v4.0.0`。稳定版之前仍须单独审批全局迁移计划并完成 clean global validation；sandbox installer validation 不授权写入用户真实 Codex home。
+`v4.0.0` 是已在完成测试的 Codex Desktop/App Server 环境中验证的稳定版本。历史 audit bundles、migration backups 与 trusted Hook metadata（如存在）属于 legacy evidence 或 non-runtime residual metadata，不是 v4 runtime dependency；本次发布不会扩大 installer cleanup 去删除它们。
 
 完整的 runtime 与架构记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。

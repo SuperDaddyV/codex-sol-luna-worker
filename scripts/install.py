@@ -20,7 +20,7 @@ from typing import Callable, Mapping
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SUPPORTED_PLATFORMS = {"Windows", "Linux", "Darwin"}
-VERSION = "v4.0.0-rc1"
+VERSION = "v4.0.0"
 MANIFEST_RELATIVE = PurePosixPath("sol-luna-v4/install-manifest.json")
 LEGACY_MANIFEST_RELATIVE = PurePosixPath("sol-luna-router/install-manifest.json")
 LEGACY_HOOKS_RELATIVE = ".".join(("hooks", "json"))
@@ -168,7 +168,7 @@ def build_plan(
     generated_at: datetime | None = None,
     allow_validation_sandbox: bool = False,
 ) -> dict:
-    """Return the original non-mutating RC1 deployment inventory."""
+    """Return the stable non-mutating v4 deployment inventory."""
 
     target = target.resolve(strict=False)
     project_root = project_root.resolve(strict=False)

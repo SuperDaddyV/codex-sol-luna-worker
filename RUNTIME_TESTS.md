@@ -1,6 +1,6 @@
 # Native Runtime Test Protocol
 
-Status: `v4.0.0-rc1 — PASS`
+Status: `v4.0.0 — STABLE / GLOBAL V4 RUNTIME PASS`
 
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 
@@ -9,8 +9,8 @@ Static validation and Native Runtime validation remain separate gates. The runti
 ## Safety boundary
 
 - The tests use a fresh project session and the current Beijing-date Daily Profile.
-- They do not alter global Codex configuration, global agents, Hooks, environment variables, or the frozen v3.2.1 installation.
-- Installer lifecycle writes are validated only in explicit fake homes. A separately approved global migration plan and clean global validation remain required pre-stable-release gates.
+- Routine test runs do not alter global Codex configuration, global agents, Hooks, or environment variables.
+- Installer lifecycle tests write only to explicit fake homes. The separately approved real global migration and isolated no-project Global Runtime acceptance were completed before stable source promotion.
 
 ## Test results
 
@@ -34,6 +34,18 @@ Each formal Luna custom agent loads `[agents] enabled = false`. The child tool s
 
 Two independent bounded read-only checks were delegated according to the current policy, both used the selected role, stayed within the project concurrency limit, and were consolidated and accepted by Sol.
 
+## Global Runtime results
+
+- G1 Global Discovery — `PASS`
+- G2 Selector + Explicit Luna — `PASS`
+- G3 Automatic Delegation — `PASS`
+- G4 Native Leaf — `PASS`
+- G5 Native Parallel — `PASS`
+- G6 Sol Acceptance — `PASS`
+- G7 Legacy Absence — `PASS`
+
+Daily Selector same-day cache reuse and no-`ultra` checks passed. LKG and fail-closed behavior are validated by the test suite. The global record is generic and contains no machine- or session-specific identifiers.
+
 ## Result rule
 
-Native Runtime Tests 1-5 now provide the generic runtime evidence for `v4.0.0-rc1`. They replace the earlier prototype's runtime-validation-needed status. This is a release-candidate validation record, not a stable `v4.0.0` declaration.
+Native Runtime Tests 1-5 and Global Runtime G1-G7 provide the generic runtime evidence for stable `v4.0.0` in the tested Codex Desktop/App Server environment. They do not promise compatibility with future Codex versions.
