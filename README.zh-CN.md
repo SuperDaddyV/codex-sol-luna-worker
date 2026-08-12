@@ -38,7 +38,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装规范：
 
-<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a2f49cc4720af855656fd752c39b5548419d6a12/CODEX_SOL_LUNA_SETUP.md
 
 根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
 必须使用项目现有安装器，不要覆盖无关的用户配置。
