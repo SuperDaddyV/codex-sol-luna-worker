@@ -1,6 +1,8 @@
-# v4.0.0 Native Architecture Note
+# v4.1.0-rc1 Native Architecture Note
 
-Status: `v4.0.0 — STABLE / GLOBAL V4 RUNTIME PASS`
+Status: `v4.1.0-rc1 — SOURCE CANDIDATE / REAL GLOBAL RUNTIME NOT RUN`
+
+`v4.0.0` remains the stable release and retains its recorded Global V4 Runtime PASS. The v4.1 RC changes only the ModelDial source layer.
 
 ## Flow
 
@@ -13,6 +15,19 @@ GPT-5.6 Sol
   -> Native leaf ([agents] enabled = false)
   -> Sol Acceptance Gate
 ```
+
+## ModelDial source flow
+
+```text
+Valid same-day Daily Profile -> reuse immediately
+Otherwise:
+  Official ModelDial API v1
+    -> invalid or unavailable: Official Full Snapshot JSON
+    -> invalid or unavailable: valid LKG
+    -> invalid or unavailable: NO_LUNA_PROFILE_AVAILABLE
+```
+
+The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contract](https://modeldial.com/openapi-v1.json), first-party provenance, a coherent batch, and exactly one row for each canonical Luna effort through the `codex` / `gpt-5.6-luna` / `official_login` route. A valid API response stops acquisition. Sources are never merged or arbitrated. Radar HTML runtime fallback is removed in v4.1.
 
 ## Stable boundary
 
@@ -43,7 +58,7 @@ GPT-5.6 Sol
 
 ## Runtime status
 
-Native Runtime Tests 1-5 are recorded as generic `PASS` for this stable release:
+Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 release:
 
 1. Project custom-agent discovery passed in a fresh project session.
 2. Explicit native spawn passed with the named custom agent's GPT-5.6 Luna model and configured effort.
@@ -53,7 +68,7 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for this stable release:
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
-Global Runtime G1-G7 also passed for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence. The Daily Selector passed same-day cache reuse and no-`ultra` runtime checks; its LKG and fail-closed contracts are covered by tests.
+Global Runtime G1-G7 also passed for v4.0.0 discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence. The v4.1 RC has not been installed globally and has not rerun G1-G7. Its source ordering, state compatibility, LKG, and fail-closed contracts are repository-test concerns until separately authorized runtime acceptance.
 
 ## Stable boundary
 

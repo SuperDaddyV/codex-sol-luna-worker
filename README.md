@@ -11,6 +11,9 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > [!IMPORTANT]
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
+> [!NOTE]
+> `v4.1.0-rc1` is a source candidate. `v4.0.0` remains the stable release, and the v4.1 real global upgrade and fresh-session runtime acceptance have not been run.
+
 ```text
 GPT-5.6 Sol
       ↓
@@ -38,7 +41,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a2f49cc4720af855656fd752c39b5548419d6a12/CODEX_SOL_LUNA_SETUP.md
+<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
@@ -48,7 +51,7 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 ```
 
 > [!WARNING]
-> Review the contract before asking Codex to execute it. The final prompt uses an immutable commit-pinned URL so its instructions cannot silently change with `master`. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> Review the contract before asking Codex to execute it. During RC assembly, the placeholder above must be replaced in a follow-up documentation commit with the immutable source-candidate commit URL; never substitute mutable `master`. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
 ## What this does
 
@@ -91,7 +94,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - Git for the recommended immutable source checkout.
 - Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
 
-Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. Real Global Runtime G1-G7 passed in the recorded Codex Desktop/App Server environment. CI PASS does not imply that real Codex runtime validation was performed on every operating system or account.
+Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The stable v4.0.0 release passed Real Global Runtime G1-G7 in the recorded Codex Desktop/App Server environment; v4.1.0-rc1 has not rerun that gate. CI PASS does not imply that real Codex runtime validation was performed on every operating system or account.
 
 Official Codex behavior is documented in [AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), and the [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference). OpenAI lists the model IDs in its [model catalog](https://developers.openai.com/api/docs/models).
 
@@ -123,7 +126,7 @@ The last example invites parallel work, but Sol still decides whether the parts 
 
 The selector validates a complete five-effort publication, chooses the highest score, and breaks ties toward the lower effort. When given a restricted supported-effort set, it selects the best supported alternative and marks capability degradation. It locks the result to the Beijing calendar day and reuses it for that day.
 
-If a live publication is invalid, the selector can use a valid last-known-good record. On first use, no valid source plus no valid fallback returns `NO_LUNA_PROFILE_AVAILABLE`; Sol keeps the task instead of guessing an effort. The installer itself does not contact ModelDial, and it never converts a legacy daily profile.
+The v4.1 source order is the official [ModelDial API v1](https://modeldial.com/api/v1/radar/latest.json), then the official [full snapshot JSON](https://modeldial.com/data/reference-snapshots/latest.json), then a valid last-known-good record. A valid API response stops acquisition immediately. Radar HTML runtime fallback is removed in v4.1. On first use, no valid source plus no valid fallback returns `NO_LUNA_PROFILE_AVAILABLE`; Sol keeps the task instead of guessing an effort. The installer itself does not contact ModelDial, and it never converts a legacy daily profile.
 
 ## Safety and configuration protection
 
@@ -186,7 +189,7 @@ Normally, no. The Daily Selector returns one stable role for the Beijing day, an
 
 ### What if ModelDial is unavailable?
 
-The same-day profile is reused. A new-day selection can fall back to a valid last-known-good record. First use without a valid source or fallback fails closed, and Sol performs the work without guessing a Luna effort.
+The same-day profile is reused. A new-day selection tries the official API, then the official full snapshot, then a valid last-known-good record. First use without a valid source or fallback fails closed, and Sol performs the work without guessing a Luna effort.
 
 ### Why is `ultra` excluded?
 
@@ -239,3 +242,5 @@ Do not use `--validation-sandbox` for a real global installation; that flag exis
 ## License
 
 [MIT](LICENSE)
+
+ModelDial-derived test data under `fixtures/modeldial/` is attributed separately in [its fixture notice](fixtures/modeldial/README.md) under CC BY 4.0; this does not change the source-code license.

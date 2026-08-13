@@ -20,7 +20,7 @@ from typing import Callable, Mapping
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SUPPORTED_PLATFORMS = {"Windows", "Linux", "Darwin"}
-VERSION = "v4.0.0"
+VERSION = "v4.1.0-rc1"
 MANIFEST_RELATIVE = PurePosixPath("sol-luna-v4/install-manifest.json")
 LEGACY_MANIFEST_RELATIVE = PurePosixPath("sol-luna-router/install-manifest.json")
 LEGACY_HOOKS_RELATIVE = ".".join(("hooks", "json"))

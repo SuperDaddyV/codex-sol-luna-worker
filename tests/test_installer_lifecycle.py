@@ -149,7 +149,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertTrue((target / MANIFEST_RELATIVE).is_file())
             manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.0.0")
+            self.assertEqual(manifest["version"], "v4.1.0-rc1")
             self.assertEqual(len(manifest["owned_files"]), 6)
             self.assertEqual(set(manifest["owned_blocks"]), {"AGENTS.md", "config.toml"})
             self.assertNotIn("installation_id", manifest)
@@ -282,6 +282,86 @@ class InstallerLifecycleTests(unittest.TestCase):
                 'name = "user_agent"\n',
             )
             self.assertTrue(Path(upgraded["backup"]).is_dir())
+
+            rolled_back = rollback(
+                target,
+                Path(upgraded["backup"]),
+                project_root=ROOT,
+                allow_validation_sandbox=True,
+            )
+            self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
+            self.assertEqual(tree_hash(target), before)
+
+    def test_v40_manifest_owned_selector_upgrades_to_rc1_and_rolls_back(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            write_text(target / "config.toml", 'user_setting = "preserve"\n')
+            write_text(target / "AGENTS.md", "User policy remains.\n")
+            call_install(target)
+
+            manifest_path = target / MANIFEST_RELATIVE
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            selector_relative = "sol-luna-v4/selector.py"
+            selector_path = target / selector_relative
+            v40_selector = (
+                b"# simulated manifest-owned v4.0.0 payload\n"
+                + selector_path.read_bytes()
+            )
+            selector_path.write_bytes(v40_selector)
+            manifest["version"] = "v4.0.0"
+            manifest["owned_files"][selector_relative] = hashlib.sha256(
+                v40_selector
+            ).hexdigest()
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            state = target / "sol-luna-v4" / "state"
+            write_text(state / "daily-profile.json", '{"legacy":"daily"}\n')
+            write_text(state / "last-good-profile.json", '{"legacy":"lkg"}\n')
+            state_before = {
+                path.name: path.read_bytes() for path in state.iterdir() if path.is_file()
+            }
+            agents_before = {
+                filename: (target / "agents" / filename).read_bytes()
+                for filename in STABLE_AGENT_FILES
+            }
+            config_before = (target / "config.toml").read_bytes()
+            agents_policy_before = (target / "AGENTS.md").read_bytes()
+            before = tree_hash(target)
+
+            upgraded = call_install(target, generated_at=FIXED_TIME + timedelta(days=1))
+            self.assertEqual(upgraded["status"], "UPGRADED")
+            self.assertTrue(Path(upgraded["backup"]).is_dir())
+            self.assertEqual(
+                selector_path.read_bytes(), (ROOT / "src/selector.py").read_bytes()
+            )
+            self.assertEqual(
+                json.loads(manifest_path.read_text(encoding="utf-8"))["version"],
+                "v4.1.0-rc1",
+            )
+            self.assertEqual(
+                {
+                    filename: (target / "agents" / filename).read_bytes()
+                    for filename in STABLE_AGENT_FILES
+                },
+                agents_before,
+            )
+            self.assertEqual((target / "config.toml").read_bytes(), config_before)
+            self.assertEqual((target / "AGENTS.md").read_bytes(), agents_policy_before)
+            self.assertEqual(
+                {
+                    path.name: path.read_bytes()
+                    for path in state.iterdir()
+                    if path.is_file()
+                },
+                state_before,
+            )
+
+            second = call_install(target, generated_at=FIXED_TIME + timedelta(days=2))
+            self.assertEqual(second["status"], "IDEMPOTENT_PASS")
+            self.assertEqual(second["effective_changes"], 0)
 
             rolled_back = rollback(
                 target,

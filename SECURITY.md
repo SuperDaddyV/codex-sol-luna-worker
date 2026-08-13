@@ -1,15 +1,17 @@
 # Security Policy
 
-## Stable release boundary
+## Release boundary
 
-This stable source release does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary.
+`v4.1.0-rc1` is a source candidate; `v4.0.0` remains stable. The source candidate does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary. A real global upgrade requires separate authorization.
 
 ## Data and network behavior
 
 - Project development state is repo-local under ignored `.var/`. Global runtime state uses an explicit `<CODEX_HOME>/sol-luna-v4/state` root and never depends on the current working directory.
-- The selector's optional live mode sends an unauthenticated HTTPS GET only to the strict ModelDial host allowlist.
+- The selector's optional live mode sends an unauthenticated HTTPS GET first to the official ModelDial API v1 endpoint and, only when that response is unavailable or invalid, to the official full snapshot JSON. The host allowlist remains limited to `modeldial.com` and `reference.modeldial.com`.
+- Radar HTML is not a v4.1 runtime source. The selector adds no third-party host, retry service, background refresh, or persistent HTTP cache.
 - The selector does not send cookies, credentials, auth headers, repository content, prompts, or Codex session data.
 - CI uses fixtures and does not contact ModelDial or run Codex.
+- ModelDial-derived fixtures are attributed under CC BY 4.0 in `fixtures/modeldial/README.md`; repository source code remains under the project MIT license.
 
 ## Installation safety
 

@@ -1,6 +1,6 @@
 # Codex Sol + Luna Worker — Execution Setup Contract
 
-Status: stable runtime `v4.0.0`; documentation contract for an existing installer.
+Status: `v4.1.0-rc1` source candidate; stable runtime remains `v4.0.0`. Real v4.1 global upgrade and fresh-session runtime acceptance require separate authorization.
 
 > [!IMPORTANT]
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. Prefer the immutable commit-pinned raw URL published in the project README. Never silently expand permissions, installation scope, or network access.
@@ -211,7 +211,7 @@ The installer copies the selector but does not need live ModelDial access and do
 
 The selector requires the canonical five efforts, chooses the highest score, and breaks a tie toward the lower effort. If invoked with a restricted `--supported` set, it can choose the best locally supported alternative and record capability degradation. The normal installation capability gate requires all five efforts, so the installed policy uses the complete default set.
 
-Selection occurs once per Beijing calendar day. A valid same-day profile is reused without a new live fetch. On a new day, an invalid live publication can fall back to a valid last-known-good record. First use with neither valid live data nor valid fallback fails closed with `NO_LUNA_PROFILE_AVAILABLE`. `ultra` is never allowed. Do not write a particular day's score into configuration or documentation as a permanent fact.
+Selection occurs once per Beijing calendar day. A valid same-day profile is reused without a new live fetch. On a new day, the selector tries the anonymous official ModelDial API v1 endpoint, then the official full snapshot JSON, then a valid last-known-good record. A valid API response stops acquisition; sources are never merged, and v4.1 has no Radar HTML runtime fallback. First use with neither valid live data nor valid fallback fails closed with `NO_LUNA_PROFILE_AVAILABLE`. `ultra` is never allowed. Do not write a particular day's score into configuration or documentation as a permanent fact.
 
 ## 14. Validation
 
@@ -228,7 +228,7 @@ After apply, perform read-only inspection and require all of the following:
 3. `config.toml` parses and the managed v4 block enables agents with maximum direct concurrency 3;
 4. the managed v4 block exists exactly once in `AGENTS.md` and contains the installed absolute selector and state command;
 5. the selector file compiles and its `--help` command succeeds;
-6. `sol-luna-v4/install-manifest.json` parses, reports `v4.0.0`, and records the expected owned files and blocks;
+6. `sol-luna-v4/install-manifest.json` parses, reports `v4.1.0-rc1`, and records the expected owned files and blocks;
 7. installer-reported created, modified, removed, and preserved content matches the selected mode;
 8. no active configuration or Hook definition still invokes the legacy Sol/Luna Router.
 

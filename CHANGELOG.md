@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### v4.1.0-rc1 source candidate
+
+- Added the official ModelDial API v1 as the Daily Selector primary source.
+- Retained the official full snapshot JSON as the only network fallback, followed by the existing LKG and fail-closed behavior.
+- Removed the Radar HTML runtime parser and fallback.
+- Preserved the five-effort selection engine, Daily Profile and LKG schemas, installer manifest schema, and legacy `3.2` migration semantics.
+- Added offline API schema, source-order, state-compatibility, and v4.0.0-to-RC1 installer lifecycle coverage.
+- Kept real global upgrade, fresh-session runtime acceptance, tag, and release outside this source-candidate change.
+
 ### Documentation
 
 - Added a Codex-executable setup contract around the existing transactional installer.

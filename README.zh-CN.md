@@ -11,6 +11,9 @@
 > [!IMPORTANT]
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
+> [!NOTE]
+> `v4.1.0-rc1` 目前是 source candidate。`v4.0.0` 仍是稳定版本；v4.1 的真实全局升级与 fresh-session runtime acceptance 尚未执行。
+
 ```text
 GPT-5.6 Sol
       ↓
@@ -38,7 +41,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a2f49cc4720af855656fd752c39b5548419d6a12/CODEX_SOL_LUNA_SETUP.md
+<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>
 
 根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
 必须使用项目现有安装器，不要覆盖无关的用户配置。
@@ -47,7 +50,7 @@ https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a2f49cc4720a
 ```
 
 > [!WARNING]
-> 请先审阅合同，再让 Codex 执行。最终提示词使用固定到不可变 commit 的 URL，避免执行内容随 `master` 悄然变化。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 请先审阅合同，再让 Codex 执行。RC 组装阶段，上面的 placeholder 必须在后续文档提交中替换为 source-candidate commit 的不可变 URL；不得改用可变 `master`。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
 ## 🚀 这是什么
 
@@ -123,7 +126,7 @@ v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtim
 - 推荐使用 Git 获取与安装合同相同的不可变 commit。
 - Windows、Ubuntu/Linux、macOS。WSL 是独立 Linux 环境，不能把 native Windows 的路径和配置直接混用。
 
-仓库 CI 已在 Windows、Ubuntu、macOS 上通过。真实 Global Runtime G1-G7 已在留档的 Codex Desktop/App Server 环境中通过。**三平台 CI PASS 不等于三个操作系统、所有客户端和所有账号都做过真实 G1-G7。**
+仓库 CI 已在 Windows、Ubuntu、macOS 上通过。稳定版 v4.0.0 的真实 Global Runtime G1-G7 已在留档的 Codex Desktop/App Server 环境中通过；v4.1.0-rc1 尚未重跑该 gate。**三平台 CI PASS 不等于三个操作系统、所有客户端和所有账号都做过真实 G1-G7。**
 
 Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、[Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference) 和 [Models](https://developers.openai.com/api/docs/models)。
 
@@ -155,7 +158,7 @@ Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chat
 
 selector 要求完整且无重复的五档发布数据，选择最高 score；同分时偏向较低 effort。显式限制 supported-effort 集合时，如果来源赢家在本地不可用，会选择最优受支持档并记录 `capability_degraded=true`。结果按北京时间自然日加锁，当天复用。
 
-实时发布无效时，可以使用有效 LKG。首次使用既无有效来源也无 LKG 时 fail closed，Sol 保留任务，不猜测 effort。installer 本身不访问 ModelDial，也不转换旧版 Daily Profile 或 LKG。某一天的具体 score 不是永久产品事实。
+v4.1 的来源顺序为官方 [ModelDial API v1](https://modeldial.com/api/v1/radar/latest.json)、官方 [Full Snapshot JSON](https://modeldial.com/data/reference-snapshots/latest.json)、有效 LKG。API 有效时立即停止获取；v4.1 已移除 Radar HTML runtime fallback。首次使用既无有效来源也无 LKG 时 fail closed，Sol 保留任务，不猜测 effort。installer 本身不访问 ModelDial，也不转换旧版 Daily Profile 或 LKG。某一天的具体 score 不是永久产品事实。
 
 ## ⚡ 并行
 
@@ -208,7 +211,7 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 
 ### Real Runtime
 
-真实 Global Runtime G1-G7 已在留档的 Codex Desktop/App Server 环境中通过，包含 global discovery、selector + explicit Luna、automatic delegation、native leaf、native parallel、Sol acceptance 与 legacy absence。该记录不扩大为“所有操作系统真实 runtime 均通过”。详细边界见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
+稳定版 v4.0.0 的真实 Global Runtime G1-G7 已在留档的 Codex Desktop/App Server 环境中通过，包含 global discovery、selector + explicit Luna、automatic delegation、native leaf、native parallel、Sol acceptance 与 legacy absence。v4.1.0-rc1 尚未执行真实全局升级或重跑 G1-G7。该记录不扩大为“所有操作系统真实 runtime 均通过”。详细边界见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 ## ❓ FAQ
 
@@ -226,7 +229,7 @@ Luna 被明确限制为执行 worker。架构决策、未解决歧义、范围�
 
 ### ModelDial 访问失败怎么办？
 
-当天已有 profile 会继续复用；跨日选择可回退到有效 LKG。首次使用没有有效来源和 LKG 时 fail closed，Sol 自己执行，不猜 effort。
+当天已有 profile 会继续复用；跨日选择依次尝试官方 API、官方完整快照和有效 LKG。首次使用没有有效来源和 LKG 时 fail closed，Sol 自己执行，不猜 effort。
 
 ### 为什么不用 Ultra？
 
@@ -279,3 +282,5 @@ python -m unittest discover -s tests -v
 ## License
 
 [MIT](LICENSE)
+
+`fixtures/modeldial/` 下由 ModelDial 数据派生的测试 fixture 依 CC BY 4.0 在[独立说明](fixtures/modeldial/README.md)中署名；项目源码许可证仍为 MIT。

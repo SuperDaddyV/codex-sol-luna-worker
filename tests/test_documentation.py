@@ -45,6 +45,25 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
+    def test_v41_rc_source_flow_and_runtime_boundary_are_explicit(self):
+        combined = "\n".join(
+            text(path)
+            for path in (
+                README,
+                README_ZH,
+                SETUP,
+                ROOT / "ARCHITECTURE.md",
+                ROOT / "SECURITY.md",
+            )
+        )
+        self.assertIn("v4.1.0-rc1", combined)
+        self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
+        self.assertIn(
+            "https://modeldial.com/data/reference-snapshots/latest.json", combined
+        )
+        self.assertIn("Radar HTML runtime fallback is removed", text(README))
+        self.assertIn("REAL GLOBAL RUNTIME NOT RUN", combined)
+
     def test_setup_execution_urls_are_coordinated_and_immutable_when_pinned(self):
         english = text(README)
         chinese = text(README_ZH)

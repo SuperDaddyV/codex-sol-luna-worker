@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import hashlib
 import json
 import math
 import os
@@ -22,10 +21,11 @@ EFFORTS = ("low", "medium", "high", "xhigh", "max")
 ROLE_BY_EFFORT = {effort: f"luna_{effort}" for effort in EFFORTS}
 BJT = timezone(timedelta(hours=8), name="BJT")
 UTC = timezone.utc
-MODELDIAL_LATEST_URL = "https://modeldial.com/data/reference-snapshots/latest.json"
-MODELDIAL_RADAR_URL = "https://modeldial.com/zh-CN/radar"
+MODELDIAL_API_URL = "https://modeldial.com/api/v1/radar/latest.json"
+MODELDIAL_SNAPSHOT_URL = "https://modeldial.com/data/reference-snapshots/latest.json"
 MODELDIAL_ALLOWED_HOSTS = frozenset({"modeldial.com", "reference.modeldial.com"})
 MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024
+API_CLOCK_SKEW = timedelta(minutes=10)
 NO_PROFILE_STATUS = "NO_LUNA_PROFILE_AVAILABLE"
 LOCK_TIMEOUT_SECONDS = 30.0
 
@@ -116,7 +116,7 @@ def _required_text(payload: Mapping[str, Any], key: str) -> str:
 def adapt_modeldial_snapshot(
     payload: Mapping[str, Any],
     *,
-    source_url: str = MODELDIAL_LATEST_URL,
+    source_url: str = MODELDIAL_SNAPSHOT_URL,
     source_mode: str = "live_json",
     now: datetime | None = None,
 ) -> dict[str, Any]:
@@ -191,6 +191,100 @@ def adapt_modeldial_snapshot(
     return adapted
 
 
+def adapt_modeldial_api(
+    payload: Mapping[str, Any],
+    *,
+    source_url: str = MODELDIAL_API_URL,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Validate ModelDial API v1 and map its Luna rows to the selector contract."""
+
+    if not isinstance(payload, Mapping):
+        raise SnapshotInvalid("API_SCHEMA_INVALID: response must be an object")
+    schema_version = payload.get("schemaVersion")
+    if not isinstance(schema_version, str) or not schema_version.strip():
+        raise SnapshotInvalid("API_SCHEMA_INVALID: schemaVersion is missing or malformed")
+    if schema_version != "1.0":
+        raise SnapshotInvalid("API_SCHEMA_UNSUPPORTED: schemaVersion is not supported")
+
+    source = payload.get("source")
+    if not isinstance(source, Mapping) or source.get("kind") != "first_party_snapshot":
+        raise SnapshotInvalid("ModelDial API lacks first-party provenance")
+
+    batch = payload.get("batch")
+    if not isinstance(batch, Mapping):
+        raise SnapshotInvalid("ModelDial API batch must be an object")
+    batch_id = batch.get("id")
+    if not isinstance(batch_id, str) or not batch_id.strip():
+        raise SnapshotInvalid("ModelDial API batch id is invalid")
+    revision = batch.get("revision")
+    if isinstance(revision, bool) or not isinstance(revision, int) or revision < 1:
+        raise SnapshotInvalid("ModelDial API batch revision is invalid")
+
+    published_at = _parse_published_at(batch.get("publishedAt"))
+    published = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+    current = datetime.now(UTC) if now is None else now
+    if current.tzinfo is None or current.utcoffset() is None:
+        raise ValueError("now must be timezone-aware")
+    if published > current.astimezone(UTC) + API_CLOCK_SKEW:
+        raise SnapshotInvalid("ModelDial API publication time is in the future")
+
+    for key in (
+        "questionPackVersion",
+        "graderVersion",
+        "evaluationProfile",
+        "scoreBaselineId",
+        "pricingSnapshotId",
+    ):
+        value = batch.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise SnapshotInvalid(f"ModelDial API batch lacks {key}")
+
+    rankings = payload.get("rankings")
+    if not isinstance(rankings, list):
+        raise SnapshotInvalid("ModelDial API rankings must be a list")
+    entry_count = batch.get("entryCount")
+    if (
+        isinstance(entry_count, bool)
+        or not isinstance(entry_count, int)
+        or entry_count != len(rankings)
+    ):
+        raise SnapshotInvalid("ModelDial API entryCount does not match rankings")
+    batch_hash = batch.get("sha256")
+    if not isinstance(batch_hash, str) or re.fullmatch(
+        r"sha256:[0-9a-f]{64}", batch_hash
+    ) is None:
+        raise SnapshotInvalid("ModelDial API batch sha256 is invalid")
+
+    rows = []
+    for ranking in rankings:
+        if not isinstance(ranking, Mapping):
+            continue
+        if (
+            ranking.get("provider") != "codex"
+            or ranking.get("model") != LUNA_MODEL
+            or ranking.get("route") != "official_login"
+        ):
+            continue
+        effort = ranking.get("reasoningEffort")
+        if effort not in EFFORTS:
+            continue
+        rows.append(
+            {"model": LUNA_MODEL, "effort": effort, "score": ranking.get("score")}
+        )
+
+    adapted = {
+        "snapshot_id": batch_id,
+        "published_at": published_at,
+        "rows": rows,
+        "source_mode": "modeldial_api_v1",
+        "source_url": source_url,
+        "snapshot_hash": batch_hash,
+    }
+    validate_snapshot(adapted)
+    return adapted
+
+
 def _validated_modeldial_url(url: str) -> urllib.parse.ParseResult:
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme.lower() != "https" or parsed.hostname not in MODELDIAL_ALLOWED_HOSTS:
@@ -212,7 +306,7 @@ def _fetch_bytes(url: str, *, expected_type: str, timeout: float) -> tuple[bytes
         url,
         headers={
             "Accept": expected_type,
-            "User-Agent": "codex-sol-luna-worker/4.0-prototype",
+            "User-Agent": "codex-sol-luna-worker/4.1.0-rc1",
         },
         method="GET",
     )
@@ -231,91 +325,26 @@ def _fetch_bytes(url: str, *, expected_type: str, timeout: float) -> tuple[bytes
     return body, final_url
 
 
-def parse_radar_html(
-    html_text: str,
-    *,
-    source_url: str = MODELDIAL_RADAR_URL,
-    now: datetime | None = None,
-) -> dict[str, Any]:
-    """Extract one complete published Luna snapshot from first-party Radar HTML."""
-
-    identifier = re.search(r'"identifier"\s*:\s*"([^"]+)"', html_text)
-    published = re.search(r'"dateModified"\s*:\s*"([^"]+)"', html_text)
-    pack = re.search(r'"measurementTechnique"\s*:\s*"ModelDial\s+([^"]+)"', html_text)
-    if not identifier or not published or not pack:
-        raise SnapshotInvalid("Radar HTML lacks published snapshot metadata")
-
-    labels = {"轻度": "low", "中": "medium", "高": "high", "极高": "xhigh", "最高": "max"}
-    row_pattern = re.compile(
-        r"<span>\s*gpt-5\.6-luna\s*</span><em>(轻度|中|高|极高|最高)</em>"
-        r'.{0,2500}?scoreCell[^>]*><strong>\s*([0-9]+(?:\.[0-9]+)?)\s*</strong>',
-        re.IGNORECASE | re.DOTALL,
-    )
-    scores: dict[str, float] = {}
-    for label, score_text in row_pattern.findall(html_text):
-        effort = labels[label]
-        score = float(score_text)
-        if effort in scores and scores[effort] != score:
-            raise SnapshotInvalid("Radar HTML contains conflicting Luna scores")
-        scores[effort] = score
-    if set(scores) != set(EFFORTS):
-        raise SnapshotInvalid("Radar HTML lacks one complete Luna five-effort batch")
-
-    grader = re.search(r'grader_version\\?"\s*:\s*\\?"([^"\\]+)', html_text)
-    profile = re.search(r'evaluation_profile\\?"\s*:\s*\\?"([^"\\]+)', html_text)
-    baseline = re.search(r'score_baseline_id\\?"\s*:\s*\\?"([^"\\]+)', html_text)
-    group_id = f"radar-html:{identifier.group(1)}"
-    publication = {
-        "kind": "first_party_snapshot",
-        "status": "complete",
-        "batch_id": identifier.group(1),
-        "published_at": published.group(1),
-        "question_pack_id": "coding-fast",
-        "question_pack_version": pack.group(1),
-        "grader_version": grader.group(1) if grader else "radar-html-published",
-        "evaluation_profile": profile.group(1) if profile else "full",
-        "score_baseline_id": baseline.group(1) if baseline else pack.group(1),
-        "batch_sha256": "html-sha256:"
-        + hashlib.sha256(html_text.encode("utf-8")).hexdigest(),
-        "provenance": {"public_official_snapshot": True},
-        "entries": [
-            {
-                "model_configuration": {
-                    "canonical_model_id": LUNA_MODEL,
-                    "reasoning_effort": effort,
-                },
-                "advisor_eligible": True,
-                "score_integrity": "first_party_controlled",
-                "score": scores[effort],
-                "source_evidence_group_id": group_id,
-            }
-            for effort in EFFORTS
-        ],
-    }
-    return adapt_modeldial_snapshot(
-        publication, source_url=source_url, source_mode="radar_html", now=now
-    )
-
-
 def fetch_modeldial_snapshot(*, timeout: float = 15.0) -> dict[str, Any]:
-    """Fetch first-party JSON, falling back to first-party Radar HTML."""
+    """Fetch ModelDial API v1, falling back to the official full snapshot."""
 
     try:
         body, final_url = _fetch_bytes(
-            MODELDIAL_LATEST_URL, expected_type="application/json", timeout=timeout
+            MODELDIAL_API_URL, expected_type="application/json", timeout=timeout
         )
         payload = json.loads(body.decode("utf-8"))
-        return adapt_modeldial_snapshot(payload, source_url=final_url)
+        return adapt_modeldial_api(payload, source_url=final_url)
     except (OSError, UnicodeError, json.JSONDecodeError, SnapshotInvalid):
         pass
 
     try:
         body, final_url = _fetch_bytes(
-            MODELDIAL_RADAR_URL, expected_type="text/html", timeout=timeout
+            MODELDIAL_SNAPSHOT_URL, expected_type="application/json", timeout=timeout
         )
-        return parse_radar_html(body.decode("utf-8"), source_url=final_url)
-    except (OSError, UnicodeError, SnapshotInvalid) as exc:
-        raise SnapshotInvalid("both first-party ModelDial sources failed") from exc
+        payload = json.loads(body.decode("utf-8"))
+        return adapt_modeldial_snapshot(payload, source_url=final_url)
+    except (OSError, UnicodeError, json.JSONDecodeError, SnapshotInvalid) as exc:
+        raise SnapshotInvalid("both first-party ModelDial JSON sources failed") from exc
 
 
 def _normalize_supported(supported_efforts: Iterable[str] | None) -> tuple[str, ...]:

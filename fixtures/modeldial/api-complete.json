@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0",
+  "generatedAt": "2026-08-12T23:32:37Z",
+  "source": {
+    "name": "ModelDial Public Radar",
+    "kind": "first_party_snapshot",
+    "methodologyUrl": "https://modeldial.com/method",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "batch": {
+    "id": "snapshot-2026-08-13T00-00-00Z",
+    "revision": 1,
+    "publishedAt": "2026-08-13T00:00:00Z",
+    "questionPackVersion": "coding-fast-v4.10",
+    "graderVersion": "scoring-mode:semantic_q1_q5_equal_v2",
+    "evaluationProfile": "full",
+    "scoreBaselineId": "coding-fast-v4.10:semantic_q1_q5_equal_v2",
+    "pricingSnapshotId": "pricing-v1-879bc0a00c291f1ac75f7ae3b19ba969edbb307c679c813df5bb464c6c7e4512",
+    "entryCount": 5,
+    "sha256": "sha256:15a8815fb8b8f20066798451165076a3e53060641c941f82d992c4ba54162202"
+  },
+  "rankings": [
+    {
+      "rank": 6,
+      "id": "cloudflare-reference:gpt-5.6-luna:max",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "displayName": "gpt-5.6-luna / max",
+      "reasoningEffort": "max",
+      "route": "official_login",
+      "score": 70,
+      "maxScore": 100,
+      "elapsedMs": 2282520,
+      "estimatedReferenceCostUsd": 0.154264,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 9,
+      "id": "cloudflare-reference:gpt-5.6-luna:xhigh",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "displayName": "gpt-5.6-luna / xhigh",
+      "reasoningEffort": "xhigh",
+      "route": "official_login",
+      "score": 67,
+      "maxScore": 100,
+      "elapsedMs": 1318852,
+      "estimatedReferenceCostUsd": 0.09094,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 11,
+      "id": "cloudflare-reference:gpt-5.6-luna:high",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "displayName": "gpt-5.6-luna / high",
+      "reasoningEffort": "high",
+      "route": "official_login",
+      "score": 61,
+      "maxScore": 100,
+      "elapsedMs": 897762,
+      "estimatedReferenceCostUsd": 0.064337,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 14,
+      "id": "cloudflare-reference:gpt-5.6-luna:medium",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "displayName": "gpt-5.6-luna / medium",
+      "reasoningEffort": "medium",
+      "route": "official_login",
+      "score": 51,
+      "maxScore": 100,
+      "elapsedMs": 566025,
+      "estimatedReferenceCostUsd": 0.031059,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 15,
+      "id": "cloudflare-reference:gpt-5.6-luna:low",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "displayName": "gpt-5.6-luna / low",
+      "reasoningEffort": "low",
+      "route": "official_login",
+      "score": 47,
+      "maxScore": 100,
+      "elapsedMs": 350765,
+      "estimatedReferenceCostUsd": 0.02062,
+      "decisionTags": [],
+      "targetLabels": [
+        {
+          "id": "lowest_cost",
+          "label": "Lowest cost"
+        }
+      ]
+    }
+  ],
+  "links": {
+    "self": "https://modeldial.com/api/v1/radar/latest.json",
+    "fullSnapshot": "https://modeldial.com/data/reference-snapshots/latest.json",
+    "openApi": "https://modeldial.com/openapi-v1.json"
+  }
+}
