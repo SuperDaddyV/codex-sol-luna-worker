@@ -44,7 +44,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/cc2b13ecd0781b423f52e8b1d899a2de2d7f6a91/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/95cfd53200a3fc53b50a48fe7ab251dcc6d5e00b/CODEX_SOL_LUNA_SETUP.md
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
@@ -54,7 +54,7 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 ```
 
 > [!WARNING]
-> The setup contract above is pinned to immutable RC3 final docs source Commit C; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> The setup contract above is pinned to immutable RC4 source Commit A. RC4 remains a source candidate and is not the published preview; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
 ## What this does
 
