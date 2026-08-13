@@ -41,7 +41,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/4e56a5d62c7f8f94e17020c2153899d552380af6/CODEX_SOL_LUNA_SETUP.md
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
