@@ -7,6 +7,25 @@ ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 README_ZH = ROOT / "README.zh-CN.md"
 SETUP = ROOT / "CODEX_SOL_LUNA_SETUP.md"
+ISSUE_TEMPLATE_DIR = ROOT / ".github" / "ISSUE_TEMPLATE"
+ISSUE_FORMS = {
+    "bug-report.yml": {
+        "summary", "expected", "os", "codex_client_version", "python_version",
+        "install_type", "version", "receipt", "luna_run", "minimal_logs",
+        "reproduction", "context", "privacy_confirmation",
+    },
+    "compatibility-report.yml": {
+        "os", "codex_client_version", "python_version", "install_type",
+        "from_version", "installed_version", "installation_result", "daily_role",
+        "sol_only_receipt", "delegated_receipt", "luna_delegation",
+        "parallel_delegation", "usage_duration", "problems_found",
+        "overall_result", "privacy_confirmation",
+    },
+    "feature-feedback.yml": {
+        "type", "improvement", "reason", "suggested_behavior", "context",
+        "privacy_confirmation",
+    },
+}
 PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
 PINNED_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
@@ -48,6 +67,97 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("img.shields.io/badge/preview-v4.1.0--rc4", content)
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
+
+    def test_public_beta_feedback_forms_and_guidance(self):
+        self.assertEqual(
+            text(ISSUE_TEMPLATE_DIR / "config.yml").strip(),
+            "blank_issues_enabled: false",
+        )
+        for filename, expected_ids in ISSUE_FORMS.items():
+            path = ISSUE_TEMPLATE_DIR / filename
+            with self.subTest(form=filename):
+                self.assertTrue(path.is_file())
+                content = text(path)
+                ids = re.findall(r"(?m)^\s+id:\s+([A-Za-z0-9_-]+)\s*$", content)
+                field_ids = set(ids)
+                self.assertEqual(field_ids, expected_ids)
+                self.assertEqual(len(ids), len(field_ids))
+                for key in ("name:", "description:", "title:", "body:"):
+                    self.assertIn(key, content)
+                self.assertIn("validations:", content)
+                self.assertIn("type: dropdown", content)
+                self.assertIn("options:", content)
+                labels = re.findall(r"(?m)^      label: (.+)$", content)
+                self.assertEqual(len(labels), len(set(labels)))
+                self.assertNotIn("labels:", content)
+                self.assertNotIn("contact_links:", content)
+
+        bug = text(ISSUE_TEMPLATE_DIR / "bug-report.yml")
+        for phrase in (
+            "API keys", "access tokens", "cookies", "passwords",
+            "private repository credentials", "personal email", "home-directory",
+            "proprietary source/code", "minimum relevant logs",
+            "unless specifically requested during later troubleshooting",
+        ):
+            self.assertIn(phrase, bug)
+        self.assertIn("placeholder: v4.1.0-rc4", bug)
+        self.assertIn("`Sol/Luna: Sol-only · no independent bounded work`", bug)
+        self.assertIn("`Sol/Luna: delegated · luna_max ×2 · parallel`", bug)
+        self.assertIn("`No Receipt`", bug)
+        self.assertIn('- "Yes"\n        - "No"\n        - "Not sure"', bug)
+
+        compatibility = text(ISSUE_TEMPLATE_DIR / "compatibility-report.yml")
+        for phrase in (
+            "Success reports are welcome", "OS compatibility", "fresh installs",
+            "upgrades", "Luna delegation", "Delegation Receipt behavior",
+            "public GitHub Issues only", "write None if no problems were found",
+            "placeholder: luna_max / Unknown",
+            "placeholder: Works normally on my environment",
+        ):
+            self.assertIn(phrase, compatibility)
+        for option in (
+            "PASS", "PASS with minor issue", "FAIL", "Not tested",
+            "Just installed", "Less than 1 day", "1–3 days", "4–7 days",
+            "More than 1 week",
+        ):
+            self.assertIn(option, compatibility)
+
+        feature = text(ISSUE_TEMPLATE_DIR / "feature-feedback.yml")
+        self.assertIn("name: Feature request / feedback", feature)
+        self.assertIn("Non-guarantee notice", feature)
+        for option in (
+            "Feature request", "Documentation", "UX / usability",
+            "Installation experience", "Delegation behavior", "Other",
+        ):
+            self.assertIn(f"- {option}", feature)
+
+        english = text(README)
+        chinese = text(README_ZH)
+        templates = (
+            "bug-report.yml",
+            "compatibility-report.yml",
+            "feature-feedback.yml",
+        )
+        for content, feedback_heading, whole_warning in (
+            (english, "## Public Beta Feedback", "the whole `CODEX_HOME`"),
+            (chinese, "## Public Beta 反馈", "整个 `CODEX_HOME`"),
+        ):
+            self.assertIn(feedback_heading, content)
+            self.assertLess(content.index(feedback_heading), content.index("Basic"))
+            for filename in templates:
+                self.assertIn(
+                    "https://github.com/SuperDaddyV/codex-sol-luna-worker/"
+                    f"issues/new?template={filename}",
+                    content,
+                )
+            self.assertIn("CODEX_HOME", content)
+            self.assertIn(whole_warning, content)
+        self.assertIn("`v4.0.0` remains the Stable release", english)
+        self.assertIn("`v4.1.0-rc4` is the current Preview prerelease", english)
+        self.assertIn("`v4.0.0` 仍是 Stable 稳定版本", chinese)
+        self.assertIn("`v4.1.0-rc4` 是当前 Preview prerelease", chinese)
+        self.assertIn("欢迎提交 Bug 报告", chinese)
+        self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
     def test_v41_rc4_published_flow_and_runtime_acceptance_are_explicit(self):
         aligned_docs = (

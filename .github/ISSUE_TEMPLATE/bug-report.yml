@@ -1,0 +1,135 @@
+name: Bug report
+description: Report a reproducible problem in the public beta
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping test the `v4.1.0-rc4` public beta.
+
+        Use this form for install, upgrade, selector, Luna delegation, Receipt classification, rollback, uninstall, or another deterministic runtime problem.
+
+        **Privacy warning — read before submitting.** Before submitting, remove or redact secrets and private information, including API keys, access tokens, cookies, passwords, private repository credentials, personal email addresses, unnecessary absolute home-directory information, and proprietary source/code unless you intentionally choose to share it. Include only the minimum relevant logs, with secrets and private information removed or redacted. Do not upload the entire CODEX_HOME (the whole `CODEX_HOME`) unless specifically requested during later troubleshooting; never upload an archive of it or its private files.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Problem summary
+      description: What went wrong? Include the shortest useful symptom.
+      placeholder: The selector reports an unexpected result after a fresh install
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: Enter the operating system, or Unknown if you do not know it.
+      placeholder: Windows 11 / macOS / Linux / Unknown
+    validations:
+      required: true
+
+  - type: input
+    id: codex_client_version
+    attributes:
+      label: Codex client/version
+      description: Enter the Codex client and version, or Unknown if you do not know it.
+      placeholder: Codex Desktop 1.x / Unknown
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: Python version
+      description: Enter the Python version, or Unknown if it is not relevant or not known.
+      placeholder: Python 3.11 / Unknown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_type
+    attributes:
+      label: Install type
+      description: Which installation path was involved?
+      options:
+        - Fresh install
+        - Upgrade from an earlier Sol + Luna version
+        - Already installed / normal usage
+        - Unknown
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Project version
+      description: Enter the actual release, tag, or commit under test. The placeholder is only an example.
+      placeholder: v4.1.0-rc4
+    validations:
+      required: true
+
+  - type: textarea
+    id: receipt
+    attributes:
+      label: Sol/Luna Receipt
+      description: |
+        Paste the final Receipt line. Examples:
+        - `Sol/Luna: Sol-only · no independent bounded work`
+        - `Sol/Luna: delegated · luna_max ×2 · parallel`
+        If no Receipt was emitted, enter `No Receipt`.
+        Receipt text is not runtime attestation.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: luna_run
+    attributes:
+      label: Did Luna run?
+      description: Did a native Luna child actually run in the affected task?
+      options:
+        - "Yes"
+        - "No"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: minimal_logs
+    attributes:
+      label: Error / relevant logs
+      description: Optional. Include only the minimum relevant, redacted excerpt. Never upload a full log, diagnostic bundle, or CODEX_HOME.
+      render: text
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: List the shortest steps and the command or prompt that reproduces the problem. Replace private paths with placeholders.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Optional. Add relevant fresh-session, upgrade, validation, or project context without sharing private information.
+
+  - type: checkboxes
+    id: privacy_confirmation
+    attributes:
+      label: Privacy confirmation
+      description: Confirm that the report is safe to make public.
+      options:
+        - label: I removed or redacted secrets and private information from this report.
+          required: true
+        - label: I did not upload the entire CODEX_HOME unless it was specifically requested later.
+          required: true

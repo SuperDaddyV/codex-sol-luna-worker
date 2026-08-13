@@ -168,6 +168,19 @@ Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chat
 
 `0 Luna` 不等于安装失败。简单任务、推理或架构任务、存在歧义的任务以及紧耦合任务本就可能由 Sol 保留。Receipt 只是低噪声执行摘要，不是 runtime attestation；正式验收仍要核对真实 child metadata。
 
+## Public Beta 反馈
+
+`v4.0.0` 仍是 Stable 稳定版本；`v4.1.0-rc4` 是当前 Preview prerelease／公开测试版本。
+
+可反馈安装、升级、selector、Luna 委派、Delegation Receipt、rollback 和 uninstall 问题；欢迎提交 Bug 报告，也欢迎提交成功的兼容性报告。请选择对应的原生 GitHub Issue Form：
+
+- [Bug Report](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=bug-report.yml)
+- [Compatibility Report（包括成功运行）](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=compatibility-report.yml)
+- [Feature / Feedback](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=feature-feedback.yml)
+
+> [!WARNING]
+> 提交前必须删除或脱敏秘密与私有信息，包括 API Key、Token、Cookie、密码、私有仓库凭据、个人邮箱、不必要的绝对 home-directory 信息，以及除非你有意分享的专有源代码。日志只保留最小相关内容。除非后续故障排查明确要求，否则不要上传整个 CODEX_HOME（即整个 `CODEX_HOME`）。`CODEX_HOME` 是私有用户配置根目录。
+
 ### Basic 只读自测
 
 安装或升级后在新任务中运行。它自然包含边界明确的检查工作，但不要求一定创建 child：

@@ -136,6 +136,19 @@ For a non-trivial task, the final line reports one observed outcome. A delegated
 
 `0 Luna` does not mean installation failure. Sol should keep trivial, reasoning-heavy, ambiguous, or tightly coupled work. The Receipt is a low-noise execution summary, not runtime attestation; verify actual child metadata when formal runtime proof matters.
 
+## Public Beta Feedback
+
+`v4.0.0` remains the Stable release. `v4.1.0-rc4` is the current Preview prerelease and public beta.
+
+Use the matching native GitHub Issue Form for install, upgrade, selector, Luna delegation, Delegation Receipt, rollback, or uninstall issues. Successful compatibility reports are welcome too:
+
+- [Bug Report](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=bug-report.yml)
+- [Compatibility Report, including a successful run](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=compatibility-report.yml)
+- [Feature / Feedback](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=feature-feedback.yml)
+
+> [!WARNING]
+> Before submitting, remove or redact secrets and private information, including API keys, access tokens, cookies, passwords, private repository credentials, personal email addresses, unnecessary absolute home-directory information, and proprietary source/code unless intentionally shared. Include only the minimum relevant logs. Do not upload the entire CODEX_HOME (the whole `CODEX_HOME`) unless specifically requested during later troubleshooting. `CODEX_HOME` is a private user configuration root.
+
 ### Basic read-only self-test
 
 Run this in a fresh task after installation or upgrade. It naturally offers bounded inspection work but does not require a child:

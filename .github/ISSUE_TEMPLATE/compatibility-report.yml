@@ -1,0 +1,161 @@
+name: Compatibility report
+description: Report public-beta compatibility, including a successful run
+title: "[Compatibility]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Success reports are welcome. They help us understand OS compatibility, fresh installs, upgrades, Luna delegation, and Delegation Receipt behavior. Reports are public GitHub Issues only.
+
+        **Privacy warning — read before submitting.** Before submitting, remove or redact secrets and private information, including API keys, access tokens, cookies, passwords, private repository credentials, personal email addresses, unnecessary absolute home-directory information, and proprietary source/code unless you intentionally choose to share it. Include only the minimum relevant logs, with secrets and private information removed or redacted. Do not upload the entire CODEX_HOME (the whole `CODEX_HOME`) unless specifically requested during later troubleshooting; never upload an archive of it or its private files.
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      description: Enter the operating system, or Unknown if you do not know it.
+      placeholder: Windows 11 / macOS / Linux / Unknown
+    validations:
+      required: true
+
+  - type: input
+    id: codex_client_version
+    attributes:
+      label: Codex client/version
+      description: Enter the Codex client and version, or Unknown if you do not know it.
+      placeholder: Codex Desktop 1.x / Unknown
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: Python version
+      description: Enter the Python version, or Unknown if it is not relevant or not known.
+      placeholder: Python 3.11 / Unknown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_type
+    attributes:
+      label: Install type
+      description: Which installation path did you test?
+      options:
+        - Fresh install
+        - Upgrade
+    validations:
+      required: true
+
+  - type: input
+    id: from_version
+    attributes:
+      label: From version
+      description: Optional. For an upgrade, enter the version you upgraded from.
+      placeholder: v4.0.0 / v4.1.0-rc3 / Unknown
+
+  - type: input
+    id: installed_version
+    attributes:
+      label: Installed version
+      description: Enter the version actually installed or tested.
+      placeholder: v4.1.0-rc4
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation_result
+    attributes:
+      label: Installation result
+      description: What was the installation result?
+      options:
+        - "PASS"
+        - "PASS with minor issue"
+        - "FAIL"
+    validations:
+      required: true
+
+  - type: input
+    id: daily_role
+    attributes:
+      label: Daily role
+      description: Optional. Enter the observed daily Luna role, or Unknown.
+      placeholder: luna_max / Unknown
+
+  - type: textarea
+    id: sol_only_receipt
+    attributes:
+      label: Sol-only Receipt observed?
+      description: Optional. Paste the observed Sol-only Receipt line, or leave blank if none was observed.
+      placeholder: "Sol/Luna: Sol-only · reasoning/architecture task"
+
+  - type: textarea
+    id: delegated_receipt
+    attributes:
+      label: Delegated Receipt observed?
+      description: Optional. Paste the observed delegated Receipt line, or leave blank if none was observed.
+      placeholder: "Sol/Luna: delegated · luna_max ×3 · parallel"
+
+  - type: dropdown
+    id: luna_delegation
+    attributes:
+      label: Luna delegation observed
+      description: Was a Luna delegation observed in the tested task?
+      options:
+        - "Yes"
+        - "No"
+        - "Not tested"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: parallel_delegation
+    attributes:
+      label: Parallel delegation observed
+      description: Was overlapping parallel Luna delegation observed?
+      options:
+        - "Yes"
+        - "No"
+        - "Not tested"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: usage_duration
+    attributes:
+      label: Approximate usage duration
+      description: How long have you used this installation?
+      options:
+        - "Just installed"
+        - "Less than 1 day"
+        - "1–3 days"
+        - "4–7 days"
+        - "More than 1 week"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problems_found
+    attributes:
+      label: Problems found
+      description: Optional. Describe any problem or limitation; write None if no problems were found. Include only minimum relevant, redacted logs.
+
+  - type: textarea
+    id: overall_result
+    attributes:
+      label: Overall result
+      description: Summarize what worked, what did not, and whether you would run this public beta again in this environment.
+      placeholder: Works normally on my environment
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: privacy_confirmation
+    attributes:
+      label: Privacy confirmation
+      description: Confirm that the report is safe to make public.
+      options:
+        - label: I removed or redacted secrets and private information from this report.
+          required: true
+        - label: I did not upload the entire CODEX_HOME unless it was specifically requested later.
+          required: true

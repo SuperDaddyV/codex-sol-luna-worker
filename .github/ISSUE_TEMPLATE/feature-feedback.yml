@@ -1,0 +1,66 @@
+name: Feature request / feedback
+description: Suggest a focused improvement for the public beta
+title: "[Feature request / feedback]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature feedback is welcome for the `v4.1.0-rc4` public beta.
+
+        **Non-guarantee notice.** Feature feedback does not guarantee implementation, roadmap inclusion, compatibility, support, or a delivery timeline. Suggestions remain subject to project scope, evidence, review, and Sol-owned acceptance.
+
+        **Privacy warning — read before submitting.** Before submitting, remove or redact secrets and private information, including API keys, access tokens, cookies, passwords, private repository credentials, personal email addresses, unnecessary absolute home-directory information, and proprietary source/code unless you intentionally choose to share it. Include only the minimum relevant logs, with secrets and private information removed or redacted. Do not upload the entire CODEX_HOME (the whole `CODEX_HOME`) unless specifically requested during later troubleshooting; never upload an archive of it or its private files.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      description: What kind of improvement are you suggesting?
+      options:
+        - Feature request
+        - Documentation
+        - UX / usability
+        - Installation experience
+        - Delegation behavior
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: What would you like to improve?
+      description: What should be improved? State the concrete user-facing problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: Why would this help?
+      description: Why would this improvement matter, and who would it help?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested_behavior
+    attributes:
+      label: Suggested behavior
+      description: Optional. Describe the smallest behavior or workflow you suggest. Avoid prescribing unrelated architecture.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Optional. Add a minimal example or non-sensitive usage context. Do not include private configuration or the entire CODEX_HOME.
+
+  - type: checkboxes
+    id: privacy_confirmation
+    attributes:
+      label: Privacy confirmation
+      description: Confirm that the feedback is safe to make public.
+      options:
+        - label: I removed or redacted secrets and private information from this feedback.
+          required: true
+        - label: I did not upload the entire CODEX_HOME unless it was specifically requested later.
+          required: true
