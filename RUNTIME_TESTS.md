@@ -1,10 +1,26 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0-rc3 — PUBLISHED PRERELEASE / RECORDED RUNTIME ACCEPTANCE PASS`; `v4.0.0 — STABLE`
+Status: `v4.1.0-rc4 — SOURCE CANDIDATE / STATIC PASS / FRESH RUNTIME NOT RUN`; `v4.1.0-rc3 — CURRENT PUBLISHED PREVIEW`; `v4.0.0 — STABLE`
 
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 
 Static validation and Native Runtime validation remain separate gates. The runtime tests do not grant Luna planning, architecture, orchestration, or final-acceptance authority. Sol owns those responsibilities.
+
+## v4.1.0-rc4 source candidate — Receipt reason evidence-gating
+
+The RC4 source candidate fixes one policy classification defect: without current-task parent-visible Luna availability failure evidence, a Sol-only Receipt must not report `Luna unavailable`. The five-outcome taxonomy and delegation threshold are unchanged. Receipt generation remains decision-neutral and must not create evidence through selector invocation, capability probes, tools, children, network access, state, telemetry, or repository writes.
+
+- Repository suite: `114/114 PASS`.
+- RC3→RC4 fake-home lifecycle: upgrade, backup, idempotency, exact rollback, and ownership-conflict fail-closed `PASS`.
+- Frozen selector, five Luna agents, config, state schema, Daily Profile, and LKG: unchanged by the candidate payload.
+- Fresh-session runtime smoke — `NOT RUN`.
+
+### Planned RC4 runtime acceptance
+
+- Runtime Case A — reasoning: require `Sol/Luna: Sol-only · reasoning/architecture task` and zero direct children.
+- Runtime Case B — delegated: require actual delegated child metadata; role, direct-child count, and optional `parallel` must match parent-visible facts.
+- Runtime Case C — no-independent-work: use a non-trivial, non-architecture, sequential or tightly coupled task with no availability failure evidence and zero children. The selector may run only when normal execution requires it. Require `Sol/Luna: Sol-only · no independent bounded work`; forbid `Luna unavailable`.
+- Runtime Case D — real-unavailable-evidence: use a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where normal execution already exposed the failure. Do not break the real selector, state, account, or Global environment to manufacture evidence.
 
 ## v4.1.0-rc3 real upgrade and Receipt acceptance — `PASS`
 

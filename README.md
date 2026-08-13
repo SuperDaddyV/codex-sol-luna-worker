@@ -13,7 +13,7 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 > [!NOTE]
-> `v4.1.0-rc3` is the current published preview prerelease. Its recorded real RC1→RC3 Global upgrade and fresh-session Sol-only and delegated Delegation Receipt acceptance passed. `v4.0.0` remains stable.
+> `v4.1.0-rc4` is a source candidate for the Receipt reason evidence-gating fix; it is not published and has not run fresh-session runtime acceptance. `v4.1.0-rc3` is the current published preview prerelease, and `v4.0.0` remains stable.
 
 ```text
 GPT-5.6 Sol
@@ -88,7 +88,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - A supplied local capability set can degrade an unavailable source winner to the best supported effort.
 - Luna is a native leaf. Sol may run at most three direct Luna children concurrently, and only for independent work.
 - Every delegation carries a bounded Task Contract and a minimal Context Firewall.
-- A final one-line Delegation Receipt summarizes the already-observed delegated or Sol-only outcome for non-trivial work. It does not alter the delegation threshold or attest runtime behavior by itself.
+- A final one-line Delegation Receipt summarizes the already-observed delegated or Sol-only outcome for non-trivial work. `Luna unavailable` requires current-task parent-visible availability failure evidence and is never the default Sol-only fallback. Receipt generation does not alter the delegation threshold or create evidence by invoking a selector, probe, tool, child, network, state, telemetry, or repository write.
 - The installer uses explicit targets, managed ownership, atomic writes, transaction backups, exact rollback, safe uninstall, and exact-schema legacy `3.2` migration.
 - Global installation and project-scoped custom agents are both supported by Codex's native configuration layers.
 
@@ -100,7 +100,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - Git for the recommended immutable source checkout.
 - Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
 
-The full repository suite passed `109/109`, and repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7, and the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback readiness, and fresh-session Sol-only and delegated Receipt acceptance in one recorded Codex environment. CI PASS does not imply that real Codex runtime validation was performed on every operating system, account, client, or user.
+The RC4 source candidate repository suite passed `114/114`; fresh-session RC4 runtime acceptance has not run. Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7, the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`, and the published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade plus fresh-session Sol-only and delegated Receipt acceptance in one recorded Codex environment. CI PASS does not imply that real Codex runtime validation was performed on every operating system, account, client, or user.
 
 Official Codex behavior is documented in [AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), and the [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference). OpenAI lists the model IDs in its [model catalog](https://developers.openai.com/api/docs/models).
 
@@ -130,7 +130,7 @@ The last example invites parallel work, but Sol still decides whether the parts 
 
 ## How do I know Sol + Luna is working?
 
-For a non-trivial task, the final line reports one observed outcome. A delegated task uses `Sol/Luna: delegated · <role> ×<direct_child_count>` and adds ` · parallel` only when at least two direct Luna children actually overlapped. A Sol-only task reports one high-level reason such as `task too small`, `reasoning/architecture task`, `no independent bounded work`, or `Luna unavailable`.
+For a non-trivial task, the final line reports one observed outcome. A delegated task uses `Sol/Luna: delegated · <role> ×<direct_child_count>` and adds ` · parallel` only when at least two direct Luna children actually overlapped. A Sol-only task reports one high-level reason such as `task too small`, `reasoning/architecture task`, `no independent bounded work`, or `Luna unavailable`. The last category is valid only after the current task's normal execution path already produced parent-visible selector or native-agent availability failure evidence; no delegation by itself is not evidence of unavailability.
 
 `0 Luna` does not mean installation failure. Sol should keep trivial, reasoning-heavy, ambiguous, or tightly coupled work. The Receipt is a low-noise execution summary, not runtime attestation; verify actual child metadata when formal runtime proof matters.
 
@@ -187,6 +187,8 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | Sol Acceptance | `PASS` |
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
+| RC4 source candidate static suite | `PASS` |
+| RC4 fresh-session runtime smoke | `NOT RUN` |
 | RC3 real Global upgrade | `PASS` |
 | RC3 Sol-only Receipt | `PASS` |
 | RC3 delegated Receipt | `PASS` |

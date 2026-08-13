@@ -13,7 +13,7 @@
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
 > [!NOTE]
-> `v4.1.0-rc3` 是当前已发布的 Preview prerelease。其留档的真实 RC1→RC3 Global 升级及 fresh-session Sol-only、delegated Delegation Receipt 验收均已通过。`v4.0.0` 仍是稳定版本。
+> `v4.1.0-rc4` 是 source candidate，只修 Receipt reason evidence-gating；它尚未发布，也尚未运行 fresh-session runtime acceptance。`v4.1.0-rc3` 是当前已发布的 Preview prerelease，`v4.0.0` 仍是稳定版本。
 
 ```text
 GPT-5.6 Sol
@@ -82,7 +82,7 @@ Sol 始终是唯一主脑。它判断一个任务是否已经足够清楚、是�
 - **Sol Acceptance Gate**：Luna 的返回不是最终结论，Sol 必须复核。
 - **Context Firewall**：只向 Luna 传递完成限定任务所需的最小上下文。
 - **Task Contract**：每次委派明确 Goal、Scope、Constraints、Acceptance Criteria 和 Verification。
-- **Delegation Receipt**：对非平凡任务，用最终一行汇总已经发生的 delegated 或 Sol-only 结果；它不降低委派门槛，也不能独立证明 runtime 行为。
+- **Delegation Receipt**：对非平凡任务，用最终一行汇总已经发生的 delegated 或 Sol-only 结果；`Luna unavailable` 必须有当前任务 parent-visible availability failure evidence，且绝不是 Sol-only 默认 fallback。Receipt 不降低委派门槛，也不得通过 selector、probe、tool、child、network、state、telemetry 或 repository write 主动创造证据。
 - **Global 与 project-scoped usage**：支持全局默认，也尊重项目自己的 Codex 配置层。
 - **事务安装器**：显式目标、ownership、原子写入、backup、exact rollback 和安全 uninstall。
 - **Legacy `3.2` migration**：只接受精确 schema，未知历史状态 fail closed。
@@ -132,7 +132,7 @@ v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtim
 - 推荐使用 Git 获取与安装合同相同的不可变 commit。
 - Windows、Ubuntu/Linux、macOS。WSL 是独立 Linux 环境，不能把 native Windows 的路径和配置直接混用。
 
-完整仓库测试已通过 `109/109`，仓库 CI 已在 Windows、Ubuntu、macOS 上通过。已发布 RC1 在一套留档 Codex Desktop/App Server 环境中完成了真实全局升级与 fresh-session Global Runtime G1-G7，已发布 RC2 记录了 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。已发布 RC3 prerelease 在一套留档 Codex 环境中通过了真实 RC1→RC3 Global 升级、installer 幂等与 rollback readiness，以及 fresh-session Sol-only、delegated Receipt 验收。**三平台 CI PASS 不等于三个操作系统、所有客户端、所有账号或所有用户都做过真实 runtime 验收。**
+RC4 source candidate 的完整仓库测试已通过 `114/114`；fresh-session RC4 runtime acceptance 尚未运行。仓库验证覆盖 Windows、Ubuntu、macOS 上的 Python 3.11。已发布 RC1 在一套留档 Codex Desktop/App Server 环境中完成了真实全局升级与 fresh-session Global Runtime G1-G7，已发布 RC2 记录了 `FRESH_REPO_CONTEXT_DELEGATION_PASS`，已发布 RC3 prerelease 在一套留档 Codex 环境中通过了真实 RC1→RC3 Global 升级以及 fresh-session Sol-only、delegated Receipt 验收。**三平台 CI PASS 不等于三个操作系统、所有客户端、所有账号或所有用户都做过真实 runtime 验收。**
 
 Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、[Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference) 和 [Models](https://developers.openai.com/api/docs/models)。
 
@@ -162,7 +162,7 @@ Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chat
 
 ## 怎么判断 Sol + Luna 是否已经生效？
 
-非平凡任务的最后一行会报告一个已经观察到的结果。发生委派时使用 `Sol/Luna: delegated · <role> ×<direct_child_count>`；只有至少两个直属 Luna child 确实重叠执行时才追加 ` · parallel`。Sol-only 任务只给一个高层原因：`task too small`、`reasoning/architecture task`、`no independent bounded work` 或 `Luna unavailable`。
+非平凡任务的最后一行会报告一个已经观察到的结果。发生委派时使用 `Sol/Luna: delegated · <role> ×<direct_child_count>`；只有至少两个直属 Luna child 确实重叠执行时才追加 ` · parallel`。Sol-only 任务只给一个高层原因：`task too small`、`reasoning/architecture task`、`no independent bounded work` 或 `Luna unavailable`。最后一类只有在当前任务的正常执行路径已经自然产生 parent-visible selector 或 native-agent availability failure evidence 时才成立；没有委派本身不等于 Luna unavailable。
 
 `0 Luna` 不等于安装失败。简单任务、推理或架构任务、存在歧义的任务以及紧耦合任务本就可能由 Sol 保留。Receipt 只是低噪声执行摘要，不是 runtime attestation；正式验收仍要核对真实 child metadata。
 
@@ -225,6 +225,8 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 | Sol Acceptance | `PASS` |
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
+| RC4 source candidate static suite | `PASS` |
+| RC4 fresh-session runtime smoke | `NOT RUN` |
 | RC3 real Global upgrade | `PASS` |
 | RC3 Sol-only Receipt | `PASS` |
 | RC3 delegated Receipt | `PASS` |

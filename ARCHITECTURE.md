@@ -1,8 +1,8 @@
-# v4.1.0-rc3 Native Architecture Note
+# v4.1.0-rc4 Native Architecture Note
 
-Status: `v4.1.0-rc3 — PUBLISHED PRERELEASE / RECORDED RUNTIME ACCEPTANCE PASS`
+Status: `v4.1.0-rc4 — SOURCE CANDIDATE / STATIC PASS / FRESH RUNTIME NOT RUN`
 
-`v4.0.0` remains the stable release. The published RC1 retains its recorded real global upgrade and fresh-session Global Runtime G1-G7 PASS, and the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade and fresh-session Sol-only and delegated Receipt acceptance. RC3 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, and migration semantics are unchanged.
+`v4.0.0` remains the stable release, and `v4.1.0-rc3` remains the current published preview prerelease. The RC4 source candidate fixes only Receipt reason evidence-gating: without current-task parent-visible availability failure evidence, a Sol-only Receipt cannot report `Luna unavailable`. RC4 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, delegation threshold, and migration semantics are unchanged.
 
 ## Flow
 
@@ -41,13 +41,13 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - The selector owns daily role choice. It does not spawn agents or perform acceptance.
 - Project development state lives under ignored `.var/` and is non-authoritative for actual Codex project delegation. Global state is explicitly rooted at `<CODEX_HOME>/sol-luna-v4/state` and contains only the daily profile, v4 LKG, and selector lock.
 - Global policy is rendered from `templates/AGENTS.global.md` with safely quoted selector and state paths; it does not install the repository policy verbatim.
-- After receipt-eligible non-trivial work, the Global policy emits at most one final-line Delegation Receipt from already-observed facts. Delegated receipts contain the actual selected role and direct-child count; `parallel` appears only for verified overlap. Sol-only receipts contain one high-level outcome reason.
+- After receipt-eligible non-trivial work, the Global policy emits at most one final-line Delegation Receipt from already-observed facts. Delegated receipts contain the actual selected role and direct-child count; `parallel` appears only for verified overlap. Sol-only receipts contain one high-level outcome reason. `Luna unavailable` is evidence-gated: the current task's normal delegation path must already have produced parent-visible selector or native-agent availability failure evidence. No selector invocation, no child attempt, Sol retention, docs-only work, or sequential/tightly coupled execution does not establish unavailability, and `Luna unavailable` is never the default fallback.
 
 ## Explicit non-goals
 
 - No Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine.
 - No unapproved global Codex mutation. Installer writes require an explicit target, and repository-local validation is restricted to `.tmp/installer-validation/`; routine lifecycle tests use fake homes only.
-- No Receipt-driven delegation, lower threshold, forced spawn or parallelism, extra selector call, child inspection, file or network read, state, telemetry, or private reasoning exposure. Receipt text is not runtime attestation.
+- No Receipt-driven delegation, lower threshold, forced spawn or parallelism, extra selector call, capability probe, child inspection, tool, file or network read, network access, state, telemetry, repository write, or private reasoning exposure. Receipt text is not runtime attestation.
 - CI and static checks are supporting evidence; Native Runtime Tests 1-5 are the runtime gate.
 
 ## Global migration transaction
@@ -71,11 +71,11 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
-The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The delegated case verified three direct `luna_max` children, native leaf behavior, parallel overlap, and Sol acceptance; the Sol-only case verified zero direct children.
+The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The delegated case verified three direct `luna_max` children, native leaf behavior, parallel overlap, and Sol acceptance; the Sol-only case verified zero direct children. RC4 has static and fake-home lifecycle evidence only; its four-case fresh-session runtime plan remains `NOT RUN`.
 
 ## Compatibility boundary
 
-`v4.0.0` is validated against the tested Codex Desktop/App Server environment and makes no compatibility promise for future Codex versions. RC3's recorded runtime results apply to the actual Codex environment in which they were observed; they do not claim real runtime validation for every operating system, client, account, or user. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
+`v4.0.0` is validated against the tested Codex Desktop/App Server environment and makes no compatibility promise for future Codex versions. RC3's recorded runtime results apply to the actual Codex environment in which they were observed; RC4 is a source candidate and has not run fresh-session runtime acceptance. Neither record claims real runtime validation for every operating system, client, account, or user. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
 
 ## Official references
 

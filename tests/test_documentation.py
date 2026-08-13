@@ -48,8 +48,10 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
-    def test_v41_rc3_published_flow_and_runtime_boundary_are_explicit(self):
-        release_docs = (
+    def test_v41_rc4_candidate_and_rc3_published_flow_are_explicit(self):
+        candidate_docs = (
+            README,
+            README_ZH,
             SETUP,
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
@@ -66,17 +68,17 @@ class DocumentationTests(unittest.TestCase):
                 ROOT / "SECURITY.md",
             )
         )
-        for path in (
-            README,
-            README_ZH,
-            SETUP,
-            ROOT / "ARCHITECTURE.md",
-            ROOT / "SECURITY.md",
-        ):
+        for path in candidate_docs:
+            self.assertIn("v4.1.0-rc4", text(path))
+            self.assertIn("source candidate", text(path).lower())
+        for path in candidate_docs:
             self.assertIn("v4.1.0-rc3", text(path))
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
-        self.assertIn("v4.1.0-rc1", text(SETUP))
+        self.assertIn(
+            "existing valid `v4.1.0-rc3` installation is an existing v4 upgrade for RC4",
+            text(SETUP),
+        )
         self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
         self.assertIn(
             "https://modeldial.com/data/reference-snapshots/latest.json", combined
@@ -84,26 +86,31 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Radar HTML runtime fallback is removed", text(README))
         self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
         self.assertIn("Global Runtime G1-G7", combined)
-        self.assertIn("RECORDED RUNTIME ACCEPTANCE PASS", combined)
+        self.assertIn("STATIC PASS / FRESH RUNTIME NOT RUN", combined)
+        self.assertIn("published RC3 prerelease passed", combined)
         self.assertIn("current published preview prerelease", text(README))
         self.assertIn("当前已发布的 Preview prerelease", text(README_ZH))
+        self.assertIn("v4.1.0-rc4` is a source candidate", text(README))
+        self.assertIn("v4.1.0-rc4` 是 source candidate", text(README_ZH))
         self.assertIn("v4.0.0` remains stable", text(README))
         self.assertIn("v4.0.0` 仍是稳定版本", text(README_ZH))
         self.assertNotRegex(combined, r"v4\.1\.0-rc3[^\n]*(?:—|is|是)\s*STABLE")
         self.assertNotIn(
             "RC2 repository-context delegation validation remains pending", combined
         )
-        self.assertNotIn("source candidate", combined.lower())
         self.assertNotIn("RC3 Receipt runtime acceptance has not run", combined)
         for content in (text(README), text(README_ZH)):
             self.assertIn("| RC3 real Global upgrade | `PASS` |", content)
             self.assertIn("| RC3 Sol-only Receipt | `PASS` |", content)
             self.assertIn("| RC3 delegated Receipt | `PASS` |", content)
-        for path in release_docs:
+        for path in candidate_docs:
             content = text(path)
             self.assertIn("v4.1.0-rc3", content)
-            self.assertNotIn("source candidate", content.lower())
         runtime = text(ROOT / "RUNTIME_TESTS.md")
+        self.assertIn("v4.1.0-rc4 source candidate", runtime)
+        self.assertIn("Fresh-session runtime smoke — `NOT RUN`", runtime)
+        for case in ("Runtime Case A", "Runtime Case B", "Runtime Case C", "Runtime Case D"):
+            self.assertIn(case, runtime)
         self.assertIn("RC1 → RC3 Global upgrade — `PASS`", runtime)
         self.assertIn("Sol-only Receipt — `PASS`", runtime)
         self.assertIn("Delegated Receipt — `PASS`", runtime)

@@ -1,5 +1,15 @@
 # Changelog
 
+## v4.1.0-rc4 (source candidate)
+
+- Fixed Delegation Receipt reason evidence-gating: `Luna unavailable` now requires current-task parent-visible availability failure evidence that arose naturally on the normal delegation path.
+- Defined selector fail-closed/no-valid-role and native role, discovery, capability, or spawn/agent availability failures as valid observed evidence; no selector invocation, no child attempt, Sol retention, docs-only work, sequential dependencies, or no independent bounded work are not evidence of unavailability.
+- Made `Luna unavailable` explicitly unavailable as a default Sol-only fallback. Ambiguous Sol-only cases use the most direct non-availability reason with parent-visible support.
+- Preserved decision neutrality: Receipt generation cannot invoke a selector, capability probe, tool, child, or network, or write state, telemetry, or repository content to manufacture evidence.
+- Bumped the installer payload version to `v4.1.0-rc4` with manifest schema `1`; added RC3→RC4 fake-home upgrade, backup, idempotency, exact rollback, ownership-conflict, policy, regression-matrix, and documentation coverage.
+- Changed no selector, ModelDial logic, Luna role, effort, concurrency, native leaf behavior, config, state schema, delegation threshold, Task Contract, Context Firewall, Sol Acceptance, installer algorithm, or migration behavior.
+- Passed the source-candidate repository suite `114/114`. Fresh-session RC4 runtime acceptance remains `NOT RUN`; `v4.1.0-rc3` remains the current published preview and `v4.0.0` remains stable.
+
 ## v4.1.0-rc3 (published prerelease)
 
 - Added a low-noise final-line Delegation Receipt to the installer-managed Global `AGENTS.md` policy for receipt-eligible non-trivial work.
