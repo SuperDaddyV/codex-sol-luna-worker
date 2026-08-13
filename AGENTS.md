@@ -4,16 +4,16 @@
 
 - Sol is the sole planner, architect, orchestrator, ambiguity resolver, and final reviewer.
 - Luna agents are bounded execution workers. They do not redefine architecture, expand scope, control delegation, or make the final acceptance decision.
-- Keep all project changes inside this repository. Do not modify global Codex configuration or the frozen v3.2.1 environment.
+- Keep source, test, and documentation changes inside this repository. Do not modify the real Global `CODEX_HOME` unless the user explicitly authorizes a specific runtime operation; do not run installer apply or clean real runtime state or backups on your own.
 - Native Codex custom agents are the orchestration mechanism. Do not add Hook routing or a custom orchestration engine.
 
 ## Daily Luna role
 
-Before the first non-trivial delegation in a session, Sol must read `.var/daily-profile.json`.
+For actual project delegation, follow the inherited Global policy and its installed selector for the current Beijing-day Luna role. Project policy must not maintain a second Daily role authority.
 
-- Use only a profile selected for the current Beijing calendar date.
-- Delegate only to its `selected_role`, which must be one of `luna_low`, `luna_medium`, `luna_high`, `luna_xhigh`, or `luna_max`.
-- If the profile is missing, invalid, stale, or fail-closed, Sol keeps the work and reports that Luna delegation is unavailable.
+- Repository-local `.var/` selector state is development-only and non-authoritative for actual Codex project delegation.
+- When the inherited Global selector returns a valid role, delegate only through that native custom agent type: `luna_low`, `luna_medium`, `luna_high`, `luna_xhigh`, or `luna_max`.
+- If the inherited Global selector yields no valid Luna role, Sol retains the work. Do not guess an effort or substitute a direct model or reasoning-effort override.
 - Never select `ultra` for Luna.
 
 ## Delegation boundary

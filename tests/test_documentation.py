@@ -56,13 +56,17 @@ class DocumentationTests(unittest.TestCase):
                 ROOT / "SECURITY.md",
             )
         )
-        self.assertIn("v4.1.0-rc1", combined)
+        for path in (README, README_ZH, ROOT / "ARCHITECTURE.md", ROOT / "SECURITY.md"):
+            self.assertIn("v4.1.0-rc2", text(path))
+        self.assertIn("v4.1.0-rc1", text(SETUP))
         self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
         self.assertIn(
             "https://modeldial.com/data/reference-snapshots/latest.json", combined
         )
         self.assertIn("Radar HTML runtime fallback is removed", text(README))
-        self.assertIn("REAL GLOBAL RUNTIME NOT RUN", combined)
+        self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
+        self.assertIn("Global Runtime G1-G7", combined)
+        self.assertIn("repository-context", combined)
 
     def test_setup_execution_urls_are_coordinated_and_immutable_when_pinned(self):
         english = text(README)

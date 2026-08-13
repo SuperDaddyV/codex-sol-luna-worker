@@ -2,7 +2,7 @@
 
 ## Release boundary
 
-`v4.1.0-rc1` is a source candidate; `v4.0.0` remains stable. The source candidate does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary. A real global upgrade requires separate authorization.
+`v4.1.0-rc2` is a repository policy and documentation source candidate over the unchanged `v4.1.0-rc1` installer payload; `v4.0.0` remains stable. The source candidate does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary. Any real global runtime operation requires separate authorization.
 
 ## Data and network behavior
 

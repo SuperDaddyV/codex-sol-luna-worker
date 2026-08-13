@@ -12,7 +12,7 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 > [!NOTE]
-> `v4.1.0-rc1` is a source candidate. `v4.0.0` remains the stable release, and the v4.1 real global upgrade and fresh-session runtime acceptance have not been run.
+> `v4.1.0-rc2` is a repository policy and documentation source candidate over the unchanged `v4.1.0-rc1` installer payload. `v4.0.0` remains the stable release. The published RC1 passed its recorded real global upgrade and fresh-session G1-G7 acceptance; RC2 repository-context delegation validation remains pending.
 
 ```text
 GPT-5.6 Sol
@@ -70,6 +70,8 @@ The design keeps high-value reasoning and acceptance with Sol without spending S
 | Selector state | `<CODEX_HOME>/sol-luna-v4/state/` | Daily profile, last-known-good record, and lock, created on first use |
 | Install manifest | `<CODEX_HOME>/sol-luna-v4/install-manifest.json` | Records installer ownership for upgrades, rollback safety, and uninstall |
 
+The repository-local `.var/` directory may be used by selector development commands, but it is non-authoritative development state rather than an authority for actual Codex project delegation. Actual project delegation follows the inherited Global installed-selector policy.
+
 All five Luna roles use `model = "gpt-5.6-luna"`; their efforts are `low`, `medium`, `high`, `xhigh`, and `max`. Every role is a native leaf with `[agents] enabled = false`, so a Luna child cannot create another agent. `ultra` is deliberately excluded.
 
 The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a managed-child registry, daemon, database, scheduler, dashboard, plugin framework, or custom orchestration engine.
@@ -77,7 +79,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 ## Core features
 
 - Sol is the sole brain and final acceptance owner.
-- Automatic delegation follows the effective `AGENTS.md` policy and today's Daily Profile; the user normally does not name a Luna role.
+- Automatic delegation follows the effective `AGENTS.md` policy and the installed Global selector's current Beijing-day role; the user normally does not name a Luna role.
 - Five stable native Luna roles cover `low` through `max`; `ultra` never enters the selector allowlist.
 - The selector runs once per Beijing day, reuses the same-day profile, can fall back to a valid last-known-good snapshot, and fails closed when first use has no valid source or fallback.
 - A supplied local capability set can degrade an unavailable source winner to the best supported effort.
@@ -94,7 +96,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - Git for the recommended immutable source checkout.
 - Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
 
-Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The stable v4.0.0 release passed Real Global Runtime G1-G7 in the recorded Codex Desktop/App Server environment; v4.1.0-rc1 has not rerun that gate. CI PASS does not imply that real Codex runtime validation was performed on every operating system or account.
+Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The published v4.1.0-rc1 prerelease passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 in one Codex Desktop/App Server environment. RC2 changes only repository policy, tests, and documentation, so a fresh repository-context delegation check remains pending. CI PASS does not imply that real Codex runtime validation was performed on every operating system or account.
 
 Official Codex behavior is documented in [AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), and the [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference). OpenAI lists the model IDs in its [model catalog](https://developers.openai.com/api/docs/models).
 
@@ -171,7 +173,7 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | Ubuntu CI | `PASS` |
 | macOS CI | `PASS` |
 
-CI PASS does not imply real Codex runtime validation on every operating system. Detailed evidence boundaries are in [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+The published v4.1.0-rc1 prerelease passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 in one Codex Desktop/App Server environment. RC2 repository-context delegation validation remains pending. CI PASS does not imply real Codex runtime validation on every operating system. Detailed evidence boundaries are in [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## FAQ
 

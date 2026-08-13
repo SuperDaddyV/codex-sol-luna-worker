@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### v4.1.0-rc2 source candidate
+
+- Fixed repository-level `AGENTS.md` policy so actual project delegation follows the installed Global selector instead of repository-local `.var/daily-profile.json`.
+- Clarified that repository-local `.var/` is non-authoritative development state and cannot allow, block, or select an actual project Luna role.
+- Aligned current documentation with the published RC1 real global upgrade and fresh-session G1-G7 evidence while keeping RC2 repository-context delegation validation pending.
+- Changed no selector algorithm, state schema, ModelDial source, Global agent configuration, installer payload, or legacy migration behavior.
+
 ### v4.1.0-rc1 source candidate
 
 - Added the official ModelDial API v1 as the Daily Selector primary source.

@@ -1,8 +1,8 @@
-# v4.1.0-rc1 Native Architecture Note
+# v4.1.0-rc2 Native Architecture Note
 
-Status: `v4.1.0-rc1 — SOURCE CANDIDATE / REAL GLOBAL RUNTIME NOT RUN`
+Status: `v4.1.0-rc2 — POLICY/DOCS SOURCE CANDIDATE / REPOSITORY-CONTEXT VALIDATION PENDING`
 
-`v4.0.0` remains the stable release and retains its recorded Global V4 Runtime PASS. The v4.1 RC changes only the ModelDial source layer.
+`v4.0.0` remains the stable release. The published `v4.1.0-rc1` prerelease retains its recorded real global upgrade and fresh-session Global Runtime G1-G7 PASS. RC2 aligns repository policy and documentation while leaving the RC1 installed selector and runtime payload unchanged.
 
 ## Flow
 
@@ -32,13 +32,13 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 ## Stable boundary
 
 - Sol is the sole planner, architect, orchestrator, ambiguity resolver, and final reviewer.
-- `AGENTS.md` is the delegation policy. It requires the current Beijing-date Daily Profile and its `selected_role` before non-trivial delegation.
+- The inherited Global `AGENTS.md` policy invokes the installed selector for the current Beijing-day role before non-trivial delegation. Repository policy does not maintain a second Daily role authority.
 - The five stable roles map `low`, `medium`, `high`, `xhigh`, and `max` to native custom agents running GPT-5.6 Luna at the selected effort. `ultra` is excluded.
 - Native `agent_type`/custom-agent selection is the only model and effort boundary. There is no direct model override.
 - Every formal Luna custom agent has `[agents] enabled = false`; Luna is a native leaf and cannot spawn or delegate.
 - At most three native Luna children may run concurrently.
 - The selector owns daily role choice. It does not spawn agents or perform acceptance.
-- Project development state lives under ignored `.var/`. Global state is explicitly rooted at `<CODEX_HOME>/sol-luna-v4/state` and contains only the daily profile, v4 LKG, and selector lock.
+- Project development state lives under ignored `.var/` and is non-authoritative for actual Codex project delegation. Global state is explicitly rooted at `<CODEX_HOME>/sol-luna-v4/state` and contains only the daily profile, v4 LKG, and selector lock.
 - Global policy is rendered from `templates/AGENTS.global.md` with safely quoted selector and state paths; it does not install the repository policy verbatim.
 
 ## Explicit non-goals
@@ -68,7 +68,7 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
-Global Runtime G1-G7 also passed for v4.0.0 discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence. The v4.1 RC has not been installed globally and has not rerun G1-G7. Its source ordering, state compatibility, LKG, and fail-closed contracts are repository-test concerns until separately authorized runtime acceptance.
+The published v4.1.0-rc1 prerelease passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. RC2 does not change the installed runtime payload; a fresh repository-context delegation check remains pending for the project-policy alignment.
 
 ## Stable boundary
 

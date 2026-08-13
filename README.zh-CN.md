@@ -12,7 +12,7 @@
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
 > [!NOTE]
-> `v4.1.0-rc1` 目前是 source candidate。`v4.0.0` 仍是稳定版本；v4.1 的真实全局升级与 fresh-session runtime acceptance 尚未执行。
+> `v4.1.0-rc2` 是基于未变化 `v4.1.0-rc1` installer payload 的 repository policy 与 documentation source candidate。`v4.0.0` 仍是稳定版本。已发布 RC1 的真实全局升级与 fresh-session G1-G7 已按记录通过；RC2 的 repository-context delegation 验证仍待执行。
 
 ```text
 GPT-5.6 Sol
@@ -68,7 +68,7 @@ Sol 始终是唯一主脑。它判断一个任务是否已经足够清楚、是�
 ## ✨ 核心功能
 
 - **Sol 唯一主脑**：规划、架构、编排、歧义处理和最终验收不下放。
-- **自动判断是否委派**：正常使用时无需手工指定 Luna role；Sol 依据有效的 `AGENTS.md` 和当天 Daily Profile 决策。
+- **自动判断是否委派**：正常使用时无需手工指定 Luna role；Sol 依据有效的 `AGENTS.md` 与 installed Global selector 返回的北京时间当天 role 决策。
 - **Daily Luna effort selection**：在 `low`、`medium`、`high`、`xhigh`、`max` 五档中选择；`ultra` 永久排除在 v4 allowlist 外。
 - **北京时间每日一次**：当天复用同一个选择，跨日重新选择。
 - **LKG fallback 与 first-use fail closed**：实时来源无效时可使用有效的 last-known-good；首次使用既无有效来源也无 LKG 时返回 `NO_LUNA_PROFILE_AVAILABLE`，Sol 自己完成任务，不猜 effort。
@@ -91,7 +91,7 @@ Sol 始终是唯一主脑。它判断一个任务是否已经足够清楚、是�
           ↓
 Sol 理解需求并处理歧义
           ↓
-读取 AGENTS policy + 当天 Daily Profile
+读取 AGENTS policy + 调用 installed Global selector
           ↓
 任务是否清楚、独立且值得委派？
        ↙             ↘
@@ -114,6 +114,8 @@ v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtim
 | v4 state | `<CODEX_HOME>/sol-luna-v4/state/` | 首次使用时生成 daily profile、LKG 和 lock |
 | Install manifest | `<CODEX_HOME>/sol-luna-v4/install-manifest.json` | 记录安装器 ownership，支持升级、回滚和卸载 |
 
+仓库本地 `.var/` 可供 selector 开发命令使用，但它只是非权威开发状态，不是实际 Codex 项目委派的 authority。实际项目委派遵循继承的 Global installed-selector policy。
+
 五个 role 全部使用 `model = "gpt-5.6-luna"`，effort 依次为 `low`、`medium`、`high`、`xhigh`、`max`，且全部是 `[agents] enabled = false` 的 native leaf。
 
 不会安装 Hook Router、`PreToolUse` enforcement、managed-child registry、daemon、database、scheduler、dashboard、plugin framework 或 custom orchestration engine。
@@ -126,7 +128,7 @@ v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtim
 - 推荐使用 Git 获取与安装合同相同的不可变 commit。
 - Windows、Ubuntu/Linux、macOS。WSL 是独立 Linux 环境，不能把 native Windows 的路径和配置直接混用。
 
-仓库 CI 已在 Windows、Ubuntu、macOS 上通过。稳定版 v4.0.0 的真实 Global Runtime G1-G7 已在留档的 Codex Desktop/App Server 环境中通过；v4.1.0-rc1 尚未重跑该 gate。**三平台 CI PASS 不等于三个操作系统、所有客户端和所有账号都做过真实 G1-G7。**
+仓库 CI 已在 Windows、Ubuntu、macOS 上通过。已发布的 v4.1.0-rc1 prerelease 已在一套留档 Codex Desktop/App Server 环境中完成真实全局升级与 fresh-session Global Runtime G1-G7。RC2 只修改 repository policy、tests 与 documentation，因此仍需 fresh repository-context delegation 验证。**三平台 CI PASS 不等于三个操作系统、所有客户端和所有账号都做过真实 G1-G7。**
 
 Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、[Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference) 和 [Models](https://developers.openai.com/api/docs/models)。
 
@@ -211,7 +213,7 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 
 ### Real Runtime
 
-稳定版 v4.0.0 的真实 Global Runtime G1-G7 已在留档的 Codex Desktop/App Server 环境中通过，包含 global discovery、selector + explicit Luna、automatic delegation、native leaf、native parallel、Sol acceptance 与 legacy absence。v4.1.0-rc1 尚未执行真实全局升级或重跑 G1-G7。该记录不扩大为“所有操作系统真实 runtime 均通过”。详细边界见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
+已发布 v4.1.0-rc1 prerelease 的真实全局升级与 fresh-session Global Runtime G1-G7 已在一套留档 Codex Desktop/App Server 环境中通过，包含 global discovery、selector + explicit Luna、automatic delegation、native leaf、native parallel、Sol acceptance 与 legacy absence。RC2 未修改 installed runtime payload，仍需在新任务中验证本仓库的 project-policy delegation 对齐。该记录不扩大为“所有操作系统真实 runtime 均通过”。详细边界见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 ## ❓ FAQ
 
