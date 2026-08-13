@@ -43,7 +43,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装规范：
 
-<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/fe9642f95fa7b66daa210217c1e66e4b43bd88bb/CODEX_SOL_LUNA_SETUP.md
 
 根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
 必须使用项目现有安装器，不要覆盖无关的用户配置。
@@ -52,7 +52,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```
 
 > [!WARNING]
-> 上面的 placeholder 是 RC3 source Commit A 的有意占位，现在不可执行。RC3 prerelease 前，Commit B 必须把它替换为指向 Commit A 的 immutable raw URL；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 上面的 setup contract 已固定到 immutable RC3 source Commit A；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
 ## 🚀 这是什么
 
