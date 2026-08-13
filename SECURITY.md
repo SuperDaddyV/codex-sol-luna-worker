@@ -2,7 +2,7 @@
 
 ## Release boundary
 
-`v4.1.0-rc4` is a source candidate for the Receipt reason evidence-gating fix; it is not published and has not run fresh-session runtime acceptance. `v4.1.0-rc3` remains the current published preview prerelease, and `v4.0.0` remains stable. RC4 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and owned hash, tests, and documentation. Publication does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary. Any real global runtime operation requires separate authorization, and recorded acceptance is not a security guarantee or a claim that every environment passed.
+`v4.1.0-rc4` is the published prerelease and current preview, with recorded real-upgrade and Runtime Cases A/B/C/D acceptance `PASS`; `v4.0.0` remains stable. RC4 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and owned hash, tests, and documentation. Publication does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary. Any real global runtime operation requires separate authorization, and recorded acceptance is not a security guarantee or a claim that every environment passed. Three-platform CI remains source validation and does not establish real Codex runtime validation on every platform, client, account, or user.
 
 ## Data and network behavior
 

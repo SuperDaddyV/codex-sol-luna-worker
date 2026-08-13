@@ -1,6 +1,16 @@
 # Codex Sol + Luna Worker — Execution Setup Contract
 
-Status: `v4.1.0-rc4` source candidate for the Receipt reason evidence-gating fix; it is not published and has not run fresh-session runtime acceptance. `v4.1.0-rc3` remains the current published preview prerelease, and `v4.0.0` remains the current stable release.
+Status: `v4.1.0-rc4` is the published prerelease and current preview. `v4.0.0` remains the current stable release.
+
+Recorded RC4 validation includes:
+
+- real RC3→RC4 Global upgrade `PASS`;
+- Sol reasoning Receipt `PASS`;
+- native delegated Receipt `PASS`;
+- no-independent-work regression `PASS`;
+- controlled genuine-unavailability evidence-gate `PASS`.
+
+These results apply only to the recorded environments and do not replace the fresh-task validation required after a new installation or upgrade.
 
 > [!IMPORTANT]
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. Prefer the immutable commit-pinned raw URL published in the project README. Never silently expand permissions, installation scope, or network access.
@@ -262,9 +272,9 @@ In the fresh task, use a concise user-facing smoke test rather than reproducing 
 5. confirm the Luna child has no multi-agent/delegation tools because it is a native leaf;
 6. require Sol to review the child evidence and own the final conclusion.
 
-RC4 runtime acceptance must add four fresh-task cases after a separately authorized real upgrade. Runtime Case A is a non-trivial architecture or reasoning task: require zero direct children and `Sol/Luna: Sol-only · reasoning/architecture task`. Runtime Case B contains two or three independent bounded read-only checks: require actual Luna direct children, an actual role and count matching `Sol/Luna: delegated · <role> ×<direct_child_count>`, and `parallel` only when parent-visible evidence proves execution overlap. Runtime Case C is non-trivial, non-architecture, sequential or tightly coupled work with no clean independent bounded child task: require no availability failure evidence, zero children, selector invocation only if normal execution required it, and `Sol/Luna: Sol-only · no independent bounded work`; `Luna unavailable` is forbidden. Runtime Case D exercises a real-unavailable classification only in a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where the normal path already exposes the failure. Do not damage or reconfigure the real selector, state, account, or Global environment to manufacture evidence.
+The recorded RC4 release acceptance used four fresh-task cases after a separately authorized real upgrade. Apply the same evidence requirements when validating an installation: Runtime Case A is a non-trivial architecture or reasoning task; require zero direct children and `Sol/Luna: Sol-only · reasoning/architecture task`. Runtime Case B contains two or three independent bounded read-only checks; require actual Luna direct children, an actual role and count matching `Sol/Luna: delegated · <role> ×<direct_child_count>`, and `parallel` only when parent-visible evidence proves execution overlap. Runtime Case C is non-trivial, non-architecture, sequential or tightly coupled work with no clean independent bounded child task; require no availability failure evidence, zero children, selector invocation only if normal execution required it, and `Sol/Luna: Sol-only · no independent bounded work`; `Luna unavailable` is forbidden. Runtime Case D exercises a real-unavailable classification only in a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where the normal path already exposes the failure. Do not damage or reconfigure the real selector, state, account, or Global environment to manufacture evidence.
 
-In all four cases, the Receipt is only a user-facing summary; verify child absence, presence, and availability facts with parent-visible runtime metadata. Receipt generation itself must not invoke a selector, capability probe, tool, child, network, state write, telemetry, or repository write. Do not accept Receipt text by itself as proof. RC4 fresh-session runtime acceptance remains `NOT RUN` while this document describes a source candidate.
+In all four cases, the Receipt is only a user-facing summary; verify child absence, presence, and availability facts with parent-visible runtime metadata. Receipt generation itself must not invoke a selector, capability probe, tool, child, network, state write, telemetry, or repository write. Do not accept Receipt text by itself as proof. The recorded RC4 release acceptance passed all four cases; each new installation or upgrade must still complete its own fresh-task smoke test before returning `INSTALL_RUNTIME_PASS`.
 
 Return `INSTALL_RUNTIME_PASS` only when all applicable checks pass. Otherwise return the exact failed step and evidence boundary. A sentinel string by itself is not proof of model, role, or leaf behavior. Static CI and repository tests are not substitutes for this fresh-task runtime check.
 

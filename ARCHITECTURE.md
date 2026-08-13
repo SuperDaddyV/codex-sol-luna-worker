@@ -1,8 +1,8 @@
 # v4.1.0-rc4 Native Architecture Note
 
-Status: `v4.1.0-rc4 — SOURCE CANDIDATE / STATIC PASS / FRESH RUNTIME NOT RUN`
+Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS`
 
-`v4.0.0` remains the stable release, and `v4.1.0-rc3` remains the current published preview prerelease. The RC4 source candidate fixes only Receipt reason evidence-gating: without current-task parent-visible availability failure evidence, a Sol-only Receipt cannot report `Luna unavailable`. RC4 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, delegation threshold, and migration semantics are unchanged.
+`v4.0.0` remains the stable release, and `v4.1.0-rc4` is the current published preview prerelease. RC4 fixes only Receipt reason evidence-gating: without current-task parent-visible availability failure evidence, a Sol-only Receipt cannot report `Luna unavailable`. RC4 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, delegation threshold, concurrency, native leaf behavior, Task Contract, Context Firewall, Daily authority, Sol Acceptance, installer, and migration semantics are unchanged.
 
 ## Flow
 
@@ -71,11 +71,11 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
-The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The delegated case verified three direct `luna_max` children, native leaf behavior, parallel overlap, and Sol acceptance; the Sol-only case verified zero direct children. RC4 has static and fake-home lifecycle evidence only; its four-case fresh-session runtime plan remains `NOT RUN`.
+The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The published RC4 prerelease passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D: reasoning-only, three-child delegated parallel execution, the no-independent-work regression, and the controlled genuine-unavailability evidence gate. RC4 changed only Receipt reason evidence-gating; the architecture flow and authority boundaries above remain unchanged.
 
 ## Compatibility boundary
 
-`v4.0.0` is validated against the tested Codex Desktop/App Server environment and makes no compatibility promise for future Codex versions. RC3's recorded runtime results apply to the actual Codex environment in which they were observed; RC4 is a source candidate and has not run fresh-session runtime acceptance. Neither record claims real runtime validation for every operating system, client, account, or user. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
+`v4.0.0` is validated against the tested Codex Desktop/App Server environment and makes no compatibility promise for future Codex versions. RC3 and RC4 recorded runtime results apply only to the actual Codex environments in which they were observed. Neither record claims real runtime validation for every operating system, client, account, or user. Three-platform CI is source validation, not three-platform real Codex runtime validation. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
 
 ## Official references
 

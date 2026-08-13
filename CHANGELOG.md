@@ -1,6 +1,6 @@
 # Changelog
 
-## v4.1.0-rc4 (source candidate)
+## v4.1.0-rc4 (published prerelease)
 
 - Fixed Delegation Receipt reason evidence-gating: `Luna unavailable` now requires current-task parent-visible availability failure evidence that arose naturally on the normal delegation path.
 - Defined selector fail-closed/no-valid-role and native role, discovery, capability, or spawn/agent availability failures as valid observed evidence; no selector invocation, no child attempt, Sol retention, docs-only work, sequential dependencies, or no independent bounded work are not evidence of unavailability.
@@ -8,7 +8,10 @@
 - Preserved decision neutrality: Receipt generation cannot invoke a selector, capability probe, tool, child, or network, or write state, telemetry, or repository content to manufacture evidence.
 - Bumped the installer payload version to `v4.1.0-rc4` with manifest schema `1`; added RC3→RC4 fake-home upgrade, backup, idempotency, exact rollback, ownership-conflict, policy, regression-matrix, and documentation coverage.
 - Changed no selector, ModelDial logic, Luna role, effort, concurrency, native leaf behavior, config, state schema, delegation threshold, Task Contract, Context Firewall, Sol Acceptance, installer algorithm, or migration behavior.
-- Passed the source-candidate repository suite `114/114`. Fresh-session RC4 runtime acceptance remains `NOT RUN`; `v4.1.0-rc3` remains the current published preview and `v4.0.0` remains stable.
+- Passed the full repository suite `114/114` at source validation commit `95cfd53200a3fc53b50a48fe7ab251dcc6d5e00b`; Windows, Ubuntu, and macOS CI passed there and at final source pin `d17bea49fdb0710bb2101f1577045bed2477ff79`.
+- Recorded the separately authorized real RC3→RC4 Global upgrade as `PASS`: result `UPGRADED`, two effective changes limited to the managed Global `AGENTS.md` block and manifest, second apply `IDEMPOTENT_PASS`, and rollback ready. Selector, five Luna agents, config, Daily Profile, and LKG remained unchanged.
+- Recorded Runtime Cases A/B/C/D as `PASS`: Sol reasoning, three-child `luna_max` delegated parallel execution with zero grandchildren, no-independent-work regression, and controlled genuine-unavailability evidence gating with its negative control.
+- Published `v4.1.0-rc4` as the current preview prerelease; `v4.0.0` remains stable. Recorded runtime evidence is environment-bounded and three-platform CI does not imply three-platform real Codex runtime validation.
 
 ## v4.1.0-rc3 (published prerelease)
 

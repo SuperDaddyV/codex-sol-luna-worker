@@ -1,26 +1,55 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0-rc4 — SOURCE CANDIDATE / STATIC PASS / FRESH RUNTIME NOT RUN`; `v4.1.0-rc3 — CURRENT PUBLISHED PREVIEW`; `v4.0.0 — STABLE`
+Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS`; `v4.0.0 — STABLE`
 
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 
 Static validation and Native Runtime validation remain separate gates. The runtime tests do not grant Luna planning, architecture, orchestration, or final-acceptance authority. Sol owns those responsibilities.
 
-## v4.1.0-rc4 source candidate — Receipt reason evidence-gating
+## v4.1.0-rc4 published prerelease — Receipt reason evidence-gating
 
-The RC4 source candidate fixes one policy classification defect: without current-task parent-visible Luna availability failure evidence, a Sol-only Receipt must not report `Luna unavailable`. The five-outcome taxonomy and delegation threshold are unchanged. Receipt generation remains decision-neutral and must not create evidence through selector invocation, capability probes, tools, children, network access, state, telemetry, or repository writes.
+RC4 fixes one policy classification defect: without current-task parent-visible Luna availability failure evidence, a Sol-only Receipt must not report `Luna unavailable`. The five-outcome taxonomy and delegation threshold are unchanged. Receipt generation remains decision-neutral and must not create evidence through selector invocation, capability probes, tools, children, network access, state, telemetry, or repository writes.
 
-- Repository suite: `114/114 PASS`.
+- Source validation commit `95cfd53200a3fc53b50a48fe7ab251dcc6d5e00b`: Windows, Ubuntu, and macOS `PASS`; full repository suite `114/114 PASS`.
+- Final source pin `d17bea49fdb0710bb2101f1577045bed2477ff79`: Windows, Ubuntu, and macOS `PASS`.
 - RC3→RC4 fake-home lifecycle: upgrade, backup, idempotency, exact rollback, and ownership-conflict fail-closed `PASS`.
-- Frozen selector, five Luna agents, config, state schema, Daily Profile, and LKG: unchanged by the candidate payload.
-- Fresh-session runtime smoke — `NOT RUN`.
+- Frozen selector, five Luna agents, config, state schema, Daily Profile, and LKG: unchanged by the RC4 payload.
 
-### Planned RC4 runtime acceptance
+### Real RC3 → RC4 Global upgrade — `PASS`
 
-- Runtime Case A — reasoning: require `Sol/Luna: Sol-only · reasoning/architecture task` and zero direct children.
-- Runtime Case B — delegated: require actual delegated child metadata; role, direct-child count, and optional `parallel` must match parent-visible facts.
-- Runtime Case C — no-independent-work: use a non-trivial, non-architecture, sequential or tightly coupled task with no availability failure evidence and zero children. The selector may run only when normal execution requires it. Require `Sol/Luna: Sol-only · no independent bounded work`; forbid `Luna unavailable`.
-- Runtime Case D — real-unavailable-evidence: use a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where normal execution already exposed the failure. Do not break the real selector, state, account, or Global environment to manufacture evidence.
+- Result: `UPGRADED`; effective changes: `2`.
+- Only the managed Global `AGENTS.md` block and install manifest changed.
+- Selector, five Luna agents, Global config, Daily Profile, and LKG remained unchanged.
+- A second apply returned `IDEMPOTENT_PASS`.
+- Rollback readiness passed.
+
+### Runtime Case A — `PASS`
+
+- Actual direct-child count: `0`.
+- Final line: `Sol/Luna: Sol-only · reasoning/architecture task`.
+
+### Runtime Case B — `PASS`
+
+- Selected role: `luna_max`; actual direct children: `3`.
+- Child model: `gpt-5.6-luna` ×3; effort: `max` ×3.
+- Parallel overlap: verified; grandchildren: `0`.
+- Final line: `Sol/Luna: delegated · luna_max ×3 · parallel`.
+
+### Runtime Case C — `PASS`
+
+- Selector invoked: `NO`; delegation attempted: `NO`.
+- Availability evidence: `NONE`; actual direct-child count: `0`.
+- Final line: `Sol/Luna: Sol-only · no independent bounded work`.
+- This is the direct regression for the RC3 misclassification: without availability evidence, `Luna unavailable` is forbidden.
+
+### Runtime Case D — controlled / isolated — `PASS`
+
+- Selector result: `NO_LUNA_PROFILE_AVAILABLE`; availability evidence: `PRESENT`.
+- With genuine parent-visible availability evidence, `Luna unavailable` is allowed.
+- Negative control: availability evidence `NONE`; `Luna unavailable` is forbidden.
+- The controlled case did not modify the real `.codex` environment.
+
+The recorded RC4 runtime evidence applies only to the environments in which it was observed. It is not three-platform real Codex runtime validation and does not claim validation for every operating system, client, account, or user.
 
 ## v4.1.0-rc3 real upgrade and Receipt acceptance — `PASS`
 
@@ -52,7 +81,7 @@ In both Receipt cases, parent-visible runtime metadata established child absence
 
 - The tests use a fresh project session and the current Beijing-date Daily Profile.
 - Routine test runs do not alter global Codex configuration, global agents, Hooks, or environment variables.
-- Installer lifecycle tests write only to explicit fake homes. Separately approved real global upgrades and fresh-session runtime acceptance were recorded for the stable source and RC3 prerelease without widening routine repository-test permissions.
+- Installer lifecycle tests write only to explicit fake homes. Separately approved real global upgrades and fresh-session runtime acceptance were recorded for the stable source, RC3, and RC4 prereleases without widening routine repository-test permissions.
 
 ## Test results
 
@@ -90,4 +119,4 @@ Daily Selector same-day cache reuse and no-`ultra` checks passed. LKG and fail-c
 
 ## Result rule
 
-Native Runtime Tests 1-5 and Global Runtime G1-G7 provide the generic runtime evidence for stable `v4.0.0` in the tested Codex Desktop/App Server environment. The RC3 upgrade and Receipt results above apply only to the one recorded Codex environment in which they were observed. They do not promise compatibility with future Codex versions or establish real runtime PASS for every operating system, client, account, or user.
+Native Runtime Tests 1-5 and Global Runtime G1-G7 provide the generic runtime evidence for stable `v4.0.0` in the tested Codex Desktop/App Server environment. The RC3 and RC4 upgrade and Receipt results above apply only to the recorded environments in which they were observed. They do not promise compatibility with future Codex versions or establish real runtime PASS for every operating system, client, account, or user.
