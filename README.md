@@ -12,7 +12,7 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 > [!NOTE]
-> `v4.1.0-rc2` is a repository policy and documentation source candidate over the unchanged `v4.1.0-rc1` installer payload. `v4.0.0` remains the stable release. The published RC1 passed its recorded real global upgrade and fresh-session G1-G7 acceptance; RC2 repository-context delegation validation remains pending.
+> `v4.1.0-rc3` is a source candidate that adds the Delegation Receipt to the installer-managed Global `AGENTS.md` payload. `v4.0.0` remains the stable release. The published RC2 passed its recorded fresh repository-context delegation check. RC3 still requires a separately authorized real upgrade and fresh-session Receipt acceptance.
 
 ```text
 GPT-5.6 Sol
@@ -26,6 +26,8 @@ Native Luna / daily selected effort
 Native leaf execution
       ↓
 Sol Acceptance Gate
+      ↓
+Delegation Receipt
 ```
 
 No Hook Router is required. The selector chooses one of five Luna effort profiles once per Beijing calendar day, and same-day tasks reuse that choice. Ready to try it? Start with [Install with Codex](#install-with-codex).
@@ -41,7 +43,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/4e56a5d62c7f8f94e17020c2153899d552380af6/CODEX_SOL_LUNA_SETUP.md
+<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
@@ -51,7 +53,7 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 ```
 
 > [!WARNING]
-> Review the contract before asking Codex to execute it. During RC assembly, the placeholder above must be replaced in a follow-up documentation commit with the immutable source-candidate commit URL; never substitute mutable `master`. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> The placeholder above is deliberate for RC3 source Commit A and is not executable. Commit B must replace it with the immutable raw URL for Commit A before an RC3 prerelease; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
 ## What this does
 
@@ -64,7 +66,7 @@ The design keeps high-value reasoning and acceptance with Sol without spending S
 | Component | Global destination | Purpose |
 | --- | --- | --- |
 | Five Luna roles | `<CODEX_HOME>/agents/luna-{low,medium,high,xhigh,max}.toml` | Native GPT-5.6 Luna workers at five stable efforts |
-| Global policy | Managed block in `<CODEX_HOME>/AGENTS.md` | Sol/Luna delegation, Task Contract, Context Firewall, and acceptance policy |
+| Global policy | Managed block in `<CODEX_HOME>/AGENTS.md` | Sol/Luna delegation, Task Contract, Context Firewall, acceptance, and Delegation Receipt policy |
 | Multi-agent settings | Managed block in `<CODEX_HOME>/config.toml` | Enables multi-agent work and caps direct children at 3 |
 | Daily Selector | `<CODEX_HOME>/sol-luna-v4/selector.py` | Resolves the Beijing-day Luna role |
 | Selector state | `<CODEX_HOME>/sol-luna-v4/state/` | Daily profile, last-known-good record, and lock, created on first use |
@@ -85,6 +87,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - A supplied local capability set can degrade an unavailable source winner to the best supported effort.
 - Luna is a native leaf. Sol may run at most three direct Luna children concurrently, and only for independent work.
 - Every delegation carries a bounded Task Contract and a minimal Context Firewall.
+- A final one-line Delegation Receipt summarizes the already-observed delegated or Sol-only outcome for non-trivial work. It does not alter the delegation threshold or attest runtime behavior by itself.
 - The installer uses explicit targets, managed ownership, atomic writes, transaction backups, exact rollback, safe uninstall, and exact-schema legacy `3.2` migration.
 - Global installation and project-scoped custom agents are both supported by Codex's native configuration layers.
 
@@ -96,7 +99,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - Git for the recommended immutable source checkout.
 - Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
 
-Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The published v4.1.0-rc1 prerelease passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 in one Codex Desktop/App Server environment. RC2 changes only repository policy, tests, and documentation, so a fresh repository-context delegation check remains pending. CI PASS does not imply that real Codex runtime validation was performed on every operating system or account.
+Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 in one Codex Desktop/App Server environment, and the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. RC3 changes the installer-managed Global policy payload, so its real upgrade and Receipt runtime acceptance remain pending. CI PASS does not imply that real Codex runtime validation was performed on every operating system or account.
 
 Official Codex behavior is documented in [AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), and the [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference). OpenAI lists the model IDs in its [model catalog](https://developers.openai.com/api/docs/models).
 
@@ -123,6 +126,20 @@ Review the frontend, backend, and tests independently, then give me one final as
 ```
 
 The last example invites parallel work, but Sol still decides whether the parts are independent and safe to delegate. After installation or an update, begin daily use in a new task so Codex reloads global instructions, agents, and configuration.
+
+## How do I know Sol + Luna is working?
+
+For a non-trivial task, the final line reports one observed outcome. A delegated task uses `Sol/Luna: delegated · <role> ×<direct_child_count>` and adds ` · parallel` only when at least two direct Luna children actually overlapped. A Sol-only task reports one high-level reason such as `task too small`, `reasoning/architecture task`, `no independent bounded work`, or `Luna unavailable`.
+
+`0 Luna` does not mean installation failure. Sol should keep trivial, reasoning-heavy, ambiguous, or tightly coupled work. The Receipt is a low-noise execution summary, not runtime attestation; verify actual child metadata when formal runtime proof matters.
+
+### Basic read-only self-test
+
+Run this in a fresh task after installation or upgrade. It naturally offers bounded inspection work but does not require a child:
+
+```text
+Read README.md and README.zh-CN.md without modifying files. Compare their installation-status and validation-boundary statements, then report any inconsistency. Follow the current delegation policy normally; do not name a role, model, or effort. Sol must independently review the result and include the normal final Delegation Receipt.
+```
 
 ## Daily Luna selection
 
@@ -173,7 +190,7 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | Ubuntu CI | `PASS` |
 | macOS CI | `PASS` |
 
-The published v4.1.0-rc1 prerelease passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 in one Codex Desktop/App Server environment. RC2 repository-context delegation validation remains pending. CI PASS does not imply real Codex runtime validation on every operating system. Detailed evidence boundaries are in [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7, and RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`, in one Codex Desktop/App Server environment. RC3 Receipt runtime acceptance has not run and must follow a separately authorized real upgrade. CI PASS does not imply real Codex runtime validation on every operating system. Detailed evidence boundaries are in [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## FAQ
 
@@ -231,6 +248,10 @@ python -m unittest discover -s tests -v
 ```
 
 Do not use `--validation-sandbox` for a real global installation; that flag exists only for repository-local test targets. Apply, migration, rollback, and uninstall commands are specified in [CODEX_SOL_LUNA_SETUP.md](CODEX_SOL_LUNA_SETUP.md).
+
+### Optional parallel self-test
+
+In a fresh task, request two or three independent bounded read-only checks and ask Sol for one reviewed conclusion. Do not require spawning or name a role. Accept ` · parallel` only when at least two direct Luna children actually overlapped according to parent-visible runtime evidence; the Receipt text alone is not proof.
 
 ## Technical documentation
 

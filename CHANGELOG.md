@@ -2,21 +2,31 @@
 
 ## Unreleased
 
-### v4.1.0-rc2 source candidate
+### v4.1.0-rc3 source candidate
+
+- Added a low-noise final-line Delegation Receipt to the installer-managed Global `AGENTS.md` policy for receipt-eligible non-trivial work.
+- Defined five conceptual outcomes: `DELEGATED`, `TASK_TOO_SMALL`, `SOL_REASONING_TASK`, `NO_INDEPENDENT_WORK`, and `LUNA_UNAVAILABLE`.
+- Required delegated receipts to use the actual selected native role and actual direct-child count, with `parallel` only for parent-visible execution overlap.
+- Kept the Receipt downstream of delegation decisions: it cannot lower the threshold, force spawn or parallelism, trigger extra selector, child, file, tool, or network work, add state or telemetry, expose private reasoning, or attest runtime behavior by itself.
+- Bumped the installer payload version to `v4.1.0-rc3` because the owned Global policy block changes; added RC1-to-RC3 upgrade, ownership-conflict, rollback, policy, installer, and documentation coverage.
+- Added bilingual Receipt interpretation plus Basic read-only and optional parallel self-tests. RC3 real upgrade and fresh-session Receipt acceptance remain separately authorized and not yet run.
+
+## v4.1.0-rc2
 
 - Fixed repository-level `AGENTS.md` policy so actual project delegation follows the installed Global selector instead of repository-local `.var/daily-profile.json`.
 - Clarified that repository-local `.var/` is non-authoritative development state and cannot allow, block, or select an actual project Luna role.
-- Aligned current documentation with the published RC1 real global upgrade and fresh-session G1-G7 evidence while keeping RC2 repository-context delegation validation pending.
+- Aligned current documentation with the published RC1 real global upgrade and fresh-session G1-G7 evidence.
+- Recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS` for the exact RC2 release source.
 - Changed no selector algorithm, state schema, ModelDial source, Global agent configuration, installer payload, or legacy migration behavior.
 
-### v4.1.0-rc1 source candidate
+## v4.1.0-rc1
 
 - Added the official ModelDial API v1 as the Daily Selector primary source.
 - Retained the official full snapshot JSON as the only network fallback, followed by the existing LKG and fail-closed behavior.
 - Removed the Radar HTML runtime parser and fallback.
 - Preserved the five-effort selection engine, Daily Profile and LKG schemas, installer manifest schema, and legacy `3.2` migration semantics.
 - Added offline API schema, source-order, state-compatibility, and v4.0.0-to-RC1 installer lifecycle coverage.
-- Kept real global upgrade, fresh-session runtime acceptance, tag, and release outside this source-candidate change.
+- The subsequently published prerelease passed its separately authorized real global upgrade and fresh-session Global Runtime G1-G7 acceptance.
 
 ### Documentation
 

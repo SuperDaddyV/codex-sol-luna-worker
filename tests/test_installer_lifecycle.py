@@ -50,6 +50,34 @@ def tree_hash(root: Path) -> str:
     return digest.hexdigest()
 
 
+def simulate_rc1_managed_policy(target: Path) -> None:
+    agents_path = target / "AGENTS.md"
+    policy = agents_path.read_text(encoding="utf-8")
+    receipt_start = policy.index("## Delegation Receipt")
+    luna_start = policy.index("## Luna", receipt_start)
+    rc1_policy = policy[:receipt_start] + policy[luna_start:]
+    rc1_policy = rc1_policy.replace("- Never select `ultra` for Luna.\n", "")
+    agents_path.write_bytes(rc1_policy.encode("utf-8"))
+
+    block_start = rc1_policy.index(AGENTS_BEGIN)
+    block_finish = rc1_policy.index(AGENTS_END, block_start) + len(AGENTS_END)
+    if block_finish < len(rc1_policy) and rc1_policy[block_finish] == "\r":
+        block_finish += 1
+    if block_finish < len(rc1_policy) and rc1_policy[block_finish] == "\n":
+        block_finish += 1
+
+    manifest_path = target / MANIFEST_RELATIVE
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["version"] = "v4.1.0-rc1"
+    manifest["owned_blocks"]["AGENTS.md"]["sha256"] = hashlib.sha256(
+        rc1_policy[block_start:block_finish].encode("utf-8")
+    ).hexdigest()
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def call_install(target: Path, **kwargs):
     return install(
         target,
@@ -149,7 +177,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertTrue((target / MANIFEST_RELATIVE).is_file())
             manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.1.0-rc1")
+            self.assertEqual(manifest["version"], "v4.1.0-rc3")
             self.assertEqual(len(manifest["owned_files"]), 6)
             self.assertEqual(set(manifest["owned_blocks"]), {"AGENTS.md", "config.toml"})
             self.assertNotIn("installation_id", manifest)
@@ -292,7 +320,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
 
-    def test_v40_manifest_owned_selector_upgrades_to_rc1_and_rolls_back(self):
+    def test_v40_manifest_owned_selector_upgrades_to_rc3_and_rolls_back(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -339,7 +367,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(
                 json.loads(manifest_path.read_text(encoding="utf-8"))["version"],
-                "v4.1.0-rc1",
+                "v4.1.0-rc3",
             )
             self.assertEqual(
                 {
@@ -370,6 +398,120 @@ class InstallerLifecycleTests(unittest.TestCase):
                 allow_validation_sandbox=True,
             )
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
+            self.assertEqual(tree_hash(target), before)
+
+    def test_rc1_global_policy_upgrades_to_rc3_receipt_and_rolls_back(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            write_text(target / "config.toml", 'user_setting = "preserve"\n')
+            write_text(target / "AGENTS.md", "User policy remains.\n")
+            call_install(target)
+            simulate_rc1_managed_policy(target)
+
+            state = target / "sol-luna-v4" / "state"
+            write_text(state / "daily-profile.json", '{"preserve":"daily"}\n')
+            write_text(state / "last-good-profile.json", '{"preserve":"lkg"}\n')
+            state_before = {
+                path.name: path.read_bytes() for path in state.iterdir() if path.is_file()
+            }
+            selector_before = (target / "sol-luna-v4" / "selector.py").read_bytes()
+            agents_before = {
+                filename: (target / "agents" / filename).read_bytes()
+                for filename in STABLE_AGENT_FILES
+            }
+            config_before = (target / "config.toml").read_bytes()
+            rc1_agents_before = (target / "AGENTS.md").read_bytes()
+            rc1_manifest_before = (target / MANIFEST_RELATIVE).read_bytes()
+            before = tree_hash(target)
+
+            upgraded = call_install(
+                target, generated_at=FIXED_TIME + timedelta(days=1)
+            )
+
+            self.assertEqual(upgraded["status"], "UPGRADED")
+            self.assertEqual(upgraded["effective_changes"], 2)
+            self.assertEqual(
+                set(upgraded["modified"]),
+                {"AGENTS.md", MANIFEST_RELATIVE.as_posix()},
+            )
+            backup = Path(upgraded["backup"])
+            self.assertTrue(backup.is_dir())
+            snapshot = json.loads(
+                (backup / "snapshot.json").read_text(encoding="utf-8")
+            )
+            backed = {entry["path"] for entry in snapshot["entries"]}
+            self.assertIn("AGENTS.md", backed)
+            self.assertIn(MANIFEST_RELATIVE.as_posix(), backed)
+
+            upgraded_policy = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertTrue(upgraded_policy.startswith("User policy remains.\n"))
+            self.assertIn("## Delegation Receipt", upgraded_policy)
+            self.assertEqual(
+                json.loads(
+                    (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
+                )["version"],
+                "v4.1.0-rc3",
+            )
+            self.assertEqual(
+                (target / "sol-luna-v4" / "selector.py").read_bytes(),
+                selector_before,
+            )
+            self.assertEqual(
+                {
+                    filename: (target / "agents" / filename).read_bytes()
+                    for filename in STABLE_AGENT_FILES
+                },
+                agents_before,
+            )
+            self.assertEqual((target / "config.toml").read_bytes(), config_before)
+            self.assertEqual(
+                {
+                    path.name: path.read_bytes()
+                    for path in state.iterdir()
+                    if path.is_file()
+                },
+                state_before,
+            )
+
+            second = call_install(
+                target, generated_at=FIXED_TIME + timedelta(days=2)
+            )
+            self.assertEqual(second["status"], "IDEMPOTENT_PASS")
+            self.assertEqual(second["effective_changes"], 0)
+
+            rolled_back = rollback(
+                target,
+                backup,
+                project_root=ROOT,
+                allow_validation_sandbox=True,
+            )
+            self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
+            self.assertEqual(tree_hash(target), before)
+            self.assertEqual((target / "AGENTS.md").read_bytes(), rc1_agents_before)
+            self.assertEqual(
+                (target / MANIFEST_RELATIVE).read_bytes(), rc1_manifest_before
+            )
+
+    def test_rc1_modified_owned_policy_blocks_rc3_upgrade(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            call_install(target)
+            simulate_rc1_managed_policy(target)
+            agents_path = target / "AGENTS.md"
+            agents_path.write_text(
+                agents_path.read_text(encoding="utf-8").replace(
+                    "Sol is the sole planner",
+                    "User changed the owned policy; Sol is the sole planner",
+                ),
+                encoding="utf-8",
+            )
+            before = tree_hash(target)
+
+            with self.assertRaises(InstallerError) as raised:
+                call_install(target, generated_at=FIXED_TIME + timedelta(days=1))
+
+            self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
             self.assertEqual(tree_hash(target), before)
 
     def test_sanitized_legacy_migration_removes_only_manifest_owned_content(self):

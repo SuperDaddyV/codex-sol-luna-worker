@@ -1,8 +1,8 @@
-# v4.1.0-rc2 Native Architecture Note
+# v4.1.0-rc3 Native Architecture Note
 
-Status: `v4.1.0-rc2 — POLICY/DOCS SOURCE CANDIDATE / REPOSITORY-CONTEXT VALIDATION PENDING`
+Status: `v4.1.0-rc3 — GLOBAL AGENTS RECEIPT SOURCE CANDIDATE / RUNTIME ACCEPTANCE PENDING`
 
-`v4.0.0` remains the stable release. The published `v4.1.0-rc1` prerelease retains its recorded real global upgrade and fresh-session Global Runtime G1-G7 PASS. RC2 aligns repository policy and documentation while leaving the RC1 installed selector and runtime payload unchanged.
+`v4.0.0` remains the stable release. The published RC1 retains its recorded real global upgrade and fresh-session Global Runtime G1-G7 PASS, and the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. RC3 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, and migration semantics are unchanged.
 
 ## Flow
 
@@ -14,6 +14,7 @@ GPT-5.6 Sol
   -> GPT-5.6 Luna / selected effort
   -> Native leaf ([agents] enabled = false)
   -> Sol Acceptance Gate
+  -> Delegation Receipt
 ```
 
 ## ModelDial source flow
@@ -40,11 +41,13 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - The selector owns daily role choice. It does not spawn agents or perform acceptance.
 - Project development state lives under ignored `.var/` and is non-authoritative for actual Codex project delegation. Global state is explicitly rooted at `<CODEX_HOME>/sol-luna-v4/state` and contains only the daily profile, v4 LKG, and selector lock.
 - Global policy is rendered from `templates/AGENTS.global.md` with safely quoted selector and state paths; it does not install the repository policy verbatim.
+- After receipt-eligible non-trivial work, the Global policy emits at most one final-line Delegation Receipt from already-observed facts. Delegated receipts contain the actual selected role and direct-child count; `parallel` appears only for verified overlap. Sol-only receipts contain one high-level outcome reason.
 
 ## Explicit non-goals
 
 - No Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine.
 - No unapproved global Codex mutation. Installer writes require an explicit target, and repository-local validation is restricted to `.tmp/installer-validation/`; routine lifecycle tests use fake homes only.
+- No Receipt-driven delegation, lower threshold, forced spawn or parallelism, extra selector call, child inspection, file or network read, state, telemetry, or private reasoning exposure. Receipt text is not runtime attestation.
 - CI and static checks are supporting evidence; Native Runtime Tests 1-5 are the runtime gate.
 
 ## Global migration transaction
@@ -68,9 +71,9 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
-The published v4.1.0-rc1 prerelease passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. RC2 does not change the installed runtime payload; a fresh repository-context delegation check remains pending for the project-policy alignment.
+The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. RC3 Receipt acceptance has not run: it requires a separately authorized real upgrade followed by fresh-task Sol-only and delegated cases with parent-visible child evidence.
 
-## Stable boundary
+## Compatibility boundary
 
 `v4.0.0` is validated against the tested Codex Desktop/App Server environment and makes no compatibility promise for future Codex versions. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
 

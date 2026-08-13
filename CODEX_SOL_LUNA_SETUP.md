@@ -1,6 +1,6 @@
 # Codex Sol + Luna Worker — Execution Setup Contract
 
-Status: `v4.1.0-rc1` source candidate; stable runtime remains `v4.0.0`. Real v4.1 global upgrade and fresh-session runtime acceptance require separate authorization.
+Status: `v4.1.0-rc3` source candidate; stable runtime remains `v4.0.0`. The published `v4.1.0-rc2` passed its recorded fresh repository-context delegation check. RC3 changes the installer-managed Global AGENTS payload and requires a separately authorized real upgrade and fresh-session Receipt acceptance.
 
 > [!IMPORTANT]
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. Prefer the immutable commit-pinned raw URL published in the project README. Never silently expand permissions, installation scope, or network access.
@@ -36,7 +36,7 @@ The global target contains five native custom agents:
 | `luna_xhigh` | `gpt-5.6-luna` | `xhigh` | `[agents] enabled = false` |
 | `luna_max` | `gpt-5.6-luna` | `max` | `[agents] enabled = false` |
 
-The managed global `config.toml` block enables multi-agent work and sets `max_concurrent_threads_per_session = 3`. The managed global `AGENTS.md` block makes Sol the planner, orchestrator, ambiguity resolver, and final acceptance owner; it requires the Daily Selector, bounded Luna delegation, a Task Contract, a Context Firewall, and Sol acceptance.
+The managed global `config.toml` block enables multi-agent work and sets `max_concurrent_threads_per_session = 3`. The managed global `AGENTS.md` block makes Sol the planner, orchestrator, ambiguity resolver, and final acceptance owner; it requires the Daily Selector, bounded Luna delegation, a Task Contract, a Context Firewall, Sol acceptance, and one concise Delegation Receipt after receipt-eligible non-trivial work. The Receipt summarizes facts already observed after the delegation decision. It cannot force delegation, lower the threshold, invoke extra tools or the selector, create state or telemetry, or expose private reasoning.
 
 The selector is installed at `<CODEX_HOME>/sol-luna-v4/selector.py`. Its state root is `<CODEX_HOME>/sol-luna-v4/state`. The v4 ownership manifest is `<CODEX_HOME>/sol-luna-v4/install-manifest.json`.
 
@@ -51,6 +51,8 @@ Do not install or introduce any of the following:
 - database or dashboard;
 - plugin framework;
 - custom orchestration engine.
+
+Do not lower the delegation threshold, force Luna use, add a Receipt-specific state or configuration flag, or treat Receipt text as runtime attestation. Selector, agent, configuration, state, concurrency, and legacy migration behavior remain unchanged in RC3.
 
 Do not modify the selector algorithm, agent payloads, concurrency limit, ModelDial policy, manifest schema, migration contract, Git tag, or GitHub Release as part of setup.
 
@@ -201,6 +203,8 @@ Interpret the real result:
 
 Do not use `--migrate-v3` merely because historical files remain beside a valid v4 installation.
 
+An existing valid `v4.1.0-rc1` installation is an existing v4 upgrade for RC3. The expected effective payload change is the installer-managed Global `AGENTS.md` block plus manifest version and ownership metadata. The selector, five Luna agents, `config.toml` managed values, Daily Profile, LKG, state schema, and migration behavior must remain byte-preserved. The installer must create and verify its normal transaction backup before applying the managed block change.
+
 ## 13. ModelDial / Daily Selector
 
 The installer copies the selector but does not need live ModelDial access and does not create selector state. First actual selection occurs when the installed global policy invokes:
@@ -226,9 +230,9 @@ After apply, perform read-only inspection and require all of the following:
 1. the five expected files exist under `<CODEX_HOME>/agents/`;
 2. every agent TOML parses, has the expected name, `gpt-5.6-luna`, matching effort, and `[agents] enabled = false`;
 3. `config.toml` parses and the managed v4 block enables agents with maximum direct concurrency 3;
-4. the managed v4 block exists exactly once in `AGENTS.md` and contains the installed absolute selector and state command;
+4. the managed v4 block exists exactly once in `AGENTS.md`, contains the installed absolute selector and state command, and includes the non-trivial-task Delegation Receipt policy without forcing delegation or extra Receipt work;
 5. the selector file compiles and its `--help` command succeeds;
-6. `sol-luna-v4/install-manifest.json` parses, reports `v4.1.0-rc1`, and records the expected owned files and blocks;
+6. `sol-luna-v4/install-manifest.json` parses, reports `v4.1.0-rc3`, and records the expected owned files and blocks;
 7. installer-reported created, modified, removed, and preserved content matches the selected mode;
 8. no active configuration or Hook definition still invokes the legacy Sol/Luna Router.
 
@@ -257,6 +261,8 @@ In the fresh task, use a concise user-facing smoke test rather than reproducing 
 4. give Sol a second clearly bounded task without naming a role and verify policy-based delegation when Sol judges it worthwhile;
 5. confirm the Luna child has no multi-agent/delegation tools because it is a native leaf;
 6. require Sol to review the child evidence and own the final conclusion.
+
+RC3 Receipt acceptance adds two fresh-task cases after the real upgrade. Case A is a non-trivial architecture or reasoning task: require zero direct children and `Sol/Luna: Sol-only · reasoning/architecture task`. Case B contains two or three independent bounded read-only checks: require actual Luna direct children, an actual role and count matching `Sol/Luna: delegated · <role> ×<direct_child_count>`, and `parallel` only when parent-visible evidence proves execution overlap. In both cases, the Receipt is only a user-facing summary; verify child absence or presence with parent-visible runtime metadata. Do not accept Receipt text by itself as proof.
 
 Return `INSTALL_RUNTIME_PASS` only when all applicable checks pass. Otherwise return the exact failed step and evidence boundary. A sentinel string by itself is not proof of model, role, or leaf behavior. Static CI and repository tests are not substitutes for this fresh-task runtime check.
 

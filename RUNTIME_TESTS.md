@@ -6,6 +6,15 @@ Native Runtime Tests 1-5 passed in fresh project sessions after the project cust
 
 Static validation and Native Runtime validation remain separate gates. The runtime tests do not grant Luna planning, architecture, orchestration, or final-acceptance authority. Sol owns those responsibilities.
 
+## v4.1.0-rc3 planned Receipt acceptance — `NOT RUN`
+
+RC3 changes the installer-managed Global `AGENTS.md` payload. Its runtime acceptance is intentionally pending until a separately authorized real upgrade and fresh task:
+
+- Case A: use a non-trivial architecture or reasoning task. Require zero direct Luna children and the final line `Sol/Luna: Sol-only · reasoning/architecture task`.
+- Case B: use two or three independent bounded read-only checks. Require actual Luna direct children and `Sol/Luna: delegated · <role> ×<direct_child_count>` matching the actual selected role and actual total direct-child count. Accept ` · parallel` only when parent-visible evidence proves at least two children overlapped. Confirm native custom-agent routing without a direct model or reasoning-effort override, and require Sol to review the child evidence and own the final conclusion.
+
+In both cases, inspect parent-visible runtime metadata for child absence or presence. Receipt text is a user-facing execution summary and cannot establish PASS by itself. No RC3 Receipt runtime PASS is claimed in this document.
+
 ## Safety boundary
 
 - The tests use a fresh project session and the current Beijing-date Daily Profile.

@@ -45,7 +45,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
-    def test_v41_rc_source_flow_and_runtime_boundary_are_explicit(self):
+    def test_v41_rc3_source_flow_and_runtime_boundary_are_explicit(self):
         combined = "\n".join(
             text(path)
             for path in (
@@ -56,8 +56,16 @@ class DocumentationTests(unittest.TestCase):
                 ROOT / "SECURITY.md",
             )
         )
-        for path in (README, README_ZH, ROOT / "ARCHITECTURE.md", ROOT / "SECURITY.md"):
-            self.assertIn("v4.1.0-rc2", text(path))
+        for path in (
+            README,
+            README_ZH,
+            SETUP,
+            ROOT / "ARCHITECTURE.md",
+            ROOT / "SECURITY.md",
+        ):
+            self.assertIn("v4.1.0-rc3", text(path))
+        for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
+            self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
         self.assertIn("v4.1.0-rc1", text(SETUP))
         self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
         self.assertIn(
@@ -66,7 +74,35 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Radar HTML runtime fallback is removed", text(README))
         self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
         self.assertIn("Global Runtime G1-G7", combined)
-        self.assertIn("repository-context", combined)
+        self.assertIn("Receipt runtime acceptance", combined)
+        self.assertIn("v4.0.0` remains the stable release", text(README))
+        self.assertIn("v4.0.0` 仍是稳定版本", text(README_ZH))
+        self.assertNotRegex(combined, r"v4\.1\.0-rc3[^\n]*(?:—|is|是)\s*STABLE")
+        self.assertNotIn(
+            "RC2 repository-context delegation validation remains pending", combined
+        )
+
+    def test_delegation_receipt_user_guidance_is_bilingual_and_bounded(self):
+        english = text(README)
+        chinese = text(README_ZH)
+        architecture = text(ROOT / "ARCHITECTURE.md")
+        security = text(ROOT / "SECURITY.md")
+
+        self.assertIn("## How do I know Sol + Luna is working?", english)
+        self.assertIn("## 怎么判断 Sol + Luna 是否已经生效？", chinese)
+        self.assertIn("### Basic read-only self-test", english)
+        self.assertIn("### Basic 只读自测", chinese)
+        self.assertIn("### Optional parallel self-test", english)
+        self.assertIn("### 可选并行自测", chinese)
+        for content in (english, chinese):
+            self.assertIn(
+                "Sol/Luna: delegated · <role> ×<direct_child_count>", content
+            )
+            self.assertIn("0 Luna", content)
+            self.assertIn("Receipt", content)
+        self.assertIn("not runtime attestation", english)
+        self.assertIn("Receipt text is not runtime attestation", architecture)
+        self.assertIn("adds no selector or network call", security)
 
     def test_setup_execution_urls_are_coordinated_and_immutable_when_pinned(self):
         english = text(README)
@@ -82,6 +118,10 @@ class DocumentationTests(unittest.TestCase):
             self.assertEqual(english.count(PLACEHOLDER), 1)
             self.assertEqual(chinese.count(PLACEHOLDER), 1)
             self.assertEqual(RAW_PATTERN.findall(combined), [])
+            self.assertIn("deliberate for RC3 source Commit A", english)
+            self.assertIn("RC3 source Commit A 的有意占位", chinese)
+            self.assertNotIn("During RC assembly, the placeholder above", english)
+            self.assertNotIn("RC 组装阶段，上面的 placeholder", chinese)
             return
 
         english_shas = RAW_PATTERN.findall(english)
