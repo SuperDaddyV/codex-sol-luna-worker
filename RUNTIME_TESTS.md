@@ -1,25 +1,42 @@
 # Native Runtime Test Protocol
 
-Status: `v4.0.0 — STABLE / GLOBAL V4 RUNTIME PASS`
+Status: `v4.1.0-rc3 — PUBLISHED PRERELEASE / RECORDED RUNTIME ACCEPTANCE PASS`; `v4.0.0 — STABLE`
 
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 
 Static validation and Native Runtime validation remain separate gates. The runtime tests do not grant Luna planning, architecture, orchestration, or final-acceptance authority. Sol owns those responsibilities.
 
-## v4.1.0-rc3 planned Receipt acceptance — `NOT RUN`
+## v4.1.0-rc3 real upgrade and Receipt acceptance — `PASS`
 
-RC3 changes the installer-managed Global `AGENTS.md` payload. Its runtime acceptance is intentionally pending until a separately authorized real upgrade and fresh task:
+The published RC3 prerelease passed its separately authorized real upgrade and fresh-session Receipt acceptance in one recorded Codex environment. The full repository suite passed `109/109`, and Windows, Ubuntu, and macOS CI passed for the release source.
 
-- Case A: use a non-trivial architecture or reasoning task. Require zero direct Luna children and the final line `Sol/Luna: Sol-only · reasoning/architecture task`.
-- Case B: use two or three independent bounded read-only checks. Require actual Luna direct children and `Sol/Luna: delegated · <role> ×<direct_child_count>` matching the actual selected role and actual total direct-child count. Accept ` · parallel` only when parent-visible evidence proves at least two children overlapped. Confirm native custom-agent routing without a direct model or reasoning-effort override, and require Sol to review the child evidence and own the final conclusion.
+### Real RC1 → RC3 Global upgrade — `PASS`
 
-In both cases, inspect parent-visible runtime metadata for child absence or presence. Receipt text is a user-facing execution summary and cannot establish PASS by itself. No RC3 Receipt runtime PASS is claimed in this document.
+- Result: `UPGRADED`; effective changes: `2`.
+- The managed Global `AGENTS.md` block and install manifest changed.
+- Selector, five Luna agents, Global config, selector state and schema, Daily Profile, and LKG remained unchanged.
+- A second apply returned `IDEMPOTENT_PASS`.
+- Rollback readiness passed.
+
+### Sol-only Receipt — `PASS`
+
+- Actual direct-child count: `0`.
+- Final line: `Sol/Luna: Sol-only · reasoning/architecture task`.
+
+### Delegated Receipt — `PASS`
+
+- Selected role: `luna_max`; actual direct children: `3`.
+- Child model: `gpt-5.6-luna` ×3; effort: `max` ×3.
+- Parallel overlap: verified; grandchildren: `0`.
+- Final line: `Sol/Luna: delegated · luna_max ×3 · parallel`.
+
+In both Receipt cases, parent-visible runtime metadata established child absence or presence. Receipt text remains a user-facing execution summary and is not runtime attestation by itself. Native leaf, parallel delegation, and Sol Acceptance all passed.
 
 ## Safety boundary
 
 - The tests use a fresh project session and the current Beijing-date Daily Profile.
 - Routine test runs do not alter global Codex configuration, global agents, Hooks, or environment variables.
-- Installer lifecycle tests write only to explicit fake homes. The separately approved real global migration and isolated no-project Global Runtime acceptance were completed before stable source promotion.
+- Installer lifecycle tests write only to explicit fake homes. Separately approved real global upgrades and fresh-session runtime acceptance were recorded for the stable source and RC3 prerelease without widening routine repository-test permissions.
 
 ## Test results
 
@@ -57,4 +74,4 @@ Daily Selector same-day cache reuse and no-`ultra` checks passed. LKG and fail-c
 
 ## Result rule
 
-Native Runtime Tests 1-5 and Global Runtime G1-G7 provide the generic runtime evidence for stable `v4.0.0` in the tested Codex Desktop/App Server environment. They do not promise compatibility with future Codex versions.
+Native Runtime Tests 1-5 and Global Runtime G1-G7 provide the generic runtime evidence for stable `v4.0.0` in the tested Codex Desktop/App Server environment. The RC3 upgrade and Receipt results above apply only to the one recorded Codex environment in which they were observed. They do not promise compatibility with future Codex versions or establish real runtime PASS for every operating system, client, account, or user.

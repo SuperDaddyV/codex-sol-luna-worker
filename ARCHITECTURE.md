@@ -1,8 +1,8 @@
 # v4.1.0-rc3 Native Architecture Note
 
-Status: `v4.1.0-rc3 — GLOBAL AGENTS RECEIPT SOURCE CANDIDATE / RUNTIME ACCEPTANCE PENDING`
+Status: `v4.1.0-rc3 — PUBLISHED PRERELEASE / RECORDED RUNTIME ACCEPTANCE PASS`
 
-`v4.0.0` remains the stable release. The published RC1 retains its recorded real global upgrade and fresh-session Global Runtime G1-G7 PASS, and the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. RC3 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, and migration semantics are unchanged.
+`v4.0.0` remains the stable release. The published RC1 retains its recorded real global upgrade and fresh-session Global Runtime G1-G7 PASS, and the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade and fresh-session Sol-only and delegated Receipt acceptance. RC3 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, and migration semantics are unchanged.
 
 ## Flow
 
@@ -71,11 +71,11 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
-The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. RC3 Receipt acceptance has not run: it requires a separately authorized real upgrade followed by fresh-task Sol-only and delegated cases with parent-visible child evidence.
+The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The delegated case verified three direct `luna_max` children, native leaf behavior, parallel overlap, and Sol acceptance; the Sol-only case verified zero direct children.
 
 ## Compatibility boundary
 
-`v4.0.0` is validated against the tested Codex Desktop/App Server environment and makes no compatibility promise for future Codex versions. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
+`v4.0.0` is validated against the tested Codex Desktop/App Server environment and makes no compatibility promise for future Codex versions. RC3's recorded runtime results apply to the actual Codex environment in which they were observed; they do not claim real runtime validation for every operating system, client, account, or user. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
 
 ## Official references
 

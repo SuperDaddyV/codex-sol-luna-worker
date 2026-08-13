@@ -1,6 +1,6 @@
 # Codex Sol + Luna Worker — Execution Setup Contract
 
-Status: `v4.1.0-rc3` source candidate; stable runtime remains `v4.0.0`. The published `v4.1.0-rc2` passed its recorded fresh repository-context delegation check. RC3 changes the installer-managed Global AGENTS payload and requires a separately authorized real upgrade and fresh-session Receipt acceptance.
+Status: `v4.1.0-rc3` published prerelease. Recorded validation includes a real existing-v4 RC1→RC3 Global upgrade and fresh-session Sol-only and delegated Delegation Receipt acceptance. `v4.0.0` remains the current stable release.
 
 > [!IMPORTANT]
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. Prefer the immutable commit-pinned raw URL published in the project README. Never silently expand permissions, installation scope, or network access.

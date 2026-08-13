@@ -46,6 +46,13 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(heading, content)
 
     def test_v41_rc3_source_flow_and_runtime_boundary_are_explicit(self):
+        release_docs = (
+            SETUP,
+            ROOT / "RUNTIME_TESTS.md",
+            ROOT / "ARCHITECTURE.md",
+            ROOT / "SECURITY.md",
+            ROOT / "CHANGELOG.md",
+        )
         combined = "\n".join(
             text(path)
             for path in (
@@ -81,6 +88,15 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn(
             "RC2 repository-context delegation validation remains pending", combined
         )
+        for path in release_docs:
+            content = text(path)
+            self.assertIn("v4.1.0-rc3", content)
+            self.assertNotIn("source candidate", content.lower())
+        runtime = text(ROOT / "RUNTIME_TESTS.md")
+        self.assertIn("RC1 → RC3 Global upgrade — `PASS`", runtime)
+        self.assertIn("Sol-only Receipt — `PASS`", runtime)
+        self.assertIn("Delegated Receipt — `PASS`", runtime)
+        self.assertNotIn("planned Receipt acceptance — `NOT RUN`", runtime)
 
     def test_delegation_receipt_user_guidance_is_bilingual_and_bounded(self):
         english = text(README)

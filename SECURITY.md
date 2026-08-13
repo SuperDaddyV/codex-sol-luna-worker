@@ -2,7 +2,7 @@
 
 ## Release boundary
 
-`v4.1.0-rc3` is a source candidate that changes the installer-managed Global `AGENTS.md` policy payload to add the Delegation Receipt; `v4.0.0` remains stable. The published RC2 recorded its fresh repository-context delegation check. RC3 does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary. Any real global runtime operation requires separate authorization.
+`v4.1.0-rc3` is a published prerelease that changes the installer-managed Global `AGENTS.md` policy payload to add the Delegation Receipt; `v4.0.0` remains stable. RC3 passed its separately authorized recorded real RC1→RC3 Global upgrade and fresh-session Sol-only and delegated Receipt acceptance. Publication does not perform an implicit installation, modify global Codex configuration during routine validation, manage credentials, or provide a production security boundary. Any real global runtime operation requires separate authorization, and the recorded acceptance is not a security guarantee or a claim that every environment passed.
 
 ## Data and network behavior
 

@@ -1,15 +1,16 @@
 # Changelog
 
-## Unreleased
-
-### v4.1.0-rc3 source candidate
+## v4.1.0-rc3 (published prerelease)
 
 - Added a low-noise final-line Delegation Receipt to the installer-managed Global `AGENTS.md` policy for receipt-eligible non-trivial work.
 - Defined five conceptual outcomes: `DELEGATED`, `TASK_TOO_SMALL`, `SOL_REASONING_TASK`, `NO_INDEPENDENT_WORK`, and `LUNA_UNAVAILABLE`.
 - Required delegated receipts to use the actual selected native role and actual direct-child count, with `parallel` only for parent-visible execution overlap.
 - Kept the Receipt downstream of delegation decisions: it cannot lower the threshold, force spawn or parallelism, trigger extra selector, child, file, tool, or network work, add state or telemetry, expose private reasoning, or attest runtime behavior by itself.
 - Bumped the installer payload version to `v4.1.0-rc3` because the owned Global policy block changes; added RC1-to-RC3 upgrade, ownership-conflict, rollback, policy, installer, and documentation coverage.
-- Added bilingual Receipt interpretation plus Basic read-only and optional parallel self-tests. RC3 real upgrade and fresh-session Receipt acceptance remain separately authorized and not yet run.
+- Added bilingual Receipt interpretation plus Basic read-only and optional parallel self-tests.
+- Recorded the separately authorized real RC1→RC3 Global upgrade as `PASS`: result `UPGRADED`, two effective changes limited to the managed Global `AGENTS.md` block and manifest, second apply `IDEMPOTENT_PASS`, and rollback ready. Selector, Luna agents, config, selector state and schema, Daily Profile, and LKG remained unchanged.
+- Recorded fresh-session Sol-only Receipt `PASS` with zero direct children and delegated Receipt `PASS` with three direct `luna_max` children, `gpt-5.6-luna` at `max`, verified parallel overlap, zero grandchildren, native leaf behavior, and Sol acceptance.
+- Passed the full repository suite `109/109` and Windows, Ubuntu, and macOS CI for the release source.
 
 ## v4.1.0-rc2
 
