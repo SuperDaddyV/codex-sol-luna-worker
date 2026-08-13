@@ -9,6 +9,7 @@ README_ZH = ROOT / "README.zh-CN.md"
 SETUP = ROOT / "CODEX_SOL_LUNA_SETUP.md"
 PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
+PINNED_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
 RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -43,8 +44,8 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("actions/workflows/validate.yml/badge.svg", content)
             self.assertIn("releases/tag/v4.0.0", content)
             self.assertIn("img.shields.io/badge/stable-v4.0.0", content)
-            self.assertIn("releases/tag/v4.1.0-rc3", content)
-            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc3", content)
+            self.assertIn("releases/tag/v4.1.0-rc4", content)
+            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc4", content)
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
@@ -70,6 +71,9 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("v4.1.0-rc4", text(path))
             self.assertIn("published prerelease", text(path).lower())
             self.assertNotIn("source candidate", text(path).lower())
+        for path in (README, README_ZH):
+            self.assertIn("v4.1.0-rc4", text(path))
+            self.assertNotIn("source candidate", text(path).lower())
         self.assertIn("v4.1.0-rc3", text(ROOT / "CHANGELOG.md"))
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
@@ -84,11 +88,12 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Radar HTML runtime fallback is removed", text(README))
         self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
         self.assertIn("Global Runtime G1-G7", combined)
-        self.assertIn("published RC3 prerelease passed", combined)
         self.assertIn("current published preview prerelease", text(README))
         self.assertIn("当前已发布的 Preview prerelease", text(README_ZH))
-        self.assertIn("v4.1.0-rc4` is a source candidate", text(README))
-        self.assertIn("v4.1.0-rc4` 是 source candidate", text(README_ZH))
+        self.assertIn("public beta", text(README))
+        self.assertIn("公开测试版本", text(README_ZH))
+        self.assertIn("no selector, no delegation, and no availability evidence", text(README))
+        self.assertIn("没有 selector、没有 delegation、没有 availability evidence", text(README_ZH))
         self.assertIn("v4.0.0` remains stable", text(README))
         self.assertIn("v4.0.0` 仍是稳定版本", text(README_ZH))
         self.assertNotRegex(combined, r"v4\.1\.0-rc3[^\n]*(?:—|is|是)\s*STABLE")
@@ -97,6 +102,11 @@ class DocumentationTests(unittest.TestCase):
         )
         self.assertNotIn("RC3 Receipt runtime acceptance has not run", combined)
         for content in (text(README), text(README_ZH)):
+            self.assertIn("| RC4 real Global upgrade | `PASS` |", content)
+            self.assertIn("| RC4 Case A | `PASS` |", content)
+            self.assertIn("| RC4 Case B | `PASS` |", content)
+            self.assertIn("| RC4 Case C | `PASS` |", content)
+            self.assertIn("| RC4 controlled Case D | `PASS` |", content)
             self.assertIn("| RC3 real Global upgrade | `PASS` |", content)
             self.assertIn("| RC3 Sol-only Receipt | `PASS` |", content)
             self.assertIn("| RC3 delegated Receipt | `PASS` |", content)
@@ -167,6 +177,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertEqual(len(english_shas), 1)
         self.assertEqual(len(chinese_shas), 1)
         self.assertEqual(english_shas, chinese_shas)
+        self.assertEqual(english_shas, [PINNED_SETUP_COMMIT])
         self.assertRegex(english_shas[0], r"^[0-9a-f]{40}$")
 
     def test_all_local_documentation_links_exist(self):

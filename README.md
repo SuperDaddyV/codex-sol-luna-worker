@@ -4,7 +4,7 @@
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![Stable: v4.0.0](https://img.shields.io/badge/stable-v4.0.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
-[![Preview: v4.1.0-rc3](https://img.shields.io/badge/preview-v4.1.0--rc3-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc3)
+[![Preview: v4.1.0-rc4](https://img.shields.io/badge/preview-v4.1.0--rc4-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc4)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
 Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and final acceptance while native GPT-5.6 Luna workers handle clear, bounded execution tasks.
@@ -13,7 +13,9 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 > [!NOTE]
-> `v4.1.0-rc4` is a source candidate for the Receipt reason evidence-gating fix; it is not published and has not run fresh-session runtime acceptance. `v4.1.0-rc3` is the current published preview prerelease, and `v4.0.0` remains stable.
+> `v4.1.0-rc4` is the current published preview prerelease for public beta. RC4 fixes the RC3 `Luna unavailable` Receipt misclassification through current-task evidence gating. Its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D passed. `v4.0.0` remains stable.
+>
+> RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4 forbids that reason without evidence and allows it only after genuine parent-visible availability failure evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
 
 ```text
 GPT-5.6 Sol
@@ -44,7 +46,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/95cfd53200a3fc53b50a48fe7ab251dcc6d5e00b/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/e1967f8fc957904e3f90b0dd6140430f792d9956/CODEX_SOL_LUNA_SETUP.md
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
@@ -54,7 +56,7 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 ```
 
 > [!WARNING]
-> The setup contract above is pinned to immutable RC4 source Commit A. RC4 remains a source candidate and is not the published preview; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> The setup contract above is pinned to immutable RC4 post-release documentation Commit C. RC4 is the current published preview prerelease for public beta; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
 ## What this does
 
@@ -100,7 +102,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - Git for the recommended immutable source checkout.
 - Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
 
-The RC4 source candidate repository suite passed `114/114`; fresh-session RC4 runtime acceptance has not run. Repository validation runs on Windows, Ubuntu, and macOS with Python 3.11. The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7, the published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`, and the published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade plus fresh-session Sol-only and delegated Receipt acceptance in one recorded Codex environment. CI PASS does not imply that real Codex runtime validation was performed on every operating system, account, client, or user.
+The RC4 repository suite passed `114/114`, and its source passed Windows, Ubuntu, and macOS CI. The published RC4 prerelease also passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D. Earlier published RC1, RC2, and RC3 runtime records remain historical evidence, including RC2's `FRESH_REPO_CONTEXT_DELEGATION_PASS`. CI PASS does not imply that real Codex runtime validation was performed on every operating system, account, client, or user.
 
 Official Codex behavior is documented in [AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), and the [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference). OpenAI lists the model IDs in its [model catalog](https://developers.openai.com/api/docs/models).
 
@@ -187,8 +189,12 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | Sol Acceptance | `PASS` |
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
-| RC4 source candidate static suite | `PASS` |
-| RC4 fresh-session runtime smoke | `NOT RUN` |
+| RC4 source suite | `PASS` |
+| RC4 real Global upgrade | `PASS` |
+| RC4 Case A | `PASS` |
+| RC4 Case B | `PASS` |
+| RC4 Case C | `PASS` |
+| RC4 controlled Case D | `PASS` |
 | RC3 real Global upgrade | `PASS` |
 | RC3 Sol-only Receipt | `PASS` |
 | RC3 delegated Receipt | `PASS` |
@@ -196,7 +202,7 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | Ubuntu CI | `PASS` |
 | macOS CI | `PASS` |
 
-The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade with two effective changes, second-apply idempotency, and rollback readiness. Its fresh-session Sol-only Receipt case verified zero direct children; its delegated Receipt case verified three direct `luna_max` children, native leaf behavior, parallel overlap, zero grandchildren, and Sol acceptance. These results apply only to the one recorded Codex environment in which they were observed. CI PASS does not imply real Codex runtime validation on every operating system, account, client, or user. Detailed evidence boundaries are in [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+The published RC4 prerelease passed its recorded real RC3→RC4 Global upgrade with two effective changes, second-apply idempotency, and rollback readiness. Case A verified the Sol reasoning Receipt; Case B verified three direct `luna_max` children, native leaf behavior, parallel overlap, zero grandchildren, and Sol acceptance; Case C directly regressed the no-selector, no-delegation, no-evidence misclassification; controlled Case D allowed `Luna unavailable` only with genuine availability evidence and forbade it without evidence. RC3 remains historical prerelease evidence. These results apply only to the recorded environments in which they were observed. CI PASS does not imply real Codex runtime validation on every operating system, account, client, or user. Detailed evidence boundaries are in [RUNTIME_TESTS.md](RUNTIME_TESTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## FAQ
 
