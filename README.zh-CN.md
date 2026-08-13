@@ -3,7 +3,8 @@
 [English](README.md)
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
-[![Release](https://img.shields.io/github/v/release/SuperDaddyV/codex-sol-luna-worker?label=release)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
+[![Stable: v4.0.0](https://img.shields.io/badge/stable-v4.0.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
+[![Preview: v4.1.0-rc3](https://img.shields.io/badge/preview-v4.1.0--rc3-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc3)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
 让 GPT-5.6 Sol 专注于理解、规划、编排、歧义处理与最终验收，让原生 GPT-5.6 Luna worker 承担边界清楚的执行任务。
@@ -12,7 +13,7 @@
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
 > [!NOTE]
-> `v4.1.0-rc3` 是把 Delegation Receipt 加入 installer-managed Global `AGENTS.md` payload 的 source candidate。`v4.0.0` 仍是稳定版本。已发布 RC2 的 fresh repository-context delegation check 已按记录通过。RC3 仍需另行授权真实升级和 fresh-session Receipt 验收。
+> `v4.1.0-rc3` 是当前已发布的 Preview prerelease。其留档的真实 RC1→RC3 Global 升级及 fresh-session Sol-only、delegated Delegation Receipt 验收均已通过。`v4.0.0` 仍是稳定版本。
 
 ```text
 GPT-5.6 Sol
@@ -43,7 +44,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/fe9642f95fa7b66daa210217c1e66e4b43bd88bb/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/cc2b13ecd0781b423f52e8b1d899a2de2d7f6a91/CODEX_SOL_LUNA_SETUP.md
 
 根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
 必须使用项目现有安装器，不要覆盖无关的用户配置。
@@ -52,7 +53,7 @@ https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/fe9642f95fa7
 ```
 
 > [!WARNING]
-> 上面的 setup contract 已固定到 immutable RC3 source Commit A；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 上面的 setup contract 已固定到 immutable RC3 final docs source Commit C；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
 ## 🚀 这是什么
 
@@ -131,7 +132,7 @@ v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtim
 - 推荐使用 Git 获取与安装合同相同的不可变 commit。
 - Windows、Ubuntu/Linux、macOS。WSL 是独立 Linux 环境，不能把 native Windows 的路径和配置直接混用。
 
-仓库 CI 已在 Windows、Ubuntu、macOS 上通过。已发布 RC1 在一套留档 Codex Desktop/App Server 环境中完成了真实全局升级与 fresh-session Global Runtime G1-G7，已发布 RC2 记录了 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。RC3 改动 installer-managed Global policy payload，因此真实升级和 Receipt runtime 验收仍待另行授权。**三平台 CI PASS 不等于三个操作系统、所有客户端和所有账号都做过真实 G1-G7。**
+完整仓库测试已通过 `109/109`，仓库 CI 已在 Windows、Ubuntu、macOS 上通过。已发布 RC1 在一套留档 Codex Desktop/App Server 环境中完成了真实全局升级与 fresh-session Global Runtime G1-G7，已发布 RC2 记录了 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。已发布 RC3 prerelease 在一套留档 Codex 环境中通过了真实 RC1→RC3 Global 升级、installer 幂等与 rollback readiness，以及 fresh-session Sol-only、delegated Receipt 验收。**三平台 CI PASS 不等于三个操作系统、所有客户端、所有账号或所有用户都做过真实 runtime 验收。**
 
 Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、[Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference) 和 [Models](https://developers.openai.com/api/docs/models)。
 
@@ -224,13 +225,16 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 | Sol Acceptance | `PASS` |
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
+| RC3 real Global upgrade | `PASS` |
+| RC3 Sol-only Receipt | `PASS` |
+| RC3 delegated Receipt | `PASS` |
 | Windows CI | `PASS` |
 | Ubuntu CI | `PASS` |
 | macOS CI | `PASS` |
 
 ### Real Runtime
 
-已发布 RC1 的真实全局升级与 fresh-session Global Runtime G1-G7 已在一套留档 Codex Desktop/App Server 环境中通过，已发布 RC2 记录了 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。RC3 Receipt runtime 验收尚未执行，必须在另行授权的真实升级后进行。该记录不扩大为“所有操作系统真实 runtime 均通过”。详细边界见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
+已发布 RC3 prerelease 的留档真实 RC1→RC3 Global 升级以两项有效变更完成，并通过 second-apply 幂等和 rollback readiness 检查。fresh-session Sol-only Receipt 用例确认直属 child 为 0；delegated Receipt 用例确认 3 个直属 `luna_max` child、native leaf、并行重叠、0 个孙级 child 和 Sol acceptance。以上结果只适用于实际观察所用的一套留档 Codex 环境，不扩大为所有操作系统、账号、客户端或用户均已通过真实 runtime 验收。详细边界见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 ## ❓ FAQ
 

@@ -42,10 +42,13 @@ class DocumentationTests(unittest.TestCase):
             content = text(path)
             self.assertIn("actions/workflows/validate.yml/badge.svg", content)
             self.assertIn("releases/tag/v4.0.0", content)
+            self.assertIn("img.shields.io/badge/stable-v4.0.0", content)
+            self.assertIn("releases/tag/v4.1.0-rc3", content)
+            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc3", content)
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
-    def test_v41_rc3_source_flow_and_runtime_boundary_are_explicit(self):
+    def test_v41_rc3_published_flow_and_runtime_boundary_are_explicit(self):
         release_docs = (
             SETUP,
             ROOT / "RUNTIME_TESTS.md",
@@ -81,13 +84,21 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Radar HTML runtime fallback is removed", text(README))
         self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
         self.assertIn("Global Runtime G1-G7", combined)
-        self.assertIn("Receipt runtime acceptance", combined)
-        self.assertIn("v4.0.0` remains the stable release", text(README))
+        self.assertIn("RECORDED RUNTIME ACCEPTANCE PASS", combined)
+        self.assertIn("current published preview prerelease", text(README))
+        self.assertIn("当前已发布的 Preview prerelease", text(README_ZH))
+        self.assertIn("v4.0.0` remains stable", text(README))
         self.assertIn("v4.0.0` 仍是稳定版本", text(README_ZH))
         self.assertNotRegex(combined, r"v4\.1\.0-rc3[^\n]*(?:—|is|是)\s*STABLE")
         self.assertNotIn(
             "RC2 repository-context delegation validation remains pending", combined
         )
+        self.assertNotIn("source candidate", combined.lower())
+        self.assertNotIn("RC3 Receipt runtime acceptance has not run", combined)
+        for content in (text(README), text(README_ZH)):
+            self.assertIn("| RC3 real Global upgrade | `PASS` |", content)
+            self.assertIn("| RC3 Sol-only Receipt | `PASS` |", content)
+            self.assertIn("| RC3 delegated Receipt | `PASS` |", content)
         for path in release_docs:
             content = text(path)
             self.assertIn("v4.1.0-rc3", content)
