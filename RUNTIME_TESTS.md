@@ -1,6 +1,8 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS`; `v4.0.0 — STABLE`
+Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RECORDED RUNTIME ACCEPTANCE — PASS`; `v4.0.0 — STABLE`
+
+These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 
@@ -50,6 +52,42 @@ RC4 fixes one policy classification defect: without current-task parent-visible 
 - The controlled case did not modify the real `.codex` environment.
 
 The recorded RC4 runtime evidence applies only to the environments in which it was observed. It is not three-platform real Codex runtime validation and does not claim validation for every operating system, client, account, or user.
+
+### Additional recorded Public Beta runtime evidence
+
+These records were obtained after the RC4 release source and tag were fixed. They are post-release Public Beta evidence, not release-source evidence, a new release gate, a tag change, or a Stable promotion.
+
+#### Day-2 cross-day end-to-end — `PASS`
+
+- Status: `DAY_2_CROSS_DAY_END_TO_END_PASS`.
+- Beijing date: `2026-08-14`; installed version: `v4.1.0-rc4`.
+- Today's profile already existed when this test began. It had refreshed naturally from the prior-day recorded state before the test, and the normal delegation path reused the same-day cache.
+- `CROSS_DAY_REFRESH_OCCURRED_NATURALLY = YES`.
+- `CURRENT_TEST_OBSERVED_REFRESH_EVENT_DIRECTLY = NO`.
+- `CURRENT_TEST_VERIFIED_REFRESH_RESULT = YES`.
+- Today's role: `luna_max`; source: `modeldial_api_v1`.
+- Actual direct children: `3`; agent: `luna_max` ×3; model: `gpt-5.6-luna` ×3; effort: `max` ×3.
+- Parallel overlap: verified; grandchildren: `0`; native leaf: `PASS`; Sol acceptance: `PASS`.
+- The Receipt matched the actual role, direct-child count, and parallel runtime metadata.
+- The repository and installed runtime payload were unchanged by the test.
+
+#### Day-2 new-session same-day persistence — `PASS`
+
+- Status: `DAY_2_SAME_DAY_NEW_SESSION_PERSISTENCE_PASS`.
+- Fresh Codex session: `YES`; Beijing date: `2026-08-14`.
+- Existing profile role: `luna_max`; effort: `max`; source: `modeldial_api_v1`.
+- Normal-path selector calls: `1`; acquisition: `same-day cache`.
+- Profile SHA before and after: unchanged; profile mtime before and after: unchanged; LKG: unchanged; profile regenerated: `NO`.
+- Actual direct children: `3`; agent: `luna_max` ×3; model: `gpt-5.6-luna` ×3; effort: `max` ×3.
+- Parallel overlap: verified; grandchildren: `0`; native leaf: `PASS`; Sol acceptance: `PASS`.
+- The Receipt role, direct-child count, and parallel marker all matched the runtime metadata.
+- This demonstrates that the recorded same-day persisted profile survived a completely new Codex session. It does not establish universal persistence across all Codex clients or user environments.
+
+### Known pre-stable hardening item
+
+`SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE`
+
+Malformed port or malformed IPv6-style URL input may surface a `ValueError` without unified normalization. RC4 does not modify the selector for this finding. It is not an RC4 Public Beta blocker, but it remains a pre-stable hardening item that must be revisited before Stable promotion.
 
 ## v4.1.0-rc3 real upgrade and Receipt acceptance — `PASS`
 

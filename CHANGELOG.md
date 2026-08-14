@@ -13,6 +13,14 @@
 - Recorded Runtime Cases A/B/C/D as `PASS`: Sol reasoning, three-child `luna_max` delegated parallel execution with zero grandchildren, no-independent-work regression, and controlled genuine-unavailability evidence gating with its negative control.
 - Published `v4.1.0-rc4` as the current preview prerelease; `v4.0.0` remains stable. Recorded runtime evidence is environment-bounded and three-platform CI does not imply three-platform real Codex runtime validation.
 
+### Post-release Public Beta validation
+
+These records are separate from release-source evidence and do not change the RC4 tag, source, payload, or release gates.
+
+- `DAY_2_CROSS_DAY_END_TO_END_PASS`: recorded Day-2 cross-day end-to-end acceptance passed with `luna_max` ×3, verified parallel overlap, native leaf behavior, and Sol acceptance. The test verified the naturally refreshed current-day result; it did not directly observe the refresh event.
+- `DAY_2_SAME_DAY_NEW_SESSION_PERSISTENCE_PASS`: a recorded fresh Codex session reused the same-day cached `luna_max` profile without changing its SHA or mtime and completed three-child parallel delegation with matching Receipt metadata.
+- `SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE`: malformed URL parsing exception normalization remains a known pre-stable hardening item. RC4 does not modify the selector for this finding, and the item is not an RC4 Public Beta blocker.
+
 ## v4.1.0-rc3 (published prerelease)
 
 - Added a low-noise final-line Delegation Receipt to the installer-managed Global `AGENTS.md` policy for receipt-eligible non-trivial work.

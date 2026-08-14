@@ -22,4 +22,4 @@
 
 ## Reporting
 
-Do not include secrets, credentials, private session transcripts, or personal filesystem paths in a report. For a future public repository, use GitHub's private vulnerability reporting channel when enabled.
+Do not include secrets, credentials, private session transcripts, or personal filesystem paths in a report. For this public repository, use GitHub's private vulnerability reporting channel when enabled.

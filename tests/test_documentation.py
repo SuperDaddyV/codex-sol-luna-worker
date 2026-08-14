@@ -223,9 +223,15 @@ class DocumentationTests(unittest.TestCase):
         runtime = text(ROOT / "RUNTIME_TESTS.md")
         self.assertIn(
             "v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / "
-            "RUNTIME ACCEPTANCE PASS",
+            "RECORDED RUNTIME ACCEPTANCE — PASS",
             runtime,
         )
+        self.assertIn(
+            "They do not imply runtime validation across every operating system, "
+            "Codex client, account, or user environment.",
+            runtime,
+        )
+        self.assertNotIn("CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS", runtime)
         self.assertIn("Real RC3 → RC4 Global upgrade — `PASS`", runtime)
         self.assertIn("Result: `UPGRADED`; effective changes: `2`", runtime)
         for case in ("Runtime Case A", "Runtime Case B", "Runtime Case C", "Runtime Case D"):
@@ -239,6 +245,21 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Sol-only Receipt — `PASS`", runtime)
         self.assertIn("Delegated Receipt — `PASS`", runtime)
         self.assertNotIn("planned Receipt acceptance — `NOT RUN`", runtime)
+        for status in (
+            "DAY_2_CROSS_DAY_END_TO_END_PASS",
+            "DAY_2_SAME_DAY_NEW_SESSION_PERSISTENCE_PASS",
+            "SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE",
+        ):
+            self.assertIn(status, runtime)
+            self.assertIn(status, text(ROOT / "CHANGELOG.md"))
+        self.assertIn(
+            "CURRENT_TEST_OBSERVED_REFRESH_EVENT_DIRECTLY = NO", runtime
+        )
+        self.assertIn("CURRENT_TEST_VERIFIED_REFRESH_RESULT = YES", runtime)
+
+        security = text(ROOT / "SECURITY.md")
+        self.assertIn("For this public repository", security)
+        self.assertNotIn("For a future public repository", security)
 
     def test_delegation_receipt_user_guidance_is_bilingual_and_bounded(self):
         english = text(README)
