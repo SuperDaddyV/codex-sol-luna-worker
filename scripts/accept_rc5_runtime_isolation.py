@@ -933,6 +933,7 @@ def _unexpected_write_snapshot(real_home: Path) -> dict[str, Any]:
         ):
             sanitized.pop("size", None)
             sanitized.pop("mtime_ns", None)
+            sanitized.pop("link_count", None)
         records[relative] = sanitized
     for relative in LOCAL_STORAGE_ANCESTOR_PATHS:
         if relative not in records:

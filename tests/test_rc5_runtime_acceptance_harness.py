@@ -96,6 +96,30 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
 
         self.assertEqual(identity, (11, 22))
 
+    def test_unknown_snapshot_excludes_mutable_ancestor_link_count(self):
+        inventory = {
+            "entries": {
+                ".": {
+                    "type": "directory",
+                    "size": 1,
+                    "mtime_ns": 2,
+                    "device": 3,
+                    "file_id": 4,
+                    "link_count": 5,
+                }
+            }
+        }
+        with mock.patch.object(HARNESS, "_inventory_tree", return_value=inventory):
+            snapshot = HARNESS._unexpected_write_snapshot(Path("runtime-home"))
+
+        root = snapshot["entries"]["."]
+        self.assertEqual(root["type"], "directory")
+        self.assertEqual(root["device"], 3)
+        self.assertEqual(root["file_id"], 4)
+        self.assertNotIn("size", root)
+        self.assertNotIn("mtime_ns", root)
+        self.assertNotIn("link_count", root)
+
     def test_only_macos_var_is_an_allowed_platform_root_alias(self):
         with mock.patch.object(HARNESS.sys, "platform", "darwin"):
             with mock.patch.object(
