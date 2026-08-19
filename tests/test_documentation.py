@@ -29,6 +29,7 @@ ISSUE_FORMS = {
 PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
 PINNED_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
+RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -159,8 +160,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("欢迎提交 Bug 报告", chinese)
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
-    def test_v41_rc4_published_flow_and_runtime_acceptance_are_explicit(self):
-        published_docs = (README, README_ZH, SETUP)
+    def test_rc4_public_flow_and_rc5_candidate_boundary_are_explicit(self):
+        published_docs = (README, README_ZH)
         source_docs = (
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
@@ -180,7 +181,12 @@ class DocumentationTests(unittest.TestCase):
         for path in published_docs:
             self.assertIn("v4.1.0-rc4", text(path))
             self.assertNotIn("source candidate", text(path).lower())
-        self.assertIn("published prerelease", text(SETUP).lower())
+        setup = text(SETUP)
+        self.assertIn("Contract version: `v4.1.0-rc5`", setup)
+        self.assertIn("RC5 is a source candidate", setup)
+        self.assertIn("RC5 is not published and is not Stable", setup)
+        self.assertIn("Stable remains `v4.0.0`", setup)
+        self.assertIn("Published Preview remains `v4.1.0-rc4`", setup)
         for path in source_docs:
             self.assertIn("v4.1.0-rc4", text(path))
             self.assertIn("v4.1.0-rc5", text(path))
@@ -192,7 +198,7 @@ class DocumentationTests(unittest.TestCase):
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
         self.assertIn(
-            "existing valid `v4.1.0-rc3` installation is an existing v4 upgrade for RC4",
+            "existing valid `v4.1.0-rc4` installation is an existing v4 upgrade for RC5",
             text(SETUP),
         )
         self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
@@ -265,7 +271,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("For this public repository", security)
         self.assertNotIn("For a future public repository", security)
 
-    def test_rc5_phase_a_source_docs_do_not_fake_an_immutable_pin(self):
+    def test_rc5_setup_contract_pins_runtime_source_without_self_reference(self):
         architecture = text(ROOT / "ARCHITECTURE.md")
         security = text(ROOT / "SECURITY.md")
         runtime = text(ROOT / "RUNTIME_TESTS.md")
@@ -288,18 +294,53 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(required, security)
         for number in range(1, 11):
-            self.assertRegex(runtime, rf"(?m)^- O{number} .* — `NOT RUN`$")
-        for status in (
-            "RC5_SOURCE_COMMIT_CREATED = NO",
-            "RC5_SOURCE_SHA_KNOWN = NO",
-            "IMMUTABLE_RC5_SETUP_PIN_WRITTEN = NO",
-            "PHASE_B_REQUIRED = YES",
-        ):
-            self.assertIn(status, runtime)
+            self.assertRegex(setup, rf"(?m)^- O{number} .* — `NOT RUN`[;.]$")
         self.assertIn("source candidate; not released", changelog)
         self.assertIn("No Source Commit A", changelog)
-        self.assertNotIn("v4.1.0-rc5", setup)
+        self.assertIn("Contract version: `v4.1.0-rc5`", setup)
+        self.assertGreaterEqual(setup.count(RC5_RUNTIME_SOURCE_COMMIT), 7)
+        self.assertIn("Stable remains `v4.0.0`", setup)
+        self.assertIn("Published Preview remains `v4.1.0-rc4`", setup)
+        self.assertIn("RC5 is not published and is not Stable", setup)
         self.assertNotIn("v4.1.0-rc5", readmes)
+        self.assertIn(f"checkout --detach {RC5_RUNTIME_SOURCE_COMMIT}", setup)
+        self.assertIn(
+            f"Require `git rev-parse HEAD` to equal `{RC5_RUNTIME_SOURCE_COMMIT}` exactly",
+            setup,
+        )
+        installer_commands = [
+            line
+            for line in setup.splitlines()
+            if "scripts/install.py" in line
+            and ("--dry-run" in line or "--apply" in line)
+        ]
+        self.assertEqual(len(installer_commands), 4)
+        for command in installer_commands:
+            self.assertIn(f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}", command)
+
+        for placeholder in (
+            "<APPROVED_40_HEX_COMMIT>",
+            "<RC5_SOURCE_SHA>",
+            "<TBD_SHA>",
+            "PIN_PENDING",
+            "<SETUP_COMMIT>",
+            "<SETUP_COMMIT_SHA>",
+            "SELF_SHA",
+            "CURRENT_DOC_SHA",
+        ):
+            self.assertNotIn(placeholder, setup)
+        self.assertNotRegex(
+            setup,
+            r"(?m)^(?:git|<PYTHON>)[^\n]*(?:\bmaster\b|\bmain\b|"
+            r"origin/master|target_commitish)",
+        )
+        self.assertNotIn(
+            "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/",
+            setup,
+        )
+        self.assertIn("a separate documentation anchor", setup)
+        self.assertIn("is not the runtime payload source", setup)
+        self.assertIn("SETUP_CONTRACT_SELF_REFERENCE_REQUIRED = NO", setup)
         for placeholder in ("<source-sha>", "TBD", "TODO-for-release"):
             self.assertNotIn(placeholder, "\n".join((architecture, security, runtime, changelog)))
 
@@ -415,9 +456,12 @@ class DocumentationTests(unittest.TestCase):
     def test_setup_contract_orchestrates_real_cli(self):
         content = text(SETUP)
         for command in (
-            "scripts/install.py --dry-run --codex-home <CODEX_HOME>",
-            "scripts/install.py --apply --codex-home <CODEX_HOME>",
-            "scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME>",
+            "scripts/install.py --dry-run --codex-home <CODEX_HOME> "
+            f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}",
+            "scripts/install.py --apply --codex-home <CODEX_HOME> "
+            f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}",
+            "scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> "
+            f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --rollback <BACKUP_PATH> --codex-home <CODEX_HOME>",
             "scripts/install.py --uninstall --codex-home <CODEX_HOME>",
         ):
@@ -425,6 +469,24 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Python 3.11 or newer", content)
         self.assertIn("INSTALL_RUNTIME_PASS", content)
         self.assertIn("Fresh Session Requirement", content)
+        for required in (
+            "--print-selection",
+            "--status-json",
+            "Luna ref-cost ↓X.X%",
+            "LKG",
+            "capability <source_effort>→<selected_effort>",
+            "STATUS_NETWORK = 0",
+            "STATUS_SELECTOR_LOCK = 0",
+            "STATUS_STATE_WRITES = 0",
+            "STATUS_LUNA_SPAWN = 0",
+            "Healthy / TODAY_SELECTION_NOT_INITIALIZED",
+            "Unavailable / DAILY_PROFILE_INVALID",
+            "Misconfigured / DAILY_PROFILE_READ_FAILED",
+            "OLD_SAME_DAY_PROFILE_FORCE_REFRESH = NO",
+            "STATE_MIGRATION_REQUIRED = NO",
+            "Upgrade to the Latest Published Version",
+        ):
+            self.assertIn(required, content)
         self.assertNotIn("--validation-sandbox --codex-home <CODEX_HOME>", content)
 
 
