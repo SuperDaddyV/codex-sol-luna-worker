@@ -33,9 +33,11 @@ earlier `NOT RUN` state in this source-candidate protocol.
 The committed repeatable harness runs the isolated O2, O4, and O9 cases from
 Source Commit A in a fresh fake `CODEX_HOME`. Before any installer write or
 credential copy, it validates that the temporary root is outside the real
-runtime, is not a symlink, junction, reparse point, or mount, and contains no
-hardlink into the real runtime. A per-run ownership marker, token, and directory
-identity gate cleanup; cleanup removes reparse entries without traversing them
+runtime, is not a user-controlled symlink, junction, reparse point, or mount,
+and contains no hardlink into the real runtime. The fixed macOS `/var` system
+alias is recognized so canonical platform temp directories remain usable. A
+per-run ownership marker, token, and directory identity gate cleanup; cleanup
+removes reparse entries without traversing them
 and fails closed if ownership or identity changes.
 
 The real-runtime audit uses three explicit path categories:

@@ -324,6 +324,18 @@ def _paths_overlap(left: Path, right: Path) -> bool:
     )
 
 
+def _is_allowed_platform_root_alias(path: Path) -> bool:
+    # macOS exposes /var as the platform-owned /private/var alias. Temporary
+    # directories live below it, so rejecting this fixed root alias would make
+    # otherwise plain system temp directories unusable.
+    if sys.platform != "darwin" or path.as_posix() != "/var":
+        return False
+    try:
+        return path.resolve(strict=True).as_posix() == "/private/var"
+    except (OSError, RuntimeError):
+        return False
+
+
 def _assert_plain_ancestor_chain(path: Path) -> None:
     absolute = _absolute(path)
     chain = list(reversed((absolute, *absolute.parents)))
@@ -331,7 +343,9 @@ def _assert_plain_ancestor_chain(path: Path) -> None:
     for candidate in chain:
         if not _lexists(candidate):
             continue
-        if _is_reparse_point(candidate):
+        if _is_reparse_point(candidate) and not _is_allowed_platform_root_alias(
+            candidate
+        ):
             raise HarnessFailure(f"reparse point found in path chain: {candidate}")
         if candidate != anchor and os.path.ismount(candidate):
             raise HarnessFailure(f"mount point found in path chain: {candidate}")
@@ -1027,13 +1041,13 @@ def _classify_auth_runtime_change(
     return AUTH_RUNTIME_REFRESH_OBSERVED
 
 
-def _plain_real_home_identity(real_home: Path) -> tuple[int, int, int]:
+def _plain_real_home_identity(real_home: Path) -> tuple[int, int]:
     _assert_plain_ancestor_chain(real_home)
     if not _lexists(real_home) or _is_reparse_point(real_home):
         raise HarnessFailure("real CODEX_HOME must remain a plain directory")
     if os.path.ismount(real_home) or not real_home.is_dir():
         raise HarnessFailure("real CODEX_HOME must remain a plain directory")
-    return _file_identity(real_home)
+    return _file_identity(real_home)[:2]
 
 
 def _assert_independent_auth(real_auth: Path, fake_auth: Path) -> None:
@@ -1289,7 +1303,7 @@ def _run_with_real_home_audit(
     real_home: Path,
     audits: dict[str, Any],
     action: Callable[[], Any],
-    expected_home_identity: tuple[int, int, int] | None = None,
+    expected_home_identity: tuple[int, int] | None = None,
 ) -> Any:
     before = _protected_state_snapshot(real_home)
     before_auth = _snapshot_file(real_home / AUTH_RUNTIME_RELATIVE)
@@ -1317,7 +1331,7 @@ def _run_with_real_home_audit(
     after_local_storage_error: BaseException | None = None
     after_unexpected: dict[str, Any] | None = None
     after_unexpected_error: BaseException | None = None
-    after_home_identity: tuple[int, int, int] | None = None
+    after_home_identity: tuple[int, int] | None = None
     after_home_error: BaseException | None = None
     try:
         after = _protected_state_snapshot(real_home)
@@ -2142,7 +2156,7 @@ def main() -> int:
     except BaseException as exc:
         after_local_storage_error = exc
 
-    after_home_identity: tuple[int, int, int] | None = None
+    after_home_identity: tuple[int, int] | None = None
     after_home_error: BaseException | None = None
     try:
         after_home_identity = _plain_real_home_identity(real_home)

@@ -73,7 +73,8 @@ The RC5 acceptance harness builds Source Commit A in a fresh fake `CODEX_HOME`
 and keeps product-runtime validation separate from the real installed-state
 audit. It validates the temporary parent and planned fake home before the first
 installer write or credential copy. Symlinks, junctions, reparse points, mount
-points, path overlap, and hardlinks across the fake/real boundary fail closed.
+points, path overlap, and hardlinks across the fake/real boundary fail closed;
+the fixed macOS `/var` system alias is the only platform-root exception.
 
 The real `CODEX_HOME` inventory has three non-overlapping path categories:
 

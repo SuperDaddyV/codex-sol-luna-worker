@@ -85,6 +85,35 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
         for forbidden in ("OPENAI_API_KEY", "GITHUB_TOKEN", "API_KEY"):
             self.assertNotIn(forbidden, environment)
 
+    def test_real_home_identity_excludes_mutable_directory_link_count(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch.object(
+                HARNESS, "_file_identity", return_value=(11, 22, 33)
+            ):
+                identity = HARNESS._plain_real_home_identity(
+                    Path(temporary)
+                )
+
+        self.assertEqual(identity, (11, 22))
+
+    def test_only_macos_var_is_an_allowed_platform_root_alias(self):
+        with mock.patch.object(HARNESS.sys, "platform", "darwin"):
+            with mock.patch.object(
+                Path, "resolve", return_value=Path("/private/var")
+            ):
+                self.assertTrue(
+                    HARNESS._is_allowed_platform_root_alias(Path("/var"))
+                )
+            with mock.patch.object(
+                Path, "resolve", return_value=Path("/unexpected")
+            ):
+                self.assertFalse(
+                    HARNESS._is_allowed_platform_root_alias(Path("/var"))
+                )
+            self.assertFalse(HARNESS._is_allowed_platform_root_alias(Path("/tmp")))
+        with mock.patch.object(HARNESS.sys, "platform", "linux"):
+            self.assertFalse(HARNESS._is_allowed_platform_root_alias(Path("/var")))
+
     def test_evidence_paths_are_symbolized_and_private_homes_are_redacted(self):
         private_fake = (
             "C:\\" + "Users" + r"\Private\AppData\Temp\run\codex-home"

@@ -22,10 +22,12 @@
 `CODEX_HOME` audit root but installs Source Commit A only into a fresh fake
 home. Before the first installer write or authentication copy, it verifies that
 the temporary parent and planned acceptance root are plain, non-overlapping
-paths with no symlink, junction, reparse point, mount, or hardlink redirection
-to the real runtime. Authentication data is copied with exclusive creation to a
-distinct fake-home file identity; its bytes are never printed or committed. The
-Codex child inherits only a fixed minimal non-credential environment; home,
+paths with no user-controlled symlink, junction, reparse point, mount, or
+hardlink redirection to the real runtime. The fixed macOS `/var` system alias is
+recognized for canonical platform temp directories. Authentication data is
+copied with exclusive creation to a distinct fake-home file identity; its bytes
+are never printed or committed. The Codex child inherits only a fixed minimal
+non-credential environment; home,
 application-data, temporary, and XDG locations are redirected into the fake
 home instead of inheriting the user's real locations.
 
