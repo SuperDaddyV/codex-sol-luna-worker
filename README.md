@@ -58,6 +58,35 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 > [!WARNING]
 > The setup contract above is pinned to immutable RC4 post-release documentation Commit C. RC4 is the current published preview prerelease for public beta; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
+## Next Candidate
+
+`v4.1.0-rc5` is the next source candidate for advanced, experimental testing. It is not published, not Stable, and not the default installation target. Stable remains `v4.0.0`; the published Preview and public beta remain `v4.1.0-rc4`.
+
+RC5 contains:
+
+- Observability metadata
+- Sol/Luna Status
+- Diagnostic report
+- Degraded indicators
+- Luna ref-cost Receipt
+- Upgrade-to-latest UX
+
+| Candidate evidence | Status |
+| --- | --- |
+| Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Source validation `PASS` |
+| Windows, Ubuntu, and macOS source CI | `PASS` |
+| Immutable setup contract | Available at Commit `7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9` |
+| Publication | `NOT PUBLISHED` |
+| Runtime acceptance O1–O10 | `NOT RUN` |
+
+Advanced users who accept candidate risk may test the experimental, non-default RC5 setup contract:
+
+```text
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9/CODEX_SOL_LUNA_SETUP.md
+```
+
+Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. RC5 runtime acceptance has not run; O1–O10 are `NOT RUN`, so source and CI validation do not imply real-user runtime validation.
+
 ## What this does
 
 Sol remains the only planner, architect, orchestrator, ambiguity resolver, and final reviewer. It decides whether a task is suitable for delegation. Luna handles bounded implementation, targeted search, file inspection, tests, lint/build, repetitive work, and clearly scoped batch tasks. Luna returns evidence; Sol accepts or rejects the result.

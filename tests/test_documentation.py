@@ -30,6 +30,7 @@ PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
 PINNED_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
 RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
+RC5_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
 RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -161,7 +162,6 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
     def test_rc4_public_flow_and_rc5_candidate_boundary_are_explicit(self):
-        published_docs = (README, README_ZH)
         source_docs = (
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
@@ -178,9 +178,54 @@ class DocumentationTests(unittest.TestCase):
                 ROOT / "SECURITY.md",
             )
         )
-        for path in published_docs:
-            self.assertIn("v4.1.0-rc4", text(path))
-            self.assertNotIn("source candidate", text(path).lower())
+        default_setup_url = (
+            "https://raw.githubusercontent.com/SuperDaddyV/"
+            f"codex-sol-luna-worker/{PINNED_SETUP_COMMIT}/CODEX_SOL_LUNA_SETUP.md"
+        )
+        candidate_setup_url = (
+            "https://raw.githubusercontent.com/SuperDaddyV/"
+            f"codex-sol-luna-worker/{RC5_SETUP_CONTRACT_COMMIT}/"
+            "CODEX_SOL_LUNA_SETUP.md"
+        )
+        for path, candidate_heading, publication_row in (
+            (README, "## Next Candidate", "| Publication | `NOT PUBLISHED` |"),
+            (README_ZH, "## 下一候选版本", "| 发布状态 | `NOT PUBLISHED` |"),
+        ):
+            content = text(path)
+            self.assertIn("v4.1.0-rc4", content)
+            self.assertIn("v4.1.0-rc5", content)
+            self.assertIn("source candidate", content.lower())
+            self.assertIn(RC5_RUNTIME_SOURCE_COMMIT, content)
+            self.assertIn(RC5_SETUP_CONTRACT_COMMIT, content)
+            self.assertIn(candidate_heading, content)
+            self.assertIn(publication_row, content)
+            self.assertIn("| Runtime acceptance O1–O10 | `NOT RUN` |", content)
+            for feature in (
+                "Observability metadata",
+                "Sol/Luna Status",
+                "Diagnostic report",
+                "Degraded indicators",
+                "Luna ref-cost Receipt",
+                "Upgrade-to-latest UX",
+            ):
+                self.assertIn(feature, content)
+            self.assertEqual(content.count(default_setup_url), 1)
+            self.assertEqual(content.count(candidate_setup_url), 1)
+            self.assertLess(content.index(default_setup_url), content.index(candidate_heading))
+            self.assertGreater(content.index(candidate_setup_url), content.index(candidate_heading))
+            candidate_start = content.index(candidate_heading)
+            candidate_end = content.index("\n## ", candidate_start + len(candidate_heading))
+            candidate_section = content[candidate_start:candidate_end]
+            for placeholder in ("<APPROVED_40_HEX_COMMIT>", "<TBD>", "pending"):
+                self.assertNotIn(placeholder, candidate_section)
+            self.assertNotIn("releases/tag/v4.1.0-rc5", content)
+            self.assertNotIn("img.shields.io/badge/preview-v4.1.0--rc5", content)
+            for forbidden in (
+                "v4.1.0-rc5 Preview",
+                "v4.1.0-rc5 Public Beta",
+                "v4.1.0 stable",
+            ):
+                self.assertNotIn(forbidden, content)
         setup = text(SETUP)
         self.assertIn("Contract version: `v4.1.0-rc5`", setup)
         self.assertIn("RC5 is a source candidate", setup)
@@ -191,9 +236,8 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("v4.1.0-rc4", text(path))
             self.assertIn("v4.1.0-rc5", text(path))
             self.assertIn("source candidate", text(path).lower())
-        for path in (README, README_ZH):
-            self.assertIn("v4.1.0-rc4", text(path))
-            self.assertNotIn("source candidate", text(path).lower())
+        self.assertIn("not the default installation target", text(README))
+        self.assertIn("不是默认安装目标", text(README_ZH))
         self.assertIn("v4.1.0-rc3", text(ROOT / "CHANGELOG.md"))
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
@@ -302,7 +346,9 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Stable remains `v4.0.0`", setup)
         self.assertIn("Published Preview remains `v4.1.0-rc4`", setup)
         self.assertIn("RC5 is not published and is not Stable", setup)
-        self.assertNotIn("v4.1.0-rc5", readmes)
+        self.assertIn("v4.1.0-rc5", readmes)
+        self.assertIn("not published, not Stable", text(README))
+        self.assertIn("尚未发布，不是 Stable", text(README_ZH))
         self.assertIn(f"checkout --detach {RC5_RUNTIME_SOURCE_COMMIT}", setup)
         self.assertIn(
             f"Require `git rev-parse HEAD` to equal `{RC5_RUNTIME_SOURCE_COMMIT}` exactly",
@@ -388,11 +434,15 @@ class DocumentationTests(unittest.TestCase):
 
         english_shas = RAW_PATTERN.findall(english)
         chinese_shas = RAW_PATTERN.findall(chinese)
-        self.assertEqual(len(english_shas), 1)
-        self.assertEqual(len(chinese_shas), 1)
+        self.assertEqual(len(english_shas), 2)
+        self.assertEqual(len(chinese_shas), 2)
         self.assertEqual(english_shas, chinese_shas)
-        self.assertEqual(english_shas, [PINNED_SETUP_COMMIT])
-        self.assertRegex(english_shas[0], r"^[0-9a-f]{40}$")
+        self.assertEqual(
+            english_shas,
+            [PINNED_SETUP_COMMIT, RC5_SETUP_CONTRACT_COMMIT],
+        )
+        for sha in english_shas:
+            self.assertRegex(sha, r"^[0-9a-f]{40}$")
 
     def test_all_local_documentation_links_exist(self):
         for document in (README, README_ZH, SETUP, ROOT / "SECURITY.md"):

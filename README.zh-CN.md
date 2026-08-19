@@ -57,6 +57,35 @@ https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/e1967f8fc957
 > [!WARNING]
 > 上面的 setup contract 已固定到 immutable RC4 post-release documentation Commit C。RC4 是当前已发布的 Preview prerelease／公开测试版本；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
+## 下一候选版本
+
+`v4.1.0-rc5` 是面向高级用户实验性测试的下一个 source candidate。它尚未发布，不是 Stable，也不是默认安装目标。Stable 仍是 `v4.0.0`；已发布的 Preview／公开测试版本仍是 `v4.1.0-rc4`。
+
+RC5 包含：
+
+- Observability metadata
+- Sol/Luna Status
+- Diagnostic report
+- Degraded indicators
+- Luna ref-cost Receipt
+- Upgrade-to-latest UX
+
+| Candidate evidence | 状态 |
+| --- | --- |
+| Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Source validation `PASS` |
+| Windows、Ubuntu、macOS source CI | `PASS` |
+| Immutable setup contract | 已在 Commit `7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9` 提供 |
+| 发布状态 | `NOT PUBLISHED` |
+| Runtime acceptance O1–O10 | `NOT RUN` |
+
+愿意承担候选版本风险的高级用户可以测试这份实验性、非默认的 RC5 setup contract：
+
+```text
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9/CODEX_SOL_LUNA_SETUP.md
+```
+
+请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。RC5 runtime acceptance 尚未运行；O1–O10 为 `NOT RUN`，因此 source 与 CI 验证不能代表真实用户 runtime 验证。
+
 ## 🚀 这是什么
 
 本项目把 Codex 中两类工作明确分开：
