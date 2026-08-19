@@ -9,7 +9,10 @@
 - Added the natural-language latest-version semantic workflow for Stable and prerelease discovery, strict SemVer selection, prerelease notice, immutable tag peeling and movement detection, and exact-commit verification. The installer remains transaction-only and contains no release client or auto-updater.
 - Bumped the source installer payload to `v4.1.0-rc5`, retained manifest schema `1`, added optional strict `--source-commit`, true zero-write transaction preflight for `--dry-run`, automatic downgrade refusal, and exact RC4→RC5 fake-home lifecycle coverage.
 - RC4→RC5 fake-home apply changes exactly the managed Global `AGENTS.md` block, installed selector, and manifest. Five Luna agents, config, Daily Profile, and LKG remain byte-identical; backup, ownership conflict, second-apply idempotency, and exact rollback are covered.
-- This entry records a Phase A source candidate only. No Source Commit A, immutable RC5 setup pin, tag, release, real Global upgrade, Daily Profile or LKG refresh, Stable promotion, or O1-O10 runtime acceptance has occurred.
+- Source Commit A is `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`; its Windows, Ubuntu, and macOS source CI passed. The immutable RC5 setup contract is available at documentation commit `7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9`.
+- Recorded the separately authorized RC5 runtime acceptance as `O1-O10 PASS` and `RC5_RUNTIME_CATEGORY_MODEL_FIXED`. This evidence is limited to the observed environment and scenarios and does not establish a release or Stable readiness.
+- Added `scripts/accept_rc5_runtime_isolation.py` and its regression suite. The harness validates isolation before writes, uses ownership- and identity-gated cleanup, rejects symlinks, Windows junctions, mount points, and hardlinks, and classifies real-runtime activity as `PROTECTED_SOL_LUNA_STATE`, `CODEX_PLATFORM_RUNTIME_STATE`, or `CODEX_LOCAL_STORAGE_STATE`.
+- The earlier Phase A statement “No Source Commit A, immutable RC5 setup pin, tag, release, real Global upgrade, Daily Profile or LKG refresh, Stable promotion, or O1-O10 runtime acceptance has occurred” is superseded by the source, setup-contract, and bounded runtime evidence above. RC5 remains a source candidate; no tag, release, or Stable promotion is recorded here.
 
 ## v4.1.0-rc4 (published prerelease)
 

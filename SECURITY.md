@@ -2,7 +2,7 @@
 
 ## Release boundary
 
-`v4.1.0-rc5 — Observability & UX` is a Phase A source candidate, not a published release. `v4.1.0-rc4` remains the published prerelease and current preview, with recorded real-upgrade and Runtime Cases A/B/C/D acceptance `PASS`; `v4.0.0` remains stable. RC5 source validation does not perform an implicit installation, modify global Codex configuration, manage credentials, or establish real runtime acceptance. Any real global runtime operation requires separate authorization, and recorded acceptance is not a security guarantee or a claim that every environment passed. Three-platform CI remains source validation and does not establish real Codex runtime validation on every platform, client, account, or user.
+`v4.1.0-rc5 — Observability & UX` is a source candidate, not a published release. `v4.1.0-rc4` remains the published prerelease and current preview, with recorded real-upgrade and Runtime Cases A/B/C/D acceptance `PASS`; `v4.0.0` remains stable. RC5 Source Commit A and its separately authorized O1-O10 runtime acceptance are now recorded, but neither source validation nor the bounded acceptance is a security guarantee or a claim that every environment passed. Three-platform CI remains source validation and does not establish real Codex runtime validation on every platform, client, account, or user. No tag, release, or Stable promotion is implied.
 
 ## Data and network behavior
 
@@ -15,6 +15,37 @@
 - Status is a read-only inspection of a fixed installed-file and existing-profile set. Diagnostic output is built from an exact whitelist, replaces filesystem paths with symbolic locations, accepts a commit SHA only when it is exactly 40 hex characters, and applies a final path, URL, and secret-canary sanitizer. It never emits environment variables, configuration or policy content, credentials, cookies, headers, logs, arbitrary exception messages, or child reasoning.
 - CI uses fixtures and does not contact ModelDial or run Codex.
 - ModelDial-derived fixtures are attributed under CC BY 4.0 in `fixtures/modeldial/README.md`; repository source code remains under the project MIT license.
+
+## Runtime acceptance harness safety
+
+`scripts/accept_rc5_runtime_isolation.py` requires an explicit real
+`CODEX_HOME` audit root but installs Source Commit A only into a fresh fake
+home. Before the first installer write or authentication copy, it verifies that
+the temporary parent and planned acceptance root are plain, non-overlapping
+paths with no symlink, junction, reparse point, mount, or hardlink redirection
+to the real runtime. Authentication data is copied with exclusive creation to a
+distinct fake-home file identity; its bytes are never printed or committed. The
+Codex child inherits only a fixed minimal non-credential environment; home,
+application-data, temporary, and XDG locations are redirected into the fake
+home instead of inheriting the user's real locations.
+
+The audit distinguishes immutable managed Sol/Luna state
+(`PROTECTED_SOL_LUNA_STATE`) from enumerated Codex platform runtime activity
+(`CODEX_PLATFORM_RUNTIME_STATE`) and enumerated local storage activity
+(`CODEX_LOCAL_STORAGE_STATE`). Unsupported path types, reparse escapes,
+unexpected hardlinks, protected-state changes, and writes outside the explicit
+categories fail closed. The result reports only inventory metadata, hashes,
+classifications, and symbolic category names, not credentials or real
+authentication content. Before JSON is printed, known real, fake, temporary,
+repository, and executable paths are replaced by symbolic locations and any
+remaining user-home path shape or credential-shaped value is redacted.
+
+Cleanup is ownership-gated: the target must remain the same direct
+harness-prefixed child of the validated temporary parent, retain the original
+directory identity, and contain the matching per-run marker and token. Cleanup
+does not follow reparse entries and fails closed on an ownership or identity
+mismatch. Regression coverage includes success and failure cleanup, symlink,
+Windows junction, mount-point, and hardlink cases.
 
 ## Installation safety
 

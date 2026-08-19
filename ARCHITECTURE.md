@@ -1,9 +1,11 @@
 # v4.1.0-rc5 Source Candidate Architecture Note
 
-`v4.1.0-rc5 — Observability & UX` is a Phase A source candidate, not a
-published release. `v4.1.0-rc4` remains the published Preview prerelease and
-`v4.0.0` remains Stable. The immutable RC5 setup pin is intentionally deferred
-until a real Source Commit A exists.
+`v4.1.0-rc5 — Observability & UX` is a source candidate, not a published
+release. `v4.1.0-rc4` remains the published Preview prerelease and `v4.0.0`
+remains Stable. RC5 Source Commit A is
+`5ae88ff9190b31174c55a6136c0c8c8611d0b34c`; the immutable setup contract is
+available at documentation commit
+`7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9`.
 
 Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS`
 
@@ -65,6 +67,33 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - No Receipt-driven delegation, lower threshold, forced spawn or parallelism, extra selector call, capability probe, child inspection, tool, file or network read, network access, state, telemetry, repository write, or private reasoning exposure. Receipt text is not runtime attestation.
 - CI and static checks are supporting evidence; Native Runtime Tests 1-5 are the runtime gate.
 
+## RC5 runtime acceptance isolation boundary
+
+The RC5 acceptance harness builds Source Commit A in a fresh fake `CODEX_HOME`
+and keeps product-runtime validation separate from the real installed-state
+audit. It validates the temporary parent and planned fake home before the first
+installer write or credential copy. Symlinks, junctions, reparse points, mount
+points, path overlap, and hardlinks across the fake/real boundary fail closed.
+
+The real `CODEX_HOME` inventory has three non-overlapping path categories:
+
+- `PROTECTED_SOL_LUNA_STATE` is the managed Sol/Luna policy, configuration,
+  agents, selector, manifest, selector state, and backup boundary. Its recorded
+  entries must remain unchanged.
+- `CODEX_PLATFORM_RUNTIME_STATE` is the explicit authentication and Codex
+  session/runtime boundary. Valid activity is reported separately from product
+  configuration changes.
+- `CODEX_LOCAL_STORAGE_STATE` is the explicit local storage, SQLite,
+  computer-use configuration, and memory-content boundary. Valid activity is
+  likewise reported without treating it as a Sol/Luna mutation.
+
+Anything outside those categories is an unexpected write. Every recorded path
+must remain inside the real runtime root, use a supported file or directory
+type, avoid reparse redirection, and have no unexpected hardlinks. Temporary
+cleanup is limited to a direct child with the harness prefix, the original
+directory identity, and a matching per-run ownership marker and token. Reparse
+entries are removed as entries and are never traversed.
+
 ## Global migration transaction
 
 - Only an exact legacy manifest version `3.2` is supported; unknown or malformed manifests fail closed.
@@ -85,6 +114,14 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 5. Parallel native delegation passed: two independent bounded checks used the selected role and Sol consolidated the result.
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
+
+The separately authorized RC5 source-candidate runtime acceptance recorded
+O1-O10 as `PASS` and status `RC5_RUNTIME_CATEGORY_MODEL_FIXED` in one observed
+Codex environment. The repeatable harness adds isolated O2, O4, and O9 coverage
+plus the pre-write, cleanup, redirection, hardlink, and runtime-category
+regressions described above. This bounded evidence does not publish RC5, change
+the Stable architecture, or claim real-runtime validation across all CI
+platforms, clients, accounts, or users.
 
 The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The published RC4 prerelease passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D: reasoning-only, three-child delegated parallel execution, the no-independent-work regression, and the controlled genuine-unavailability evidence gate. RC4 changed only Receipt reason evidence-gating; the architecture flow and authority boundaries above remain unchanged.
 

@@ -4,26 +4,67 @@ Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RECORDED RUNTIM
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.0-rc5 source candidate — O1-O10 acceptance contract
+## v4.1.0-rc5 source candidate — recorded O1-O10 acceptance `PASS`
 
-RC5 `Observability & UX` is implemented in Source Phase A only. Unit,
-integration, and fake-home lifecycle tests are source evidence; they are not a
-substitute for a real installed-runtime acceptance run. The immutable setup pin
-will be written only in Phase B after Source Commit A exists.
+RC5 `Observability & UX` Source Commit A is
+`5ae88ff9190b31174c55a6136c0c8c8611d0b34c`. Its immutable setup contract is
+available at documentation commit
+`7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9`. The separately authorized runtime
+acceptance completed in one recorded Codex environment and supersedes the
+earlier `NOT RUN` state in this source-candidate protocol.
 
-- O1 Natural-language healthy status — `NOT RUN`
-- O2 No-profile healthy status — `NOT RUN`
-- O3 Degraded LKG Receipt and status — `NOT RUN`
-- O4 Capability-degraded selected-effort Receipt and status — `NOT RUN`
-- O5 Unavailable evidence status — `NOT RUN`
-- O6 Misconfigured precedence — `NOT RUN`
-- O7 Safe diagnostic report — `NOT RUN`
-- O8 Latest prerelease immutable discovery and notice — `NOT RUN`
-- O9 Real RC4→RC5 Global upgrade, idempotency, and rollback readiness — `NOT RUN`
-- O10 Fresh-session delegation and Receipt suffixes — `NOT RUN`
+- O1 Natural-language healthy status — `PASS`
+- O2 No-profile healthy status — `PASS`
+- O3 Degraded LKG Receipt and status — `PASS`
+- O4 Capability-degraded selected-effort Receipt and status — `PASS`
+- O5 Unavailable evidence status — `PASS`
+- O6 Misconfigured precedence — `PASS`
+- O7 Safe diagnostic report — `PASS`
+- O8 Latest prerelease immutable discovery and notice — `PASS`
+- O9 Real RC4→RC5 Global upgrade, idempotency, and rollback readiness — `PASS`
+- O10 Fresh-session delegation and Receipt suffixes — `PASS`
 
-`RC5_SOURCE_COMMIT_CREATED = NO`; `RC5_SOURCE_SHA_KNOWN = NO`;
-`IMMUTABLE_RC5_SETUP_PIN_WRITTEN = NO`; `PHASE_B_REQUIRED = YES`.
+`RC5_SOURCE_COMMIT_CREATED = YES`;
+`RC5_SOURCE_SHA = 5ae88ff9190b31174c55a6136c0c8c8611d0b34c`;
+`RC5_SETUP_CONTRACT_COMMIT = 7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9`;
+`RC5_RUNTIME_ACCEPTANCE_COMPLETED = YES`;
+`RC5_RUNTIME_CATEGORY_MODEL_FIXED = YES`.
+
+The committed repeatable harness runs the isolated O2, O4, and O9 cases from
+Source Commit A in a fresh fake `CODEX_HOME`. Before any installer write or
+credential copy, it validates that the temporary root is outside the real
+runtime, is not a symlink, junction, reparse point, or mount, and contains no
+hardlink into the real runtime. A per-run ownership marker, token, and directory
+identity gate cleanup; cleanup removes reparse entries without traversing them
+and fails closed if ownership or identity changes.
+
+The real-runtime audit uses three explicit path categories:
+
+- `PROTECTED_SOL_LUNA_STATE`: managed Sol/Luna policy, configuration, agents,
+  selector, manifest, selector state, and backups; this category must remain
+  unchanged.
+- `CODEX_PLATFORM_RUNTIME_STATE`: authentication and Codex platform session
+  activity; only explicitly enumerated, structurally valid runtime paths may
+  change.
+- `CODEX_LOCAL_STORAGE_STATE`: explicitly enumerated local storage, SQLite,
+  computer-use configuration, and memory content; only structurally valid
+  in-root activity may change.
+
+Any reparse escape, unexpected hardlink, invalid runtime type, change to
+protected state, or write outside those explicit categories fails the harness.
+Authentication bytes are copied only to the isolated fake home with a distinct
+file identity; they are not committed, printed, or included in the result. The
+Codex child receives a fixed minimal inherited environment plus fake-home
+values for home, application data, temporary storage, and XDG roots, so
+unrelated user credential variables are not forwarded. All real, fake,
+temporary, repository, and executable paths are symbolized before the JSON
+evidence is printed; remaining user-home path shapes and credential-shaped
+values are redacted.
+
+This is environment- and scenario-bounded runtime evidence for an unreleased
+RC5 source candidate. It is not three-platform real-runtime validation, a tag,
+a release, a Stable claim, or a Stable promotion. Windows, Ubuntu, and macOS CI
+remain source validation only.
 
 `SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE` remains unchanged.
 
