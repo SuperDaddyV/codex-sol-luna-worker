@@ -17,7 +17,7 @@
     "evaluationProfile": "full",
     "scoreBaselineId": "coding-fast-v4.10:semantic_q1_q5_equal_v2",
     "pricingSnapshotId": "pricing-v1-879bc0a00c291f1ac75f7ae3b19ba969edbb307c679c813df5bb464c6c7e4512",
-    "entryCount": 5,
+    "entryCount": 10,
     "sha256": "sha256:15a8815fb8b8f20066798451165076a3e53060641c941f82d992c4ba54162202"
   },
   "rankings": [
@@ -100,6 +100,76 @@
           "label": "Lowest cost"
         }
       ]
+    },
+    {
+      "rank": 1,
+      "id": "cloudflare-reference:gpt-5.6-sol:max",
+      "provider": "codex",
+      "model": "gpt-5.6-sol",
+      "displayName": "gpt-5.6-sol / max",
+      "reasoningEffort": "max",
+      "route": "official_login",
+      "score": 91,
+      "maxScore": 100,
+      "estimatedReferenceCostUsd": 2.571067,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 2,
+      "id": "cloudflare-reference:gpt-5.6-sol:xhigh",
+      "provider": "codex",
+      "model": "gpt-5.6-sol",
+      "displayName": "gpt-5.6-sol / xhigh",
+      "reasoningEffort": "xhigh",
+      "route": "official_login",
+      "score": 88,
+      "maxScore": 100,
+      "estimatedReferenceCostUsd": 1.515667,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 3,
+      "id": "cloudflare-reference:gpt-5.6-sol:high",
+      "provider": "codex",
+      "model": "gpt-5.6-sol",
+      "displayName": "gpt-5.6-sol / high",
+      "reasoningEffort": "high",
+      "route": "official_login",
+      "score": 84,
+      "maxScore": 100,
+      "estimatedReferenceCostUsd": 1.072283,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 4,
+      "id": "cloudflare-reference:gpt-5.6-sol:medium",
+      "provider": "codex",
+      "model": "gpt-5.6-sol",
+      "displayName": "gpt-5.6-sol / medium",
+      "reasoningEffort": "medium",
+      "route": "official_login",
+      "score": 80,
+      "maxScore": 100,
+      "estimatedReferenceCostUsd": 0.51765,
+      "decisionTags": [],
+      "targetLabels": []
+    },
+    {
+      "rank": 5,
+      "id": "cloudflare-reference:gpt-5.6-sol:low",
+      "provider": "codex",
+      "model": "gpt-5.6-sol",
+      "displayName": "gpt-5.6-sol / low",
+      "reasoningEffort": "low",
+      "route": "official_login",
+      "score": 76,
+      "maxScore": 100,
+      "estimatedReferenceCostUsd": 0.343667,
+      "decisionTags": [],
+      "targetLabels": []
     }
   ],
   "links": {

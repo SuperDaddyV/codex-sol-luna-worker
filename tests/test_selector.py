@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import io
 import json
 import tempfile
@@ -9,6 +10,8 @@ from contextlib import redirect_stdout
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
+
+from scripts.install import install
 
 from src.selector import (
     BJT,
@@ -29,6 +32,7 @@ from src.selector import (
 
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "modeldial"
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_fixture(name):
@@ -38,6 +42,56 @@ def load_fixture(name):
 
 def encoded_fixture(name):
     return json.dumps(load_fixture(name)).encode("utf-8")
+
+
+def tree_inventory(root):
+    return [
+        (
+            path.relative_to(root).as_posix(),
+            hashlib.sha256(path.read_bytes()).hexdigest(),
+            path.stat().st_mtime_ns,
+        )
+        for path in sorted(item for item in root.rglob("*") if item.is_file())
+    ]
+
+
+def materialize_fake_global(target):
+    install(target, project_root=ROOT)
+
+
+DIAGNOSTIC_KEYS = {
+    "diagnostic_schema_version",
+    "generated_at_utc",
+    "os",
+    "architecture",
+    "codex_version",
+    "python_version",
+    "installed_version",
+    "verified_commit_sha",
+    "manifest_status",
+    "global_policy_status",
+    "selector_status",
+    "agents_ready",
+    "agents_expected",
+    "native_leaf",
+    "config_status",
+    "max_parallel",
+    "today_bjt",
+    "selection_initialized",
+    "selected_role",
+    "selected_effort",
+    "source_mode",
+    "fallback",
+    "capability_degraded",
+    "snapshot_id",
+    "pricing_snapshot_id",
+    "reference_cost_metadata_available",
+    "reference_cost_reduction_pct",
+    "project_override_status",
+    "health",
+    "reason_codes",
+    "locations",
+}
 
 
 class ModelDialApiAdapterTests(unittest.TestCase):
@@ -113,7 +167,6 @@ class ModelDialApiAdapterTests(unittest.TestCase):
             "graderVersion",
             "evaluationProfile",
             "scoreBaselineId",
-            "pricingSnapshotId",
         )
         for field in fields:
             with self.subTest(field=field):
@@ -121,6 +174,14 @@ class ModelDialApiAdapterTests(unittest.TestCase):
                 payload["batch"][field] = ""
                 with self.assertRaises(SnapshotInvalid):
                     adapt_modeldial_api(payload)
+
+    def test_pricing_snapshot_id_is_optional_for_score_selection(self):
+        payload = load_fixture("api-complete.json")
+        payload["batch"]["pricingSnapshotId"] = ""
+        adapted = adapt_modeldial_api(payload)
+        self.assertEqual(select_snapshot(adapted)["selected_effort"], "max")
+        self.assertNotIn("pricing_snapshot_id", adapted)
+        self.assertNotIn("reference_costs", adapted)
 
     def test_entry_count_must_match_rankings(self):
         payload = load_fixture("api-complete.json")
@@ -138,7 +199,12 @@ class ModelDialApiAdapterTests(unittest.TestCase):
 
     def test_missing_effort_is_rejected(self):
         payload = load_fixture("api-complete.json")
-        payload["rankings"] = payload["rankings"][:-1]
+        missing = next(
+            row
+            for row in payload["rankings"]
+            if row["model"] == "gpt-5.6-luna" and row["reasoningEffort"] == "low"
+        )
+        payload["rankings"].remove(missing)
         payload["batch"]["entryCount"] -= 1
         with self.assertRaises(SnapshotInvalid):
             adapt_modeldial_api(payload)
@@ -186,6 +252,124 @@ class ModelDialApiAdapterTests(unittest.TestCase):
         payload["batch"]["entryCount"] += 1
         profile = select_snapshot(adapt_modeldial_api(payload))
         self.assertEqual(profile["selected_effort"], "max")
+
+    def test_api_reference_cost_adapter_projects_five_pairs(self):
+        adapted = adapt_modeldial_api(load_fixture("api-complete.json"))
+        self.assertEqual(adapted["pricing_snapshot_id"], "pricing-v1-879bc0a00c291f1ac75f7ae3b19ba969edbb307c679c813df5bb464c6c7e4512")
+        costs = adapted["reference_costs"]
+        self.assertEqual(costs["metric"], "modeldial_estimated_reference_cost_usd")
+        self.assertEqual(costs["provider"], "codex")
+        self.assertEqual(costs["route"], "official_login")
+        self.assertEqual(set(costs["by_effort"]), set(EFFORTS))
+        self.assertEqual(
+            costs["by_effort"]["high"],
+            {"luna_cost_usd": 0.064337, "sol_cost_usd": 1.072283},
+        )
+
+    def test_invalid_cost_metadata_is_omitted_without_invalidating_scores(self):
+        invalid_values = (None, True, float("nan"), float("inf"), -1)
+        for value in invalid_values:
+            with self.subTest(value=value):
+                payload = load_fixture("api-complete.json")
+                luna_high = next(
+                    row
+                    for row in payload["rankings"]
+                    if row["model"] == "gpt-5.6-luna"
+                    and row["reasoningEffort"] == "high"
+                )
+                luna_high["estimatedReferenceCostUsd"] = value
+                adapted = adapt_modeldial_api(payload)
+                self.assertEqual(set(validate_snapshot(adapted)["scores"]), set(EFFORTS))
+                self.assertNotIn("high", adapted["reference_costs"]["by_effort"])
+
+    def test_noncomparable_cost_pair_is_omitted(self):
+        payload = load_fixture("api-complete.json")
+        luna_max = next(
+            row
+            for row in payload["rankings"]
+            if row["model"] == "gpt-5.6-luna" and row["reasoningEffort"] == "max"
+        )
+        luna_max["estimatedReferenceCostUsd"] = 3.0
+        adapted = adapt_modeldial_api(payload)
+        self.assertEqual(select_snapshot(adapted)["selected_effort"], "max")
+        self.assertNotIn("max", adapted["reference_costs"]["by_effort"])
+
+    def test_cost_identity_errors_are_isolated_from_scores(self):
+        scenarios = ("missing", "wrong-provider", "wrong-route", "duplicate")
+        for scenario in scenarios:
+            with self.subTest(scenario=scenario):
+                payload = load_fixture("api-complete.json")
+                sol_high = next(
+                    row
+                    for row in payload["rankings"]
+                    if row["model"] == "gpt-5.6-sol"
+                    and row["reasoningEffort"] == "high"
+                )
+                if scenario == "missing":
+                    sol_high.pop("estimatedReferenceCostUsd")
+                elif scenario == "wrong-provider":
+                    sol_high["provider"] = "other"
+                elif scenario == "wrong-route":
+                    sol_high["route"] = "api_key"
+                else:
+                    payload["rankings"].append(copy.deepcopy(sol_high))
+                    payload["batch"]["entryCount"] += 1
+                adapted = adapt_modeldial_api(payload)
+                self.assertEqual(select_snapshot(adapted)["selected_effort"], "max")
+                self.assertNotIn("high", adapted["reference_costs"]["by_effort"])
+
+
+class ModelDialFullSnapshotCostTests(unittest.TestCase):
+    def test_full_snapshot_reference_cost_adapter_projects_five_pairs(self):
+        adapted = adapt_modeldial_snapshot(
+            load_fixture("first-party-complete.json"),
+            now=datetime(2026, 8, 11, 9, tzinfo=BJT),
+        )
+        self.assertEqual(adapted["pricing_snapshot_id"], "fixture-pricing-v1")
+        self.assertEqual(set(adapted["reference_costs"]["by_effort"]), set(EFFORTS))
+        self.assertEqual(
+            adapted["reference_costs"]["by_effort"]["max"],
+            {"luna_cost_usd": 0.154264, "sol_cost_usd": 2.571067},
+        )
+
+    def test_full_snapshot_cost_provenance_errors_are_fail_soft(self):
+        scenarios = (
+            "wrong-provider",
+            "wrong-route",
+            "pricing-missing",
+            "evidence-mismatch",
+            "duplicate",
+        )
+        for scenario in scenarios:
+            with self.subTest(scenario=scenario):
+                payload = load_fixture("first-party-complete.json")
+                sol_high = next(
+                    entry
+                    for entry in payload["entries"]
+                    if entry["model_configuration"]["canonical_model_id"]
+                    == "gpt-5.6-sol"
+                    and entry["model_configuration"]["reasoning_effort"] == "high"
+                )
+                if scenario == "wrong-provider":
+                    sol_high["provider"] = "other"
+                elif scenario == "wrong-route":
+                    sol_high["route_identity"] = "uncontrolled"
+                elif scenario == "pricing-missing":
+                    payload["pricing_snapshot_id"] = None
+                elif scenario == "evidence-mismatch":
+                    sol_high["source_evidence_group_id"] = "other-run"
+                else:
+                    payload["entries"].append(copy.deepcopy(sol_high))
+                adapted = adapt_modeldial_snapshot(
+                    payload, now=datetime(2026, 8, 11, 9, tzinfo=BJT)
+                )
+                self.assertEqual(select_snapshot(adapted)["selected_effort"], "max")
+                if scenario == "pricing-missing":
+                    self.assertNotIn("reference_costs", adapted)
+                else:
+                    self.assertNotIn(
+                        "high", adapted["reference_costs"]["by_effort"]
+                    )
 
 
 class SelectorTests(unittest.TestCase):
@@ -388,7 +572,13 @@ class SelectorTests(unittest.TestCase):
 
     def test_first_party_snapshot_rejects_cross_group_rows(self):
         payload = load_fixture("first-party-complete.json")
-        payload["entries"][-1]["source_evidence_group_id"] = "other-run"
+        luna_max = next(
+            entry
+            for entry in payload["entries"]
+            if entry["model_configuration"]["canonical_model_id"] == "gpt-5.6-luna"
+            and entry["model_configuration"]["reasoning_effort"] == "max"
+        )
+        luna_max["source_evidence_group_id"] = "other-run"
         with self.assertRaises(SnapshotInvalid):
             adapt_modeldial_snapshot(
                 payload, now=datetime(2026, 8, 11, 9, tzinfo=BJT)
@@ -438,7 +628,12 @@ class SelectorTests(unittest.TestCase):
     @patch("src.selector._fetch_bytes")
     def test_incomplete_api_falls_back_to_snapshot(self, fetch):
         api = load_fixture("api-complete.json")
-        api["rankings"] = api["rankings"][:-1]
+        missing = next(
+            row
+            for row in api["rankings"]
+            if row["model"] == "gpt-5.6-luna" and row["reasoningEffort"] == "low"
+        )
+        api["rankings"].remove(missing)
         api["batch"]["entryCount"] -= 1
         fetch.side_effect = [
             (json.dumps(api).encode("utf-8"), MODELDIAL_API_URL),
@@ -494,6 +689,102 @@ class SelectorTests(unittest.TestCase):
             )
             self.assertEqual(profile, old_profile)
 
+    def test_same_day_profile_is_not_backfilled(self):
+        with tempfile.TemporaryDirectory() as directory:
+            now = datetime(2026, 8, 13, 9, tzinfo=BJT)
+            legacy = select_snapshot(load_fixture("complete.json"), now=now)
+            legacy.pop("metadata_schema_version")
+            path = Path(directory) / "daily-profile.json"
+            original = json.dumps(legacy, sort_keys=True)
+            path.write_text(original, encoding="utf-8")
+            profile = ensure_daily_profile(
+                adapt_modeldial_api(load_fixture("api-complete.json")),
+                state_dir=directory,
+                now=now + timedelta(hours=1),
+            )
+            self.assertEqual(profile, legacy)
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+            self.assertNotIn("metadata_schema_version", profile)
+            self.assertNotIn("reference_cost_comparison", profile)
+
+    def test_legacy_lkg_selects_without_cost_suffix(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lkg = Path(directory) / "last-good-profile.json"
+            lkg.write_text(
+                json.dumps({"snapshot": load_fixture("complete.json")}),
+                encoding="utf-8",
+            )
+            profile = ensure_daily_profile(
+                None,
+                state_dir=directory,
+                now=datetime(2026, 8, 13, 9, tzinfo=BJT),
+            )
+            self.assertTrue(profile["fallback"])
+            self.assertNotIn("pricing_snapshot_id", profile)
+            self.assertNotIn("reference_cost_comparison", profile)
+
+    def test_capability_degradation_projects_selected_effort_cost(self):
+        profile = select_snapshot(
+            adapt_modeldial_snapshot(
+                load_fixture("first-party-complete.json"),
+                now=datetime(2026, 8, 11, 9, tzinfo=BJT),
+            ),
+            supported_efforts=("low", "medium", "high"),
+        )
+        self.assertEqual(profile["source_winner_effort"], "max")
+        self.assertEqual(profile["selected_effort"], "high")
+        self.assertTrue(profile["capability_degraded"])
+        self.assertEqual(profile["reference_cost_comparison"]["effort"], "high")
+        self.assertEqual(profile["reference_cost_comparison"]["reduction_pct"], 94.0)
+
+    def test_lkg_projects_fallback_and_reference_cost(self):
+        with tempfile.TemporaryDirectory() as directory:
+            live = adapt_modeldial_api(load_fixture("api-complete.json"))
+            day_one = datetime(2026, 8, 13, 9, tzinfo=BJT)
+            ensure_daily_profile(live, state_dir=directory, now=day_one)
+            profile = ensure_daily_profile(
+                load_fixture("missing-row.json"),
+                state_dir=directory,
+                now=day_one + timedelta(days=1),
+            )
+            self.assertTrue(profile["fallback"])
+            self.assertEqual(profile["reference_cost_comparison"]["effort"], "max")
+            self.assertEqual(
+                profile["pricing_snapshot_id"],
+                "pricing-v1-879bc0a00c291f1ac75f7ae3b19ba969edbb307c679c813df5bb464c6c7e4512",
+            )
+
+    def test_print_selection_json_contract(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = io.StringIO()
+            with redirect_stdout(output):
+                code = main(
+                    [
+                        "--snapshot",
+                        str(FIXTURES / "api-complete.json"),
+                        "--state-dir",
+                        directory,
+                        "--ensure-daily",
+                        "--print-selection",
+                    ]
+                )
+            self.assertEqual(code, 0)
+            selection = json.loads(output.getvalue())
+            self.assertEqual(
+                set(selection),
+                {
+                    "selected_role",
+                    "selected_effort",
+                    "fallback",
+                    "capability_degraded",
+                    "source_winner_effort",
+                    "reference_cost_comparison",
+                },
+            )
+            self.assertNotIn("source_url", selection)
+            self.assertNotIn("snapshot_hash", selection)
+            self.assertNotIn("pricing_snapshot_id", selection)
+
     def test_api_lkg_remains_compatible_with_existing_snapshot_contract(self):
         with tempfile.TemporaryDirectory() as directory:
             adapted = adapt_modeldial_api(load_fixture("api-complete.json"))
@@ -511,6 +802,296 @@ class SelectorTests(unittest.TestCase):
         self.assertNotIn("parse_radar_html", source)
         self.assertNotIn("/zh-CN/radar", source)
         self.assertFalse((FIXTURES / "radar-complete.html").exists())
+
+
+class StatusAndDiagnosticTests(unittest.TestCase):
+    def status(self, target, state=None, project=None):
+        output = io.StringIO()
+        arguments = [
+            "--status-json",
+            "--codex-home",
+            str(target),
+            "--state-dir",
+            str(state or target / "sol-luna-v4" / "state"),
+        ]
+        if project is not None:
+            arguments.extend(["--project-dir", str(project)])
+        with redirect_stdout(output):
+            code = main(arguments)
+        self.assertEqual(code, 0)
+        return json.loads(output.getvalue())
+
+    def test_status_no_profile_is_healthy_and_read_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            state = target / "sol-luna-v4" / "state"
+            before = tree_inventory(target)
+            with (
+                patch("src.selector.fetch_modeldial_snapshot", side_effect=AssertionError("network")),
+                patch("src.selector._selector_lock", side_effect=AssertionError("lock")),
+                patch("src.selector._write_json", side_effect=AssertionError("write")),
+            ):
+                status = self.status(target, state)
+            self.assertEqual(status["health"], "Healthy")
+            self.assertIn("TODAY_SELECTION_NOT_INITIALIZED", status["reason_codes"])
+            self.assertFalse(status["selection_initialized"])
+            self.assertFalse(state.exists())
+            self.assertFalse((state / "selector.lock").exists())
+            self.assertFalse((state / "daily-profile.json").exists())
+            self.assertFalse((state / "last-good-profile.json").exists())
+            self.assertEqual(tree_inventory(target), before)
+            self.assertNotIn(
+                "subprocess",
+                (ROOT / "src" / "selector.py").read_text(encoding="utf-8"),
+            )
+
+    def test_status_healthy_is_read_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            state = target / "sol-luna-v4" / "state"
+            ensure_daily_profile(
+                adapt_modeldial_api(load_fixture("api-complete.json")),
+                state_dir=state,
+                now=datetime.now(BJT),
+            )
+            before = tree_inventory(target)
+            with (
+                patch("src.selector.fetch_modeldial_snapshot", side_effect=AssertionError("network")),
+                patch("src.selector._selector_lock", side_effect=AssertionError("lock")),
+                patch("src.selector._write_json", side_effect=AssertionError("write")),
+            ):
+                status = self.status(target, state)
+            self.assertEqual(status["health"], "Healthy")
+            self.assertEqual(status["reason_codes"], ["OK"])
+            self.assertTrue(status["selection_initialized"])
+            self.assertEqual(tree_inventory(target), before)
+
+    def test_status_invalid_today_profile_is_unavailable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            state = target / "sol-luna-v4" / "state"
+            state.mkdir(parents=True)
+            (state / "daily-profile.json").write_text(
+                json.dumps(
+                    {
+                        "selection_date_bjt": datetime.now(BJT).date().isoformat(),
+                        "selected_at_bjt": datetime.now(BJT).isoformat(),
+                        "selected_effort": "ultra",
+                        "selected_role": "luna_ultra",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            status = self.status(target, state)
+            self.assertEqual(status["health"], "Unavailable")
+            self.assertIn("DAILY_PROFILE_INVALID", status["reason_codes"])
+
+    def test_status_invalid_json_profile_remains_unavailable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            state = target / "sol-luna-v4" / "state"
+            state.mkdir(parents=True)
+            (state / "daily-profile.json").write_text("{", encoding="utf-8")
+
+            status = self.status(target, state)
+
+            self.assertEqual(status["health"], "Unavailable")
+            self.assertIn("DAILY_PROFILE_INVALID", status["reason_codes"])
+            self.assertNotIn("DAILY_PROFILE_READ_FAILED", status["reason_codes"])
+
+    def test_status_profile_read_failures_are_misconfigured_and_read_only(self):
+        failures = (
+            OSError("OSError SecretUser C:\\Users\\SecretUser"),
+            PermissionError("Permission denied C:\\Users\\SecretUser"),
+            UnicodeError("UnicodeError SecretUser C:\\Users\\SecretUser"),
+        )
+        for failure in failures:
+            with self.subTest(failure=type(failure).__name__):
+                with tempfile.TemporaryDirectory() as directory:
+                    target = Path(directory) / ".codex"
+                    materialize_fake_global(target)
+                    state = target / "sol-luna-v4" / "state"
+                    state.mkdir(parents=True)
+                    profile_path = state / "daily-profile.json"
+                    profile_path.write_text("{}", encoding="utf-8")
+                    before = tree_inventory(target)
+                    original_read_text = Path.read_text
+
+                    def fail_profile_read(path, *args, **kwargs):
+                        if path.name == "daily-profile.json":
+                            raise failure
+                        return original_read_text(path, *args, **kwargs)
+
+                    with (
+                        patch.object(Path, "read_text", fail_profile_read),
+                        patch(
+                            "src.selector.fetch_modeldial_snapshot",
+                            side_effect=AssertionError("network"),
+                        ),
+                        patch(
+                            "src.selector._selector_lock",
+                            side_effect=AssertionError("lock"),
+                        ),
+                        patch(
+                            "src.selector._write_json",
+                            side_effect=AssertionError("write"),
+                        ),
+                        patch(
+                            "src.selector.ensure_daily_profile",
+                            side_effect=AssertionError("selection"),
+                        ),
+                    ):
+                        status = self.status(target, state)
+
+                    rendered = json.dumps(status)
+                    self.assertEqual(status["health"], "Misconfigured")
+                    self.assertIn("DAILY_PROFILE_READ_FAILED", status["reason_codes"])
+                    self.assertNotIn("DAILY_PROFILE_INVALID", status["reason_codes"])
+                    self.assertNotEqual(status["health"], "Unavailable")
+                    self.assertFalse(status["selection_initialized"])
+                    self.assertEqual(tree_inventory(target), before)
+                    for canary in (
+                        str(failure),
+                        "Permission denied",
+                        "C:\\Users\\SecretUser",
+                        "SecretUser",
+                    ):
+                        self.assertNotIn(canary, rendered)
+
+    def test_status_profile_read_failure_does_not_affect_normal_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            state = target / "sol-luna-v4" / "state"
+            now = datetime.now(BJT)
+            snapshot = adapt_modeldial_api(load_fixture("api-complete.json"), now=now)
+            original_profile = ensure_daily_profile(snapshot, state_dir=state, now=now)
+            profile_path = state / "daily-profile.json"
+            profile_bytes = profile_path.read_bytes()
+            original_read_text = Path.read_text
+
+            def fail_profile_read(path, *args, **kwargs):
+                if path.name == "daily-profile.json":
+                    raise OSError("status-only failure")
+                return original_read_text(path, *args, **kwargs)
+
+            with patch.object(Path, "read_text", fail_profile_read):
+                status = self.status(target, state)
+
+            self.assertEqual(status["health"], "Misconfigured")
+            self.assertIn("DAILY_PROFILE_READ_FAILED", status["reason_codes"])
+            self.assertEqual(profile_path.read_bytes(), profile_bytes)
+
+            selected = ensure_daily_profile(snapshot, state_dir=state, now=now)
+            self.assertEqual(selected, original_profile)
+            self.assertEqual(selected["selected_role"], original_profile["selected_role"])
+
+    def test_status_degraded_projects_both_indicators(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            state = target / "sol-luna-v4" / "state"
+            state.mkdir(parents=True)
+            profile = select_snapshot(
+                adapt_modeldial_snapshot(
+                    load_fixture("first-party-complete.json"),
+                    now=datetime.now(BJT),
+                ),
+                supported_efforts=("low", "medium", "high"),
+                now=datetime.now(BJT),
+                fallback=True,
+            )
+            (state / "daily-profile.json").write_text(
+                json.dumps(profile), encoding="utf-8"
+            )
+            status = self.status(target, state)
+            self.assertEqual(status["health"], "Degraded")
+            self.assertEqual(
+                status["reason_codes"],
+                ["LKG_FALLBACK_ACTIVE", "CAPABILITY_DEGRADED"],
+            )
+            self.assertTrue(status["fallback"])
+            self.assertTrue(status["capability_degraded"])
+            self.assertTrue(status["reference_cost_metadata_available"])
+
+    def test_status_misconfigured_precedence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            (target / "sol-luna-v4" / "install-manifest.json").unlink()
+            state = target / "sol-luna-v4" / "state"
+            state.mkdir(parents=True)
+            (state / "daily-profile.json").write_text("{}", encoding="utf-8")
+            status = self.status(target, state)
+            self.assertEqual(status["health"], "Misconfigured")
+            self.assertEqual(status["reason_codes"][0], "MANIFEST_MISSING")
+
+    def test_status_reader_failure_is_isolated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            (target / "sol-luna-v4" / "install-manifest.json").write_bytes(b"not-json")
+            status = self.status(target)
+            self.assertEqual(status["health"], "Misconfigured")
+            self.assertIn("MANIFEST_INVALID", status["reason_codes"])
+
+    def test_diagnostic_exact_whitelist(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            status = self.status(target)
+            self.assertEqual(set(status), DIAGNOSTIC_KEYS)
+            self.assertEqual(
+                set(status["locations"]),
+                {"codex_home", "state_dir", "project_root"},
+            )
+            self.assertEqual(status["locations"]["codex_home"], "<CODEX_HOME>")
+            self.assertEqual(status["locations"]["state_dir"], "<STATE_DIR>")
+            self.assertEqual(status["locations"]["project_root"], "Not checked")
+
+    def test_diagnostic_sanitizer_redacts_canaries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / ".codex"
+            materialize_fake_global(target)
+            state = target / "sol-luna-v4" / "state"
+            state.mkdir(parents=True)
+            now = datetime.now(BJT)
+            profile = select_snapshot(
+                adapt_modeldial_api(load_fixture("api-complete.json")), now=now
+            )
+            windows_canary = "C:\\" + "Users\\SecretUser"
+            unc_canary = "\\\\" + "private-server\\share"
+            private_url = "https" + "://private.example/repo"
+            profile["snapshot_id"] = (
+                windows_canary + " Bearer SECRET token=SECRET"
+            )
+            profile["pricing_snapshot_id"] = (
+                f"{unc_canary} {private_url} api_key=SECRET sk-secret ghp_secret"
+            )
+            (state / "daily-profile.json").write_text(
+                json.dumps(profile), encoding="utf-8"
+            )
+            project = Path(directory) / "SecretUser-project"
+            project.mkdir()
+            status = self.status(target, state, project)
+            rendered = json.dumps(status)
+            for canary in (
+                str(target),
+                str(project),
+                windows_canary,
+                unc_canary,
+                private_url,
+                "Bearer",
+                "token=",
+                "api_key=",
+                "sk-",
+                "ghp_",
+            ):
+                self.assertNotIn(canary, rendered)
 
 
 if __name__ == "__main__":

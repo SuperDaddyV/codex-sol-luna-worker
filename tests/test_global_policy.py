@@ -20,6 +20,7 @@ class GlobalPolicyTests(unittest.TestCase):
             self.assertNotIn(forbidden, TEMPLATE)
         self.assertIn("<CODEX_HOME>", TEMPLATE)
         self.assertIn("<SELECTOR_COMMAND>", TEMPLATE)
+        self.assertIn("<STATUS_COMMAND>", TEMPLATE)
         self.assertIn("[agents] enabled = false", TEMPLATE)
 
     def test_delegation_receipt_is_evidence_based_and_low_noise(self):
@@ -60,6 +61,15 @@ class GlobalPolicyTests(unittest.TestCase):
         self.assertIn("add telemetry", TEMPLATE)
         self.assertIn("not runtime attestation", TEMPLATE)
         self.assertIn("Never expose hidden chain-of-thought", TEMPLATE)
+        self.assertIn("same-batch, same-pricing, same-effort", TEMPLATE)
+        for forbidden_claim in (
+            "token saved",
+            "cost saved",
+            "bill saved",
+            "quota saved",
+            "whole-task saving",
+        ):
+            self.assertNotIn(forbidden_claim, TEMPLATE.lower())
 
         self.assertIn("<SELECTOR_COMMAND>", TEMPLATE)
         self.assertIn("Do not substitute a direct model", TEMPLATE)
@@ -120,8 +130,10 @@ class GlobalPolicyTests(unittest.TestCase):
         )
         self.assertIn(r'python "C:\Program Data\Codex Home\sol-luna-v4\selector.py"', rendered)
         self.assertIn(r'--state-dir "C:\Program Data\Codex Home\sol-luna-v4\state"', rendered)
-        self.assertIn("--ensure-daily --print-role", rendered)
+        self.assertIn("--ensure-daily --print-selection", rendered)
+        self.assertIn("--status-json", rendered)
         self.assertNotIn("<CODEX_HOME>", rendered)
+        self.assertNotIn("<STATUS_COMMAND>", rendered)
 
     def test_linux_rendering_quotes_paths(self):
         rendered = render_global_policy(
@@ -136,6 +148,84 @@ class GlobalPolicyTests(unittest.TestCase):
         )
         self.assertIn("python '/Volumes/Codex Home/sol-luna-v4/selector.py'", rendered)
         self.assertIn("--state-dir '/Volumes/Codex Home/sol-luna-v4/state'", rendered)
+
+    def test_receipt_suffix_order_and_budget(self):
+        order = (
+            " · parallel",
+            " · Luna ref-cost ↓X.X%",
+            " · LKG",
+            " · capability <source_effort>→<selected_effort>",
+        )
+        positions = [TEMPLATE.index(item) for item in order]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("exact order", TEMPLATE)
+        self.assertIn("at most one of each suffix", TEMPLATE)
+        self.assertIn("Sol-only receipts never receive", TEMPLATE)
+        self.assertIn("Normal healthy/API/full-capability state stays silent", TEMPLATE)
+
+    def test_receipt_requires_zero_extra_work(self):
+        self.assertIn("Save that one result for delegation and the final receipt", TEMPLATE)
+        for forbidden_extra in (
+            "must not invoke the selector",
+            "probe capabilities",
+            "spawn or inspect a child",
+            "read files, call tools or networks",
+            "write state",
+            "add telemetry",
+        ):
+            self.assertIn(forbidden_extra, TEMPLATE)
+
+    def test_status_and_diagnostic_share_one_read_only_reader(self):
+        self.assertIn("## Natural-language status and diagnostics", TEMPLATE)
+        self.assertEqual(TEMPLATE.count("run `<STATUS_COMMAND>` exactly once"), 1)
+        self.assertIn("run the same `<STATUS_COMMAND>` exactly once", TEMPLATE)
+        for forbidden_action in (
+            "fetch ModelDial",
+            "create or refresh a profile or LKG",
+            "take the selector lock",
+            "spawn Luna",
+            "write state",
+        ):
+            self.assertIn(forbidden_action, TEMPLATE)
+        self.assertIn("Selection not initialized", TEMPLATE)
+        self.assertIn("sanitized whitelist", TEMPLATE)
+
+    def test_latest_stable_and_prerelease_semver_contract(self):
+        self.assertIn("including prereleases", TEMPLATE)
+        self.assertIn("Do not ask Stable or Preview again", TEMPLATE)
+        self.assertIn("strict project SemVer", TEMPLATE)
+        self.assertIn("Choose by SemVer precedence", TEMPLATE)
+        self.assertIn("never by publication time", TEMPLATE)
+        self.assertIn("draft = false", TEMPLATE)
+        self.assertIn("non-null `published_at`", TEMPLATE)
+        self.assertIn("Reject build metadata", TEMPLATE)
+        self.assertIn("malformed leading zeroes", TEMPLATE)
+        self.assertIn("duplicate Releases with the same normalized version", TEMPLATE)
+
+    def test_immutable_tag_and_prerelease_risk_contract(self):
+        for required in (
+            "direct ref",
+            "annotated or lightweight tag",
+            "exact 40-hex commit",
+            "detached checkout",
+            "TAG_MOVED",
+            "--source-commit <40hex>",
+            "never install from `master`",
+            "If the installed version is already the target",
+            "zero writes and zero backups",
+            "never downgrade automatically",
+            "渠道：Prerelease / Public Beta",
+            "外部真实运行验证少于稳定版",
+            "修改托管文件前会创建事务备份",
+        ):
+            self.assertIn(required, TEMPLATE)
+
+    def test_upgrade_discovery_stays_outside_installer(self):
+        installer = (ROOT / "scripts" / "install.py").read_text(encoding="utf-8")
+        self.assertIn("Release discovery is a semantic workflow outside the installer", TEMPLATE)
+        self.assertNotIn("/repos/SuperDaddyV/codex-sol-luna-worker/releases", installer)
+        self.assertNotIn("target_commitish", installer)
+        self.assertNotIn("urllib", installer)
 
 
 if __name__ == "__main__":

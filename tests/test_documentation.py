@@ -160,8 +160,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
     def test_v41_rc4_published_flow_and_runtime_acceptance_are_explicit(self):
-        aligned_docs = (
-            SETUP,
+        published_docs = (README, README_ZH, SETUP)
+        source_docs = (
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
             ROOT / "SECURITY.md",
@@ -177,10 +177,14 @@ class DocumentationTests(unittest.TestCase):
                 ROOT / "SECURITY.md",
             )
         )
-        for path in aligned_docs:
+        for path in published_docs:
             self.assertIn("v4.1.0-rc4", text(path))
-            self.assertIn("published prerelease", text(path).lower())
             self.assertNotIn("source candidate", text(path).lower())
+        self.assertIn("published prerelease", text(SETUP).lower())
+        for path in source_docs:
+            self.assertIn("v4.1.0-rc4", text(path))
+            self.assertIn("v4.1.0-rc5", text(path))
+            self.assertIn("source candidate", text(path).lower())
         for path in (README, README_ZH):
             self.assertIn("v4.1.0-rc4", text(path))
             self.assertNotIn("source candidate", text(path).lower())
@@ -260,6 +264,44 @@ class DocumentationTests(unittest.TestCase):
         security = text(ROOT / "SECURITY.md")
         self.assertIn("For this public repository", security)
         self.assertNotIn("For a future public repository", security)
+
+    def test_rc5_phase_a_source_docs_do_not_fake_an_immutable_pin(self):
+        architecture = text(ROOT / "ARCHITECTURE.md")
+        security = text(ROOT / "SECURITY.md")
+        runtime = text(ROOT / "RUNTIME_TESTS.md")
+        changelog = text(ROOT / "CHANGELOG.md")
+        setup = text(SETUP)
+        readmes = text(README) + "\n" + text(README_ZH)
+
+        for required in (
+            "structured selection metadata boundary",
+            "read-only health reader",
+            "fail-soft",
+            "single state authority",
+        ):
+            self.assertIn(required, architecture)
+        for required in (
+            "exact whitelist",
+            "symbolic locations",
+            "immutable commit",
+            "no auto-updater",
+        ):
+            self.assertIn(required, security)
+        for number in range(1, 11):
+            self.assertRegex(runtime, rf"(?m)^- O{number} .* — `NOT RUN`$")
+        for status in (
+            "RC5_SOURCE_COMMIT_CREATED = NO",
+            "RC5_SOURCE_SHA_KNOWN = NO",
+            "IMMUTABLE_RC5_SETUP_PIN_WRITTEN = NO",
+            "PHASE_B_REQUIRED = YES",
+        ):
+            self.assertIn(status, runtime)
+        self.assertIn("source candidate; not released", changelog)
+        self.assertIn("No Source Commit A", changelog)
+        self.assertNotIn("v4.1.0-rc5", setup)
+        self.assertNotIn("v4.1.0-rc5", readmes)
+        for placeholder in ("<source-sha>", "TBD", "TODO-for-release"):
+            self.assertNotIn(placeholder, "\n".join((architecture, security, runtime, changelog)))
 
     def test_delegation_receipt_user_guidance_is_bilingual_and_bounded(self):
         english = text(README)

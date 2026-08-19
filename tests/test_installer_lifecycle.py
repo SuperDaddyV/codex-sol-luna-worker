@@ -16,6 +16,7 @@ from scripts.install import (
     InstallerError,
     MANIFEST_RELATIVE,
     STABLE_AGENT_FILES,
+    dry_run_install,
     install,
     rollback,
     uninstall,
@@ -116,6 +117,57 @@ def simulate_rc3_managed_policy(target: Path) -> None:
     )
 
 
+def simulate_rc4_managed_install(target: Path) -> None:
+    agents_path = target / "AGENTS.md"
+    policy = agents_path.read_text(encoding="utf-8")
+    policy = "\n".join(
+        line for line in policy.splitlines() if not line.startswith("- Status command:")
+    ) + "\n"
+    policy = policy.replace(
+        "- The selector returns receipt-safe selection JSON. Save that one result for "
+        "delegation and the final receipt; do not select again for reporting.\n",
+        "",
+    )
+    policy = policy.replace(
+        "- When `selected_role` is valid, delegate through that native custom agent type.\n",
+        "- When the selector returns a valid role, delegate through that native custom "
+        "agent type.\n",
+    )
+    suffix_start = policy.index("- A delegated receipt may append only")
+    suffix_end = policy.index(
+        "- If any Luna child actually ran", suffix_start
+    )
+    policy = policy[:suffix_start] + policy[suffix_end:]
+    status_start = policy.index("## Natural-language status and diagnostics")
+    luna_start = policy.index("## Luna", status_start)
+    policy = policy[:status_start] + policy[luna_start:]
+    policy = policy.replace("--print-selection", "--print-role")
+    agents_path.write_bytes(policy.encode("utf-8"))
+
+    block_start = policy.index(AGENTS_BEGIN)
+    block_finish = policy.index(AGENTS_END, block_start) + len(AGENTS_END)
+    if block_finish < len(policy) and policy[block_finish] == "\r":
+        block_finish += 1
+    if block_finish < len(policy) and policy[block_finish] == "\n":
+        block_finish += 1
+
+    selector_relative = "sol-luna-v4/selector.py"
+    selector_path = target / selector_relative
+    selector = b"# simulated manifest-owned RC4 selector\n" + selector_path.read_bytes()
+    selector_path.write_bytes(selector)
+    manifest_path = target / MANIFEST_RELATIVE
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["version"] = "v4.1.0-rc4"
+    manifest.pop("source_commit", None)
+    manifest["owned_files"][selector_relative] = hashlib.sha256(selector).hexdigest()
+    manifest["owned_blocks"]["AGENTS.md"]["sha256"] = hashlib.sha256(
+        policy[block_start:block_finish].encode("utf-8")
+    ).hexdigest()
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
 def call_install(target: Path, **kwargs):
     return install(
         target,
@@ -204,18 +256,23 @@ class InstallerLifecycleTests(unittest.TestCase):
                     agent = tomllib.load(handle)
                 self.assertEqual(agent["model"], "gpt-5.6-luna")
                 self.assertFalse(agent["agents"]["enabled"])
-            installed_policy = (target / "AGENTS.md").read_text()
+            installed_policy = (target / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(AGENTS_BEGIN, installed_policy)
             self.assertIn(str(target.resolve()), installed_policy)
-            self.assertIn("--ensure-daily --print-role", installed_policy)
+            self.assertIn("--ensure-daily --print-selection", installed_policy)
+            self.assertIn("--status-json", installed_policy)
             self.assertNotIn("<CODEX_HOME>", installed_policy)
             self.assertNotIn(".var", installed_policy)
-            self.assertIn(CONFIG_BEGIN, (target / "config.toml").read_text())
+            self.assertIn(
+                CONFIG_BEGIN, (target / "config.toml").read_text(encoding="utf-8")
+            )
             self.assertTrue((target / "sol-luna-v4" / "selector.py").is_file())
             self.assertTrue((target / MANIFEST_RELATIVE).is_file())
-            manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
+            manifest = json.loads(
+                (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
+            )
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.1.0-rc4")
+            self.assertEqual(manifest["version"], "v4.1.0-rc5")
             self.assertEqual(len(manifest["owned_files"]), 6)
             self.assertEqual(set(manifest["owned_blocks"]), {"AGENTS.md", "config.toml"})
             self.assertNotIn("installation_id", manifest)
@@ -244,15 +301,21 @@ class InstallerLifecycleTests(unittest.TestCase):
             (target / "hooks.json").write_bytes(original_hook)
 
             call_install(target)
-            config = tomllib.loads((target / "config.toml").read_text())
+            config = tomllib.loads(
+                (target / "config.toml").read_text(encoding="utf-8")
+            )
             self.assertEqual(config["model"], "user-model")
             self.assertEqual(config["mcp_servers"]["user"]["command"], "user-tool")
             self.assertEqual(config["agents"]["user_option"], "keep")
             self.assertTrue(config["agents"]["enabled"])
             self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 3)
-            self.assertTrue((target / "AGENTS.md").read_text().startswith(original_agents))
+            self.assertTrue(
+                (target / "AGENTS.md")
+                .read_text(encoding="utf-8")
+                .startswith(original_agents)
+            )
             self.assertEqual(
-                (target / "agents" / "user-agent.toml").read_text(),
+                (target / "agents" / "user-agent.toml").read_text(encoding="utf-8"),
                 'name = "user_agent"\n',
             )
             self.assertEqual((target / "hooks.json").read_bytes(), original_hook)
@@ -309,7 +372,9 @@ class InstallerLifecycleTests(unittest.TestCase):
                 allow_validation_sandbox=True,
             )
             self.assertEqual(result["status"], "UNINSTALLED")
-            self.assertEqual((target / "config.toml").read_text(), original_config)
+            self.assertEqual(
+                (target / "config.toml").read_text(encoding="utf-8"), original_config
+            )
 
     def test_upgrade_restores_leaf_removes_owned_experiment_and_rolls_back(self):
         with sandbox() as directory:
@@ -317,10 +382,12 @@ class InstallerLifecycleTests(unittest.TestCase):
             target.mkdir()
             call_install(target)
             manifest_path = target / MANIFEST_RELATIVE
-            manifest = json.loads(manifest_path.read_text())
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             for filename in STABLE_AGENT_FILES:
                 path = target / "agents" / filename
-                prototype = path.read_text().replace("\n[agents]\nenabled = false\n", "\n")
+                prototype = path.read_text(encoding="utf-8").replace(
+                    "\n[agents]\nenabled = false\n", "\n"
+                )
                 self.assertNotIn("enabled = false", prototype)
                 write_text(path, prototype)
                 manifest["owned_files"][f"agents/{filename}"] = hashlib.sha256(
@@ -344,7 +411,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 with (target / "agents" / filename).open("rb") as handle:
                     self.assertFalse(tomllib.load(handle)["agents"]["enabled"])
             self.assertEqual(
-                (target / "agents" / "user-agent.toml").read_text(),
+                (target / "agents" / "user-agent.toml").read_text(encoding="utf-8"),
                 'name = "user_agent"\n',
             )
             self.assertTrue(Path(upgraded["backup"]).is_dir())
@@ -358,7 +425,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
 
-    def test_v40_manifest_owned_selector_upgrades_to_rc4_and_rolls_back(self):
+    def test_v40_manifest_owned_selector_upgrades_to_rc5_and_rolls_back(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -405,7 +472,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(
                 json.loads(manifest_path.read_text(encoding="utf-8"))["version"],
-                "v4.1.0-rc4",
+                "v4.1.0-rc5",
             )
             self.assertEqual(
                 {
@@ -438,7 +505,122 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
 
-    def test_rc1_global_policy_upgrades_to_rc4_receipt_and_rolls_back(self):
+    def test_rc4_to_rc5_upgrade_changes_exactly_three_paths(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            write_text(target / "config.toml", 'user_setting = "preserve"\n')
+            write_text(target / "AGENTS.md", "User policy remains.\n")
+            call_install(target)
+            simulate_rc4_managed_install(target)
+
+            state = target / "sol-luna-v4" / "state"
+            write_text(state / "daily-profile.json", '{"preserve":"daily"}\n')
+            write_text(state / "last-good-profile.json", '{"preserve":"lkg"}\n')
+            agents_before = {
+                filename: (target / "agents" / filename).read_bytes()
+                for filename in STABLE_AGENT_FILES
+            }
+            config_before = (target / "config.toml").read_bytes()
+            state_before = {
+                path.name: path.read_bytes() for path in state.iterdir() if path.is_file()
+            }
+            before = tree_hash(target)
+            expected = {
+                "AGENTS.md",
+                "sol-luna-v4/selector.py",
+                MANIFEST_RELATIVE.as_posix(),
+            }
+
+            dry = dry_run_install(
+                target,
+                project_root=ROOT,
+                generated_at=FIXED_TIME + timedelta(days=1),
+                allow_validation_sandbox=True,
+                source_commit="b" * 40,
+            )
+            self.assertEqual(dry["status"], "DRY_RUN_PASS")
+            self.assertEqual(dry["effective_changes"], 3)
+            self.assertEqual(set(dry["modified"]), expected)
+            self.assertEqual(tree_hash(target), before)
+
+            upgraded = call_install(
+                target,
+                generated_at=FIXED_TIME + timedelta(days=1),
+                source_commit="b" * 40,
+            )
+            self.assertEqual(upgraded["status"], "UPGRADED")
+            self.assertEqual(upgraded["effective_changes"], 3)
+            self.assertEqual(set(upgraded["modified"]), expected)
+            backup = Path(upgraded["backup"])
+            backup_entries = json.loads(
+                (backup / "snapshot.json").read_text(encoding="utf-8")
+            )["entries"]
+            self.assertEqual({entry["path"] for entry in backup_entries}, expected)
+            manifest = json.loads(
+                (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["version"], "v4.1.0-rc5")
+            self.assertEqual(manifest["schema_version"], 1)
+            self.assertEqual(manifest["source_commit"], "b" * 40)
+            self.assertEqual(
+                {
+                    filename: (target / "agents" / filename).read_bytes()
+                    for filename in STABLE_AGENT_FILES
+                },
+                agents_before,
+            )
+            self.assertEqual((target / "config.toml").read_bytes(), config_before)
+            self.assertEqual(
+                {
+                    path.name: path.read_bytes()
+                    for path in state.iterdir()
+                    if path.is_file()
+                },
+                state_before,
+            )
+
+            second = call_install(
+                target, generated_at=FIXED_TIME + timedelta(days=2)
+            )
+            self.assertEqual(second["status"], "IDEMPOTENT_PASS")
+            self.assertEqual(second["effective_changes"], 0)
+            self.assertIsNone(second["backup"])
+            self.assertEqual(
+                json.loads(
+                    (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
+                )["source_commit"],
+                "b" * 40,
+            )
+
+            rolled_back = rollback(
+                target,
+                backup,
+                project_root=ROOT,
+                allow_validation_sandbox=True,
+            )
+            self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
+            self.assertEqual(tree_hash(target), before)
+
+    def test_rc4_modified_owned_content_blocks_upgrade(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            call_install(target)
+            simulate_rc4_managed_install(target)
+            policy = target / "AGENTS.md"
+            policy.write_text(
+                policy.read_text(encoding="utf-8").replace(
+                    "Sol is the sole planner", "User changed the owned policy"
+                ),
+                encoding="utf-8",
+            )
+            before = tree_hash(target)
+            with self.assertRaises(InstallerError) as raised:
+                call_install(target, generated_at=FIXED_TIME + timedelta(days=1))
+            self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
+            self.assertEqual(tree_hash(target), before)
+
+    def test_rc1_global_policy_upgrades_to_rc5_receipt_and_rolls_back(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -488,7 +670,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 json.loads(
                     (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
                 )["version"],
-                "v4.1.0-rc4",
+                "v4.1.0-rc5",
             )
             self.assertEqual(
                 (target / "sol-luna-v4" / "selector.py").read_bytes(),
@@ -530,7 +712,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_bytes(), rc1_manifest_before
             )
 
-    def test_rc1_modified_owned_policy_blocks_rc4_upgrade(self):
+    def test_rc1_modified_owned_policy_blocks_rc5_upgrade(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -552,7 +734,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
             self.assertEqual(tree_hash(target), before)
 
-    def test_rc3_global_policy_upgrades_to_rc4_evidence_gate_and_rolls_back(self):
+    def test_rc3_global_policy_upgrades_to_rc5_evidence_gate_and_rolls_back(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -605,7 +787,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
             )
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.1.0-rc4")
+            self.assertEqual(manifest["version"], "v4.1.0-rc5")
             self.assertEqual(
                 (target / "sol-luna-v4" / "selector.py").read_bytes(),
                 selector_before,
@@ -646,7 +828,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_bytes(), rc3_manifest_before
             )
 
-    def test_rc3_modified_owned_policy_blocks_rc4_upgrade(self):
+    def test_rc3_modified_owned_policy_blocks_rc5_upgrade(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -684,12 +866,23 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertTrue((target / "agents" / "user-agent.toml").is_file())
             self.assertTrue((target / "hooks" / "user_hook.py").is_file())
             self.assertTrue((target / "sol-luna-router" / "user-note.txt").is_file())
-            hooks = json.loads((target / "hooks.json").read_text())
+            hooks = json.loads((target / "hooks.json").read_text(encoding="utf-8"))
             self.assertEqual(len(hooks["hooks"]["PreToolUse"]), 1)
             self.assertNotIn("SubagentStart", hooks["hooks"])
-            self.assertIn("User instruction stays.", (target / "AGENTS.md").read_text())
-            self.assertNotIn("SOL_LUNA_DAILY_BEST", (target / "AGENTS.md").read_text())
-            self.assertEqual(tomllib.loads((target / "config.toml").read_text())["user_model"], "preserve")
+            self.assertIn(
+                "User instruction stays.",
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+            )
+            self.assertNotIn(
+                "SOL_LUNA_DAILY_BEST",
+                (target / "AGENTS.md").read_text(encoding="utf-8"),
+            )
+            self.assertEqual(
+                tomllib.loads(
+                    (target / "config.toml").read_text(encoding="utf-8")
+                )["user_model"],
+                "preserve",
+            )
             self.assertFalse((target / "sol-luna-v4" / "state").exists())
 
             rollback(
@@ -810,7 +1003,9 @@ class InstallerLifecycleTests(unittest.TestCase):
                     "legacy_manifest_cleanup",
                 ],
             )
-            manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
+            manifest = json.loads(
+                (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
+            )
             self.assertEqual(manifest["legacy_cleanup"]["status"], "complete")
 
     def test_postcommit_legacy_manifest_cleanup_failure_is_retryable(self):
@@ -830,7 +1025,9 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertTrue(
                 (target / "sol-luna-router" / "install-manifest.json").is_file()
             )
-            manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
+            manifest = json.loads(
+                (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
+            )
             self.assertEqual(manifest["legacy_cleanup"]["status"], "pending")
             self.assertTrue((target / "agents" / "luna-low.toml").is_file())
 
@@ -843,7 +1040,9 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertFalse(
                 (target / "sol-luna-router" / "install-manifest.json").exists()
             )
-            manifest = json.loads((target / MANIFEST_RELATIVE).read_text())
+            manifest = json.loads(
+                (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
+            )
             self.assertEqual(manifest["legacy_cleanup"]["status"], "complete")
 
     def test_foreign_luna_agent_is_ownership_conflict(self):
@@ -940,8 +1139,12 @@ class InstallerLifecycleTests(unittest.TestCase):
                 self.assertFalse((target / "agents" / filename).exists())
             self.assertFalse((target / "sol-luna-v4" / "selector.py").exists())
             self.assertFalse((target / MANIFEST_RELATIVE).exists())
-            self.assertEqual((target / "config.toml").read_text(), original_config)
-            self.assertEqual((target / "AGENTS.md").read_text(), original_agents)
+            self.assertEqual(
+                (target / "config.toml").read_text(encoding="utf-8"), original_config
+            )
+            self.assertEqual(
+                (target / "AGENTS.md").read_text(encoding="utf-8"), original_agents
+            )
             self.assertTrue((target / "agents" / "user-agent.toml").is_file())
             self.assertTrue((target / "runtime" / "user-state.json").is_file())
 

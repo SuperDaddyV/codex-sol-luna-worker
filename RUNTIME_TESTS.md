@@ -4,6 +4,29 @@ Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RECORDED RUNTIM
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
+## v4.1.0-rc5 source candidate — O1-O10 acceptance contract
+
+RC5 `Observability & UX` is implemented in Source Phase A only. Unit,
+integration, and fake-home lifecycle tests are source evidence; they are not a
+substitute for a real installed-runtime acceptance run. The immutable setup pin
+will be written only in Phase B after Source Commit A exists.
+
+- O1 Natural-language healthy status — `NOT RUN`
+- O2 No-profile healthy status — `NOT RUN`
+- O3 Degraded LKG Receipt and status — `NOT RUN`
+- O4 Capability-degraded selected-effort Receipt and status — `NOT RUN`
+- O5 Unavailable evidence status — `NOT RUN`
+- O6 Misconfigured precedence — `NOT RUN`
+- O7 Safe diagnostic report — `NOT RUN`
+- O8 Latest prerelease immutable discovery and notice — `NOT RUN`
+- O9 Real RC4→RC5 Global upgrade, idempotency, and rollback readiness — `NOT RUN`
+- O10 Fresh-session delegation and Receipt suffixes — `NOT RUN`
+
+`RC5_SOURCE_COMMIT_CREATED = NO`; `RC5_SOURCE_SHA_KNOWN = NO`;
+`IMMUTABLE_RC5_SETUP_PIN_WRITTEN = NO`; `PHASE_B_REQUIRED = YES`.
+
+`SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE` remains unchanged.
+
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 
 Static validation and Native Runtime validation remain separate gates. The runtime tests do not grant Luna planning, architecture, orchestration, or final-acceptance authority. Sol owns those responsibilities.

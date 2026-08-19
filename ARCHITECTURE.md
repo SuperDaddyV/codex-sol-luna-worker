@@ -1,4 +1,9 @@
-# v4.1.0-rc4 Native Architecture Note
+# v4.1.0-rc5 Source Candidate Architecture Note
+
+`v4.1.0-rc5 — Observability & UX` is a Phase A source candidate, not a
+published release. `v4.1.0-rc4` remains the published Preview prerelease and
+`v4.0.0` remains Stable. The immutable RC5 setup pin is intentionally deferred
+until a real Source Commit A exists.
 
 Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS`
 
@@ -42,6 +47,16 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - Project development state lives under ignored `.var/` and is non-authoritative for actual Codex project delegation. Global state is explicitly rooted at `<CODEX_HOME>/sol-luna-v4/state` and contains only the daily profile, v4 LKG, and selector lock.
 - Global policy is rendered from `templates/AGENTS.global.md` with safely quoted selector and state paths; it does not install the repository policy verbatim.
 - After receipt-eligible non-trivial work, the Global policy emits at most one final-line Delegation Receipt from already-observed facts. Delegated receipts contain the actual selected role and direct-child count; `parallel` appears only for verified overlap. Sol-only receipts contain one high-level outcome reason. `Luna unavailable` is evidence-gated: the current task's normal delegation path must already have produced parent-visible selector or native-agent availability failure evidence. No selector invocation, no child attempt, Sol retention, docs-only work, or sequential/tightly coupled execution does not establish unavailability, and `Luna unavailable` is never the default fallback.
+
+## RC5 observability flow
+
+- The selector normalizes score provenance once and optionally projects only validated same-batch, same-pricing, same-effort ModelDial reference-cost pairs. Invalid cost metadata is fail-soft and cannot invalidate otherwise valid Luna scores or change winner and tie-break semantics.
+- A new Daily Profile records metadata schema `1` and projects only the actual selected effort. Existing same-day RC4 profiles are reused byte-for-byte without refresh, backfill, migration, network access, or state writes. New LKG records keep the existing `{"snapshot": ...}` envelope around the canonical normalized snapshot; legacy LKG remains valid.
+- `--print-selection` is the structured selection metadata boundary for delegation and Receipt rendering. The saved result supplies role, effort, fallback, capability degradation, source winner, and an optional reference-cost comparison. `--print-role` remains stdout- and exit-compatible with RC4.
+- `--status-json` enters one read-only health reader before fetch, snapshot loading, Daily selection, and the selector lock. Status and diagnostic UX share this reader; it performs zero network access, selector locks, state writes, state-directory creation, and Luna spawn or availability probes.
+- Health priority is `Misconfigured > Unavailable > Degraded > Healthy`. Absence of today's profile is Healthy with selection not initialized; status cannot manufacture unavailable evidence.
+- The diagnostic report is constructed from an exact whitelist and then sanitized. It exposes symbolic locations rather than real private paths and contains no environment dump, configuration or policy content, arbitrary URL, log, credential, exception message, or child reasoning.
+- The installed state directory remains the single state authority. RC5 adds no dashboard, daemon, telemetry, background service, router, sidecar state, or database.
 
 ## Explicit non-goals
 

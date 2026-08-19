@@ -20,7 +20,7 @@ from typing import Callable, Mapping
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SUPPORTED_PLATFORMS = {"Windows", "Linux", "Darwin"}
-VERSION = "v4.1.0-rc4"
+VERSION = "v4.1.0-rc5"
 MANIFEST_RELATIVE = PurePosixPath("sol-luna-v4/install-manifest.json")
 LEGACY_MANIFEST_RELATIVE = PurePosixPath("sol-luna-router/install-manifest.json")
 LEGACY_HOOKS_RELATIVE = ".".join(("hooks", "json"))
@@ -89,6 +89,55 @@ def _sha256(data: bytes) -> str:
 
 def _json_bytes(value: object) -> bytes:
     return (json.dumps(value, indent=2, sort_keys=True) + "\n").encode("utf-8")
+
+
+def _normalize_source_commit(value: str | None) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or re.fullmatch(r"[0-9a-fA-F]{40}", value) is None:
+        raise InstallerError(
+            "SOURCE_COMMIT_INVALID", "source commit must be one exact 40-hex commit"
+        )
+    return value.lower()
+
+
+def _parse_project_semver(value: object) -> tuple[tuple[int, int, int], tuple[str, ...] | None]:
+    if not isinstance(value, str):
+        raise InstallerError("MANIFEST_INVALID", "installed version is invalid")
+    match = re.fullmatch(
+        r"v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+        r"(?:-((?:0|[1-9]\d*|[A-Za-z-][0-9A-Za-z-]*)"
+        r"(?:\.(?:0|[1-9]\d*|[A-Za-z-][0-9A-Za-z-]*))*))?",
+        value,
+    )
+    if match is None:
+        raise InstallerError("MANIFEST_INVALID", "installed version is invalid")
+    prerelease = tuple(match.group(4).split(".")) if match.group(4) else None
+    return tuple(int(match.group(index)) for index in (1, 2, 3)), prerelease
+
+
+def _compare_project_semver(left: object, right: object) -> int:
+    left_core, left_pre = _parse_project_semver(left)
+    right_core, right_pre = _parse_project_semver(right)
+    if left_core != right_core:
+        return 1 if left_core > right_core else -1
+    if left_pre is None or right_pre is None:
+        if left_pre is right_pre:
+            return 0
+        return 1 if left_pre is None else -1
+    for left_item, right_item in zip(left_pre, right_pre):
+        if left_item == right_item:
+            continue
+        left_numeric = left_item.isdigit()
+        right_numeric = right_item.isdigit()
+        if left_numeric and right_numeric:
+            return 1 if int(left_item) > int(right_item) else -1
+        if left_numeric != right_numeric:
+            return -1 if left_numeric else 1
+        return 1 if left_item > right_item else -1
+    if len(left_pre) == len(right_pre):
+        return 0
+    return 1 if len(left_pre) > len(right_pre) else -1
 
 
 def _utc_now() -> datetime:
@@ -241,7 +290,25 @@ def render_global_policy(
         selector = str(home / "sol-luna-v4" / "selector.py")
         state = str(home / "sol-luna-v4" / "state")
         command = subprocess.list2cmdline(
-            ["python", selector, "--state-dir", state, "--ensure-daily", "--print-role"]
+            [
+                "python",
+                selector,
+                "--state-dir",
+                state,
+                "--ensure-daily",
+                "--print-selection",
+            ]
+        )
+        status_command = subprocess.list2cmdline(
+            [
+                "python",
+                selector,
+                "--status-json",
+                "--codex-home",
+                str(home),
+                "--state-dir",
+                state,
+            ]
         )
         rendered_home = str(home)
     else:
@@ -249,13 +316,36 @@ def render_global_policy(
         selector = str(home / "sol-luna-v4" / "selector.py")
         state = str(home / "sol-luna-v4" / "state")
         command = shlex.join(
-            ["python", selector, "--state-dir", state, "--ensure-daily", "--print-role"]
+            [
+                "python",
+                selector,
+                "--state-dir",
+                state,
+                "--ensure-daily",
+                "--print-selection",
+            ]
+        )
+        status_command = shlex.join(
+            [
+                "python",
+                selector,
+                "--status-json",
+                "--codex-home",
+                str(home),
+                "--state-dir",
+                state,
+            ]
         )
         rendered_home = str(home)
-    rendered = template.replace("<SELECTOR_COMMAND>", command).replace(
-        "<CODEX_HOME>", rendered_home
+    rendered = (
+        template.replace("<SELECTOR_COMMAND>", command)
+        .replace("<STATUS_COMMAND>", status_command)
+        .replace("<CODEX_HOME>", rendered_home)
     )
-    if "<SELECTOR_COMMAND>" in rendered or "<CODEX_HOME>" in rendered:
+    if any(
+        placeholder in rendered
+        for placeholder in ("<SELECTOR_COMMAND>", "<STATUS_COMMAND>", "<CODEX_HOME>")
+    ):
         raise InstallerError("POLICY_RENDER_FAILED", "global policy placeholder remains")
     return rendered
 
@@ -704,7 +794,10 @@ def _validate_v4_payloads(desired_files: dict[str, bytes], policy: str) -> None:
         )
     except (KeyError, UnicodeError, SyntaxError) as exc:
         raise InstallerError("PAYLOAD_INVALID", "selector payload is invalid") from exc
-    if any(value in policy for value in ("<CODEX_HOME>", "<SELECTOR_COMMAND>", ".var")):
+    if any(
+        value in policy
+        for value in ("<CODEX_HOME>", "<SELECTOR_COMMAND>", "<STATUS_COMMAND>", ".var")
+    ):
         raise InstallerError("PAYLOAD_INVALID", "global policy rendering is invalid")
 
 
@@ -898,8 +991,13 @@ def _build_install_plan(
     *,
     migrate_legacy: bool,
     now: datetime,
+    source_commit: str | None = None,
 ) -> tuple[dict[str, bytes | None], dict, dict]:
     manifest = _load_manifest(target)
+    if manifest and _compare_project_semver(manifest.get("version"), VERSION) > 0:
+        raise InstallerError(
+            "CURRENT_VERSION_NEWER", "installed version is newer; automatic downgrade refused"
+        )
     operations: dict[str, bytes | None] = {}
     migration = manifest.get("legacy_migration") if manifest else None
     legacy_cleanup = manifest.get("legacy_cleanup") if manifest else None
@@ -1009,8 +1107,80 @@ def _build_install_plan(
         "legacy_cleanup": legacy_cleanup,
         "last_backup": manifest.get("last_backup") if manifest else None,
     }
+    existing_source_commit = manifest.get("source_commit") if manifest else None
+    if source_commit is not None:
+        desired_manifest["source_commit"] = source_commit
+    elif (
+        manifest
+        and manifest.get("version") == VERSION
+        and isinstance(existing_source_commit, str)
+        and re.fullmatch(r"[0-9a-fA-F]{40}", existing_source_commit)
+    ):
+        desired_manifest["source_commit"] = existing_source_commit
     context = {"existing_manifest": manifest, "desired_manifest": desired_manifest}
     return operations, context, migration or {}
+
+
+def dry_run_install(
+    target: Path,
+    *,
+    project_root: Path = PROJECT_ROOT,
+    migrate_legacy: bool = False,
+    generated_at: datetime | None = None,
+    allow_validation_sandbox: bool = False,
+    source_commit: str | None = None,
+) -> dict:
+    """Run the real payload and ownership preflight while guaranteeing zero writes."""
+
+    source_commit = _normalize_source_commit(source_commit)
+    target = target.resolve(strict=False)
+    project_root = project_root.resolve(strict=False)
+    validate_target(
+        target,
+        project_root,
+        allow_validation_sandbox=allow_validation_sandbox,
+    )
+    now = generated_at or _utc_now()
+    operations, context, migration = _build_install_plan(
+        target,
+        project_root,
+        migrate_legacy=migrate_legacy,
+        now=now,
+        source_commit=source_commit,
+    )
+    effective = _effective_operations(target, operations)
+    manifest_relative = MANIFEST_RELATIVE.as_posix()
+    manifest_path = _target_path(target, manifest_relative)
+    manifest_bytes = _json_bytes(context["desired_manifest"])
+    current_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
+    if current_manifest != manifest_bytes:
+        effective[manifest_relative] = manifest_bytes
+    created = sorted(
+        relative
+        for relative, desired in effective.items()
+        if desired is not None and not _target_path(target, relative).is_file()
+    )
+    modified = sorted(
+        relative
+        for relative, desired in effective.items()
+        if desired is not None and _target_path(target, relative).is_file()
+    )
+    removed = sorted(
+        relative
+        for relative, desired in effective.items()
+        if desired is None and _target_path(target, relative).is_file()
+    )
+    return {
+        "status": "IDEMPOTENT_PASS" if not effective else "DRY_RUN_PASS",
+        "mode": "dry-run",
+        "will_modify": False,
+        "effective_changes": len(effective),
+        "created": created,
+        "modified": modified,
+        "removed": removed,
+        "backup": None,
+        "migration": migration,
+    }
 
 
 def install(
@@ -1021,7 +1191,9 @@ def install(
     generated_at: datetime | None = None,
     allow_validation_sandbox: bool = False,
     failpoint: Callable[[str], None] | None = None,
+    source_commit: str | None = None,
 ) -> dict:
+    source_commit = _normalize_source_commit(source_commit)
     target = target.resolve(strict=False)
     project_root = project_root.resolve(strict=False)
     validate_target(
@@ -1032,7 +1204,11 @@ def install(
     _ensure_target_writable(target)
     now = generated_at or _utc_now()
     operations, context, migration = _build_install_plan(
-        target, project_root, migrate_legacy=migrate_legacy, now=now
+        target,
+        project_root,
+        migrate_legacy=migrate_legacy,
+        now=now,
+        source_commit=source_commit,
     )
     manifest_relative = MANIFEST_RELATIVE.as_posix()
     existing_manifest = context["existing_manifest"]
@@ -1341,6 +1517,7 @@ def main(argv: list[str] | None = None) -> int:
     modes.add_argument("--uninstall", action="store_true")
     modes.add_argument("--rollback", metavar="BACKUP_PATH")
     parser.add_argument("--codex-home", help="Explicit target CODEX_HOME")
+    parser.add_argument("--source-commit", help="Verified immutable 40-hex source commit")
     parser.add_argument("--migrate-v3", action="store_true")
     parser.add_argument(
         "--validation-sandbox",
@@ -1354,6 +1531,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("mutating modes require --codex-home")
     if args.migrate_v3 and not args.apply:
         parser.error("--migrate-v3 requires --apply")
+    if args.source_commit and (args.uninstall or args.rollback):
+        parser.error("--source-commit is valid only for apply or dry-run")
     target = resolve_codex_home(args.codex_home)
 
     if args.apply:
@@ -1362,6 +1541,7 @@ def main(argv: list[str] | None = None) -> int:
                 target,
                 migrate_legacy=args.migrate_v3,
                 allow_validation_sandbox=args.validation_sandbox,
+                source_commit=args.source_commit,
             )
         )
     elif args.uninstall:
@@ -1380,8 +1560,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         result, code = _result_or_error(
-            lambda: build_plan(
-                target, allow_validation_sandbox=args.validation_sandbox
+            lambda: dry_run_install(
+                target,
+                allow_validation_sandbox=args.validation_sandbox,
+                source_commit=args.source_commit,
             )
         )
     print(json.dumps(result, indent=2, sort_keys=True))

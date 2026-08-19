@@ -1,5 +1,16 @@
 # Changelog
 
+## v4.1.0-rc5 (source candidate; not released)
+
+- Implemented optional canonical ModelDial reference-cost metadata for the API v1 and full-snapshot adapters. Cost validation is fail-soft and selection-neutral; Profile and LKG projection uses the actual selected effort.
+- Added receipt-safe `--print-selection` while preserving the RC4 `--print-role` stdout and exit contract, same-day legacy Profile reuse, and legacy LKG compatibility.
+- Added one read-only `--status-json` health reader shared by natural-language status and diagnostic UX, with fixed health precedence, exact diagnostic whitelist, symbolic locations, and path/URL/secret sanitization.
+- Extended the Global policy with fixed-order delegated Receipt suffixes for reference cost, LKG fallback, and capability degradation, without extra selector, network, state, probe, or child work at Receipt time.
+- Added the natural-language latest-version semantic workflow for Stable and prerelease discovery, strict SemVer selection, prerelease notice, immutable tag peeling and movement detection, and exact-commit verification. The installer remains transaction-only and contains no release client or auto-updater.
+- Bumped the source installer payload to `v4.1.0-rc5`, retained manifest schema `1`, added optional strict `--source-commit`, true zero-write transaction preflight for `--dry-run`, automatic downgrade refusal, and exact RC4→RC5 fake-home lifecycle coverage.
+- RC4→RC5 fake-home apply changes exactly the managed Global `AGENTS.md` block, installed selector, and manifest. Five Luna agents, config, Daily Profile, and LKG remain byte-identical; backup, ownership conflict, second-apply idempotency, and exact rollback are covered.
+- This entry records a Phase A source candidate only. No Source Commit A, immutable RC5 setup pin, tag, release, real Global upgrade, Daily Profile or LKG refresh, Stable promotion, or O1-O10 runtime acceptance has occurred.
+
 ## v4.1.0-rc4 (published prerelease)
 
 - Fixed Delegation Receipt reason evidence-gating: `Luna unavailable` now requires current-task parent-visible availability failure evidence that arose naturally on the normal delegation path.

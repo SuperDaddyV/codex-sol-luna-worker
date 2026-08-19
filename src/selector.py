@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import json
 import math
 import os
+import platform
 import re
 import time
+import tomllib
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -16,8 +19,12 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
 
 
+SOL_MODEL = "gpt-5.6-sol"
 LUNA_MODEL = "gpt-5.6-luna"
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
+METADATA_SCHEMA_VERSION = 1
+STATUS_SCHEMA_VERSION = 1
+REFERENCE_COST_METRIC = "modeldial_estimated_reference_cost_usd"
 ROLE_BY_EFFORT = {effort: f"luna_{effort}" for effort in EFFORTS}
 BJT = timezone(timedelta(hours=8), name="BJT")
 UTC = timezone.utc
@@ -28,6 +35,12 @@ MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024
 API_CLOCK_SKEW = timedelta(minutes=10)
 NO_PROFILE_STATUS = "NO_LUNA_PROFILE_AVAILABLE"
 LOCK_TIMEOUT_SECONDS = 30.0
+MANIFEST_RELATIVE = Path("sol-luna-v4/install-manifest.json")
+AGENTS_BEGIN = "<!-- BEGIN SOL_LUNA_V4 -->"
+AGENTS_END = "<!-- END SOL_LUNA_V4 -->"
+CONFIG_BEGIN = "# BEGIN SOL_LUNA_V4_CONFIG"
+CONFIG_END = "# END SOL_LUNA_V4_CONFIG"
+STABLE_AGENT_FILES = tuple(f"luna-{effort}.toml" for effort in EFFORTS)
 
 
 class SnapshotInvalid(ValueError):
@@ -59,43 +72,107 @@ def _parse_published_at(value: Any) -> str:
     return value
 
 
+def _finite_cost(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    normalized = float(value)
+    if not math.isfinite(normalized) or normalized < 0:
+        return None
+    return normalized
+
+
+def _validated_reference_costs(payload: Mapping[str, Any]) -> tuple[str, dict] | None:
+    pricing_snapshot_id = payload.get("pricing_snapshot_id")
+    reference_costs = payload.get("reference_costs")
+    if not isinstance(pricing_snapshot_id, str) or not pricing_snapshot_id.strip():
+        return None
+    if not isinstance(reference_costs, Mapping):
+        return None
+    if (
+        reference_costs.get("metric") != REFERENCE_COST_METRIC
+        or reference_costs.get("provider") != "codex"
+        or reference_costs.get("route") != "official_login"
+    ):
+        return None
+    raw_by_effort = reference_costs.get("by_effort")
+    if not isinstance(raw_by_effort, Mapping):
+        return None
+    by_effort = {}
+    for effort in EFFORTS:
+        pair = raw_by_effort.get(effort)
+        if not isinstance(pair, Mapping):
+            continue
+        luna_cost = _finite_cost(pair.get("luna_cost_usd"))
+        sol_cost = _finite_cost(pair.get("sol_cost_usd"))
+        if luna_cost is None or sol_cost is None or sol_cost <= 0 or luna_cost >= sol_cost:
+            continue
+        by_effort[effort] = {
+            "luna_cost_usd": luna_cost,
+            "sol_cost_usd": sol_cost,
+        }
+    if not by_effort:
+        return None
+    return pricing_snapshot_id, {
+        "metric": REFERENCE_COST_METRIC,
+        "provider": "codex",
+        "route": "official_login",
+        "by_effort": by_effort,
+    }
+
+
 def validate_snapshot(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Validate one complete published snapshot and return normalized scores."""
+    """Validate one complete snapshot and return its canonical normalized form."""
 
     if not isinstance(payload, Mapping):
         raise SnapshotInvalid("snapshot must be an object")
+    if (
+        "metadata_schema_version" in payload
+        and payload.get("metadata_schema_version") != METADATA_SCHEMA_VERSION
+    ):
+        raise SnapshotInvalid("metadata_schema_version is unsupported")
 
     snapshot_id = payload.get("snapshot_id")
     if not isinstance(snapshot_id, str) or not snapshot_id.strip():
         raise SnapshotInvalid("snapshot_id must be a non-empty string")
 
     published_at = _parse_published_at(payload.get("published_at"))
-    rows = payload.get("rows")
-    if not isinstance(rows, list):
-        raise SnapshotInvalid("rows must be a list")
-
     scores: dict[str, float] = {}
-    for row in rows:
-        if not isinstance(row, Mapping) or row.get("model") != LUNA_MODEL:
-            continue
-        effort = row.get("effort")
-        if effort not in EFFORTS:
-            continue
-        if effort in scores:
-            raise SnapshotInvalid(f"duplicate Luna row: {effort}")
-        score = row.get("score")
-        if isinstance(score, bool) or not isinstance(score, (int, float)):
-            raise SnapshotInvalid(f"score must be numeric for: {effort}")
-        normalized_score = float(score)
-        if not math.isfinite(normalized_score):
-            raise SnapshotInvalid(f"score must be finite for: {effort}")
-        scores[effort] = normalized_score
+    canonical_scores = payload.get("scores")
+    if isinstance(canonical_scores, Mapping):
+        for effort in EFFORTS:
+            score = canonical_scores.get(effort)
+            if isinstance(score, bool) or not isinstance(score, (int, float)):
+                raise SnapshotInvalid(f"score must be numeric for: {effort}")
+            normalized_score = float(score)
+            if not math.isfinite(normalized_score):
+                raise SnapshotInvalid(f"score must be finite for: {effort}")
+            scores[effort] = normalized_score
+    else:
+        rows = payload.get("rows")
+        if not isinstance(rows, list):
+            raise SnapshotInvalid("rows must be a list")
+        for row in rows:
+            if not isinstance(row, Mapping) or row.get("model") != LUNA_MODEL:
+                continue
+            effort = row.get("effort")
+            if effort not in EFFORTS:
+                continue
+            if effort in scores:
+                raise SnapshotInvalid(f"duplicate Luna row: {effort}")
+            score = row.get("score")
+            if isinstance(score, bool) or not isinstance(score, (int, float)):
+                raise SnapshotInvalid(f"score must be numeric for: {effort}")
+            normalized_score = float(score)
+            if not math.isfinite(normalized_score):
+                raise SnapshotInvalid(f"score must be finite for: {effort}")
+            scores[effort] = normalized_score
 
     missing = [effort for effort in EFFORTS if effort not in scores]
     if missing:
         raise SnapshotInvalid(f"missing canonical Luna rows: {', '.join(missing)}")
 
     normalized = {
+        "metadata_schema_version": METADATA_SCHEMA_VERSION,
         "snapshot_id": snapshot_id,
         "published_at": published_at,
         "scores": scores,
@@ -103,6 +180,9 @@ def validate_snapshot(payload: Mapping[str, Any]) -> dict[str, Any]:
     for key in ("source_mode", "source_url", "snapshot_hash"):
         if isinstance(payload.get(key), str) and payload[key]:
             normalized[key] = payload[key]
+    reference_costs = _validated_reference_costs(payload)
+    if reference_costs is not None:
+        normalized["pricing_snapshot_id"], normalized["reference_costs"] = reference_costs
     return normalized
 
 
@@ -111,6 +191,36 @@ def _required_text(payload: Mapping[str, Any], key: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise SnapshotInvalid(f"ModelDial snapshot lacks {key}")
     return value
+
+
+def _reference_cost_metadata(
+    pricing_snapshot_id: Any,
+    candidates: Mapping[tuple[str, str], list[float | None]],
+) -> dict[str, Any]:
+    if not isinstance(pricing_snapshot_id, str) or not pricing_snapshot_id.strip():
+        return {}
+    by_effort = {}
+    for effort in EFFORTS:
+        luna = candidates.get((LUNA_MODEL, effort), [])
+        sol = candidates.get((SOL_MODEL, effort), [])
+        if len(luna) != 1 or len(sol) != 1 or luna[0] is None or sol[0] is None:
+            continue
+        if 0 <= luna[0] < sol[0]:
+            by_effort[effort] = {
+                "luna_cost_usd": luna[0],
+                "sol_cost_usd": sol[0],
+            }
+    if not by_effort:
+        return {}
+    return {
+        "pricing_snapshot_id": pricing_snapshot_id,
+        "reference_costs": {
+            "metric": REFERENCE_COST_METRIC,
+            "provider": "codex",
+            "route": "official_login",
+            "by_effort": by_effort,
+        },
+    }
 
 
 def adapt_modeldial_snapshot(
@@ -187,8 +297,34 @@ def adapt_modeldial_snapshot(
         "source_url": source_url,
         "snapshot_hash": payload["batch_sha256"],
     }
-    validate_snapshot(adapted)
-    return adapted
+    cost_candidates: dict[tuple[str, str], list[float | None]] = {}
+    if payload.get("cost_coverage") == "complete":
+        for entry in entries:
+            if not isinstance(entry, Mapping):
+                continue
+            configuration = entry.get("model_configuration")
+            if not isinstance(configuration, Mapping):
+                continue
+            model = configuration.get("canonical_model_id")
+            effort = configuration.get("reasoning_effort")
+            if model not in (LUNA_MODEL, SOL_MODEL) or effort not in EFFORTS:
+                continue
+            if (
+                entry.get("provider") != "codex"
+                or entry.get("route") != "official_login"
+                or entry.get("advisor_eligible") is not True
+                or entry.get("score_integrity") != "first_party_controlled"
+                or entry.get("route_identity") != "first_party_controlled"
+                or entry.get("cost_coverage") != "complete"
+                or entry.get("source_evidence_group_id") not in evidence_groups
+            ):
+                continue
+            cost = _finite_cost(entry.get("estimated_api_cost_usd"))
+            cost_candidates.setdefault((model, effort), []).append(cost)
+    adapted.update(
+        _reference_cost_metadata(payload.get("pricing_snapshot_id"), cost_candidates)
+    )
+    return validate_snapshot(adapted)
 
 
 def adapt_modeldial_api(
@@ -234,7 +370,6 @@ def adapt_modeldial_api(
         "graderVersion",
         "evaluationProfile",
         "scoreBaselineId",
-        "pricingSnapshotId",
     ):
         value = batch.get(key)
         if not isinstance(value, str) or not value.strip():
@@ -257,21 +392,22 @@ def adapt_modeldial_api(
         raise SnapshotInvalid("ModelDial API batch sha256 is invalid")
 
     rows = []
+    cost_candidates: dict[tuple[str, str], list[float | None]] = {}
     for ranking in rankings:
         if not isinstance(ranking, Mapping):
             continue
-        if (
-            ranking.get("provider") != "codex"
-            or ranking.get("model") != LUNA_MODEL
-            or ranking.get("route") != "official_login"
-        ):
+        if ranking.get("provider") != "codex" or ranking.get("route") != "official_login":
             continue
+        model = ranking.get("model")
         effort = ranking.get("reasoningEffort")
-        if effort not in EFFORTS:
+        if model not in (LUNA_MODEL, SOL_MODEL) or effort not in EFFORTS:
             continue
-        rows.append(
-            {"model": LUNA_MODEL, "effort": effort, "score": ranking.get("score")}
-        )
+        if model == LUNA_MODEL:
+            rows.append(
+                {"model": LUNA_MODEL, "effort": effort, "score": ranking.get("score")}
+            )
+        cost = _finite_cost(ranking.get("estimatedReferenceCostUsd"))
+        cost_candidates.setdefault((model, effort), []).append(cost)
 
     adapted = {
         "snapshot_id": batch_id,
@@ -281,8 +417,10 @@ def adapt_modeldial_api(
         "source_url": source_url,
         "snapshot_hash": batch_hash,
     }
-    validate_snapshot(adapted)
-    return adapted
+    adapted.update(
+        _reference_cost_metadata(batch.get("pricingSnapshotId"), cost_candidates)
+    )
+    return validate_snapshot(adapted)
 
 
 def _validated_modeldial_url(url: str) -> urllib.parse.ParseResult:
@@ -306,7 +444,7 @@ def _fetch_bytes(url: str, *, expected_type: str, timeout: float) -> tuple[bytes
         url,
         headers={
             "Accept": expected_type,
-            "User-Agent": "codex-sol-luna-worker/4.1.0-rc1",
+            "User-Agent": "codex-sol-luna-worker/4.1.0-rc5",
         },
         method="GET",
     )
@@ -383,6 +521,7 @@ def select_snapshot(
     selected_at = _aware_bjt(now)
 
     profile = {
+        "metadata_schema_version": METADATA_SCHEMA_VERSION,
         "source_winner_effort": source_effort,
         "source_winner_score": snapshot["scores"][source_effort],
         "selected_effort": selected_effort,
@@ -398,6 +537,22 @@ def select_snapshot(
     for key in ("source_mode", "source_url", "snapshot_hash"):
         if key in snapshot:
             profile[key] = snapshot[key]
+    reference_costs = snapshot.get("reference_costs")
+    if isinstance(reference_costs, Mapping):
+        pair = reference_costs.get("by_effort", {}).get(selected_effort)
+        if isinstance(pair, Mapping):
+            luna_cost = pair["luna_cost_usd"]
+            sol_cost = pair["sol_cost_usd"]
+            profile["pricing_snapshot_id"] = snapshot["pricing_snapshot_id"]
+            profile["reference_cost_comparison"] = {
+                "metric": REFERENCE_COST_METRIC,
+                "effort": selected_effort,
+                "provider": "codex",
+                "route": "official_login",
+                "luna_cost_usd": luna_cost,
+                "sol_cost_usd": sol_cost,
+                "reduction_pct": round((1 - luna_cost / sol_cost) * 100, 1),
+            }
     return profile
 
 
@@ -514,8 +669,9 @@ def ensure_daily_profile(
 
         if live_snapshot is not None:
             try:
+                normalized_snapshot = validate_snapshot(live_snapshot)
                 profile = select_snapshot(
-                    live_snapshot,
+                    normalized_snapshot,
                     supported_efforts=supported_efforts,
                     now=selected_at,
                     fallback=False,
@@ -523,7 +679,7 @@ def ensure_daily_profile(
             except SnapshotInvalid:
                 profile = None
             else:
-                _write_json(lkg_path, {"snapshot": dict(live_snapshot)})
+                _write_json(lkg_path, {"snapshot": normalized_snapshot})
                 _write_json(profile_path, profile)
                 return profile
 
@@ -557,7 +713,425 @@ def _load_optional_snapshot(path: str | None) -> Mapping[str, Any] | None:
             return adapt_modeldial_snapshot(payload, source_url=str(Path(path)))
         except SnapshotInvalid:
             return None
+    if "schemaVersion" in payload:
+        try:
+            return adapt_modeldial_api(payload, source_url=str(Path(path)))
+        except SnapshotInvalid:
+            return None
     return payload
+
+
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _read_json_safely(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+
+
+def _read_daily_profile(path: Path) -> tuple[str, Any]:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return "MISSING", None
+    except (OSError, UnicodeError):
+        return "READ_FAILED", None
+
+    try:
+        return "OK", json.loads(text)
+    except json.JSONDecodeError:
+        return "INVALID_CONTENT", None
+
+
+def _owned_block(path: Path, begin: str, end: str) -> bytes | None:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+    if text.count(begin) != 1 or text.count(end) != 1:
+        return None
+    start = text.index(begin)
+    try:
+        finish = text.index(end, start) + len(end)
+    except ValueError:
+        return None
+    if finish < len(text) and text[finish] == "\r":
+        finish += 1
+    if finish < len(text) and text[finish] == "\n":
+        finish += 1
+    return text[start:finish].encode("utf-8")
+
+
+def _owned_hash(manifest: Mapping[str, Any] | None, relative: str) -> str | None:
+    if not isinstance(manifest, Mapping):
+        return None
+    value = manifest.get("owned_files", {}).get(relative)
+    if isinstance(value, str):
+        return value
+    if isinstance(value, Mapping) and isinstance(value.get("sha256"), str):
+        return value["sha256"]
+    return None
+
+
+def _block_hash(manifest: Mapping[str, Any] | None, filename: str) -> str | None:
+    if not isinstance(manifest, Mapping):
+        return None
+    value = manifest.get("owned_blocks", {}).get(filename)
+    return value.get("sha256") if isinstance(value, Mapping) else None
+
+
+def _safe_identifier(value: Any, *, default: str = "Not available") -> str:
+    if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9._:+-]{1,200}", value):
+        return value
+    return default
+
+
+def _profile_date(profile: Mapping[str, Any]) -> str | None:
+    selection_date = profile.get("selection_date_bjt")
+    if isinstance(selection_date, str):
+        try:
+            return datetime.fromisoformat(selection_date).date().isoformat()
+        except ValueError:
+            pass
+    selected_at = profile.get("selected_at_bjt")
+    if not isinstance(selected_at, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(selected_at.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed.astimezone(BJT).date().isoformat()
+
+
+def _project_override_present(project_root: Path) -> bool:
+    override = project_root / "AGENTS.override.md"
+    try:
+        if override.is_file() and override.read_text(encoding="utf-8").strip():
+            return True
+    except (OSError, UnicodeError):
+        return True
+    agents = project_root / ".codex" / "agents"
+    try:
+        if agents.is_dir() and any((agents / name).exists() for name in STABLE_AGENT_FILES):
+            return True
+    except OSError:
+        return True
+    config = project_root / ".codex" / "config.toml"
+    try:
+        if config.is_file():
+            value = tomllib.loads(config.read_text(encoding="utf-8"))
+            if isinstance(value.get("agents"), Mapping):
+                return True
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError):
+        return True
+    return False
+
+
+def _sanitize_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _sanitize_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_value(item) for item in value]
+    if not isinstance(value, str):
+        return value
+    forbidden = (
+        r"(?i)bearer",
+        r"(?i)token=",
+        r"(?i)api_key=",
+        r"(?i)sk-",
+        r"(?i)ghp_",
+        r"(?i)https?://",
+        r"(?i)(?:^|\s)[a-z]:[\\/]",
+        r"^\\\\",
+    )
+    return "Redacted" if any(re.search(pattern, value) for pattern in forbidden) else value
+
+
+def read_status(
+    *,
+    codex_home: str | Path | None,
+    state_dir: str | Path,
+    project_dir: str | Path | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Read installed health without network, selector locks, writes, or Luna probes."""
+
+    current = _aware_bjt(now)
+    home = (
+        Path(codex_home).resolve(strict=False)
+        if codex_home is not None
+        else (Path.home() / ".codex").resolve(strict=False)
+    )
+    state_root = Path(state_dir).resolve(strict=False)
+    project_root = (
+        Path(project_dir).resolve(strict=False) if project_dir is not None else None
+    )
+    misconfigured = []
+    unavailable = []
+    degraded = []
+
+    manifest_path = home / MANIFEST_RELATIVE
+    manifest: Mapping[str, Any] | None = None
+    if not manifest_path.is_file():
+        manifest_status = "Missing"
+        misconfigured.append("MANIFEST_MISSING")
+    else:
+        candidate = _read_json_safely(manifest_path)
+        if (
+            not isinstance(candidate, Mapping)
+            or candidate.get("schema_version") != 1
+            or not isinstance(candidate.get("version"), str)
+            or not isinstance(candidate.get("owned_files"), Mapping)
+            or not isinstance(candidate.get("owned_blocks"), Mapping)
+        ):
+            manifest_status = "Invalid"
+            misconfigured.append("MANIFEST_INVALID")
+        else:
+            manifest = candidate
+            manifest_status = "Ready"
+
+    selector_path = home / "sol-luna-v4" / "selector.py"
+    selector_status = "Ready"
+    try:
+        selector_bytes = selector_path.read_bytes() if selector_path.is_file() else None
+    except OSError:
+        selector_bytes = None
+    if (
+        selector_bytes is None
+        or _owned_hash(manifest, "sol-luna-v4/selector.py")
+        != _sha256_bytes(selector_bytes)
+    ):
+        selector_status = "Ownership mismatch" if selector_bytes is not None else "Missing"
+        misconfigured.append("SELECTOR_OWNERSHIP_MISMATCH")
+
+    policy_path = home / "AGENTS.md"
+    policy_block = _owned_block(policy_path, AGENTS_BEGIN, AGENTS_END)
+    if not policy_path.is_file() or policy_block is None:
+        global_policy_status = "Missing"
+        misconfigured.append("GLOBAL_POLICY_MISSING")
+    elif _block_hash(manifest, "AGENTS.md") != _sha256_bytes(policy_block):
+        global_policy_status = "Ownership mismatch"
+        misconfigured.append("GLOBAL_POLICY_OWNERSHIP_MISMATCH")
+    else:
+        global_policy_status = "Ready"
+    override_path = home / "AGENTS.override.md"
+    try:
+        global_override = (
+            override_path.is_file()
+            and bool(override_path.read_text(encoding="utf-8").strip())
+        )
+    except (OSError, UnicodeError):
+        global_override = True
+    if global_override:
+        misconfigured.append("GLOBAL_AGENTS_OVERRIDE_PRESENT")
+
+    config_path = home / "config.toml"
+    config: Mapping[str, Any] | None = None
+    config_block = _owned_block(config_path, CONFIG_BEGIN, CONFIG_END)
+    if not config_path.is_file():
+        config_status = "Missing"
+        misconfigured.append("CONFIG_MISSING")
+    else:
+        try:
+            parsed_config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, tomllib.TOMLDecodeError):
+            parsed_config = None
+        if not isinstance(parsed_config, Mapping):
+            config_status = "Invalid"
+            misconfigured.append("CONFIG_INVALID")
+        elif config_block is None or _block_hash(manifest, "config.toml") != _sha256_bytes(
+            config_block
+        ):
+            config_status = "Ownership mismatch"
+            misconfigured.append("CONFIG_OWNERSHIP_MISMATCH")
+            config = parsed_config
+        else:
+            config_status = "Ready"
+            config = parsed_config
+
+    agents_config = config.get("agents") if isinstance(config, Mapping) else None
+    max_parallel: int | str = "Invalid"
+    if isinstance(agents_config, Mapping):
+        if agents_config.get("enabled") is not True:
+            misconfigured.append("AGENTS_DISABLED")
+        configured_max = agents_config.get("max_concurrent_threads_per_session")
+        if isinstance(configured_max, bool) or not isinstance(configured_max, int) or configured_max != 3:
+            misconfigured.append("MAX_PARALLEL_INVALID")
+        else:
+            max_parallel = configured_max
+    elif config is not None:
+        misconfigured.extend(["AGENTS_DISABLED", "MAX_PARALLEL_INVALID"])
+
+    agents_ready = 0
+    missing_agents = False
+    invalid_agents = False
+    ownership_agents = False
+    for effort, filename in zip(EFFORTS, STABLE_AGENT_FILES):
+        relative = f"agents/{filename}"
+        path = home / relative
+        if not path.is_file():
+            missing_agents = True
+            continue
+        try:
+            data = path.read_bytes()
+            payload = tomllib.loads(data.decode("utf-8"))
+        except (OSError, UnicodeError, tomllib.TOMLDecodeError):
+            invalid_agents = True
+            continue
+        leaf = payload.get("agents")
+        if (
+            payload.get("model") != LUNA_MODEL
+            or payload.get("model_reasoning_effort") != effort
+            or not isinstance(leaf, Mapping)
+            or leaf.get("enabled") is not False
+        ):
+            invalid_agents = True
+            continue
+        if _owned_hash(manifest, relative) != _sha256_bytes(data):
+            ownership_agents = True
+            continue
+        agents_ready += 1
+    if missing_agents:
+        misconfigured.append("AGENT_SET_INCOMPLETE")
+    if invalid_agents:
+        misconfigured.extend(["AGENT_PAYLOAD_INVALID", "NATIVE_LEAF_INVALID"])
+    if ownership_agents:
+        misconfigured.append("AGENT_OWNERSHIP_MISMATCH")
+    native_leaf = "Ready" if agents_ready == len(EFFORTS) else "Invalid"
+
+    project_override_status = "Not checked"
+    if project_root is not None:
+        if _project_override_present(project_root):
+            project_override_status = "Override present"
+            misconfigured.append("PROJECT_OVERRIDE_PRESENT")
+        else:
+            project_override_status = "Clear"
+
+    profile_path = state_root / "daily-profile.json"
+    selection_initialized = False
+    profile: Mapping[str, Any] | None = None
+    profile_read_status, candidate_profile = _read_daily_profile(profile_path)
+    if profile_read_status == "READ_FAILED":
+        misconfigured.append("DAILY_PROFILE_READ_FAILED")
+    elif profile_read_status == "INVALID_CONTENT":
+        unavailable.append("DAILY_PROFILE_INVALID")
+    elif profile_read_status == "OK":
+        if not isinstance(candidate_profile, Mapping):
+            unavailable.append("DAILY_PROFILE_INVALID")
+        else:
+            profile_date = _profile_date(candidate_profile)
+            if profile_date is None:
+                unavailable.append("DAILY_PROFILE_INVALID")
+            elif profile_date == current.date().isoformat():
+                effort = candidate_profile.get("selected_effort")
+                if (
+                    effort not in EFFORTS
+                    or candidate_profile.get("selected_role") != ROLE_BY_EFFORT.get(effort)
+                    or candidate_profile.get("source_winner_effort") not in EFFORTS
+                    or not isinstance(candidate_profile.get("fallback"), bool)
+                    or not isinstance(candidate_profile.get("capability_degraded"), bool)
+                ):
+                    unavailable.append("DAILY_PROFILE_INVALID")
+                else:
+                    selection_initialized = True
+                    profile = candidate_profile
+                    if agents_ready != len(EFFORTS):
+                        unavailable.append("DAILY_ROLE_UNAVAILABLE")
+                    if profile.get("fallback"):
+                        degraded.append("LKG_FALLBACK_ACTIVE")
+                    if profile.get("capability_degraded"):
+                        degraded.append("CAPABILITY_DEGRADED")
+
+    if misconfigured:
+        health = "Misconfigured"
+        reason_codes = misconfigured + unavailable + degraded
+    elif unavailable:
+        health = "Unavailable"
+        reason_codes = unavailable + degraded
+    elif degraded:
+        health = "Degraded"
+        reason_codes = degraded
+    elif selection_initialized:
+        health = "Healthy"
+        reason_codes = ["OK"]
+    else:
+        health = "Healthy"
+        reason_codes = ["TODAY_SELECTION_NOT_INITIALIZED"]
+
+    comparison = profile.get("reference_cost_comparison") if profile else None
+    reduction = None
+    if isinstance(comparison, Mapping):
+        value = comparison.get("reduction_pct")
+        if (
+            not isinstance(value, bool)
+            and isinstance(value, (int, float))
+            and math.isfinite(float(value))
+            and 0 <= float(value) <= 100
+        ):
+            reduction = float(value)
+
+    source_labels = {
+        "modeldial_api_v1": "ModelDial API v1",
+        "live_json": "ModelDial Full Snapshot",
+    }
+    raw_source = profile.get("source_mode") if profile else None
+    source_mode = source_labels.get(raw_source, "Not initialized")
+    source_commit = manifest.get("source_commit") if manifest else None
+    verified_commit_sha = (
+        source_commit
+        if isinstance(source_commit, str)
+        and re.fullmatch(r"[0-9a-fA-F]{40}", source_commit)
+        else "Not available"
+    )
+    installed_version = _safe_identifier(
+        manifest.get("version") if manifest else None,
+        default="Not available",
+    )
+    diagnostic = {
+        "diagnostic_schema_version": STATUS_SCHEMA_VERSION,
+        "generated_at_utc": current.astimezone(UTC).isoformat(),
+        "os": _safe_identifier(platform.system(), default="Unknown"),
+        "architecture": _safe_identifier(platform.machine(), default="Unknown"),
+        "codex_version": "Not checked",
+        "python_version": _safe_identifier(platform.python_version(), default="Unknown"),
+        "installed_version": installed_version,
+        "verified_commit_sha": verified_commit_sha,
+        "manifest_status": manifest_status,
+        "global_policy_status": global_policy_status,
+        "selector_status": selector_status,
+        "agents_ready": agents_ready,
+        "agents_expected": len(EFFORTS),
+        "native_leaf": native_leaf,
+        "config_status": config_status,
+        "max_parallel": max_parallel,
+        "today_bjt": current.date().isoformat(),
+        "selection_initialized": selection_initialized,
+        "selected_role": profile.get("selected_role", "Not selected") if profile else "Not selected",
+        "selected_effort": profile.get("selected_effort", "Not selected") if profile else "Not selected",
+        "source_mode": source_mode,
+        "fallback": profile.get("fallback", "N/A") if profile else "N/A",
+        "capability_degraded": profile.get("capability_degraded", "N/A") if profile else "N/A",
+        "snapshot_id": _safe_identifier(profile.get("snapshot_id") if profile else None),
+        "pricing_snapshot_id": _safe_identifier(
+            profile.get("pricing_snapshot_id") if profile else None
+        ),
+        "reference_cost_metadata_available": reduction is not None,
+        "reference_cost_reduction_pct": reduction if reduction is not None else "Not available",
+        "project_override_status": project_override_status,
+        "health": health,
+        "reason_codes": list(dict.fromkeys(reason_codes)),
+        "locations": {
+            "codex_home": "<CODEX_HOME>",
+            "state_dir": "<STATE_DIR>",
+            "project_root": "<PROJECT_ROOT>" if project_root is not None else "Not checked",
+        },
+    }
+    return _sanitize_value(diagnostic)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -574,17 +1148,38 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Ensure one valid profile for the current Beijing calendar day",
     )
-    parser.add_argument(
+    output = parser.add_mutually_exclusive_group()
+    output.add_argument(
         "--print-role",
         action="store_true",
         help="Print only the selected native custom-agent role",
     )
+    output.add_argument(
+        "--print-selection",
+        action="store_true",
+        help="Print only receipt-safe structured selection metadata",
+    )
+    output.add_argument(
+        "--status-json",
+        action="store_true",
+        help="Print one read-only, sanitized Sol/Luna diagnostic snapshot",
+    )
+    parser.add_argument("--codex-home", help="Installed CODEX_HOME to inspect read-only")
+    parser.add_argument("--project-dir", help="Optional project root to inspect read-only")
     parser.add_argument(
         "--supported",
         default=",".join(EFFORTS),
         help="Comma-separated locally supported efforts",
     )
     args = parser.parse_args(argv)
+    if args.status_json:
+        diagnostic = read_status(
+            codex_home=args.codex_home,
+            state_dir=args.state_dir,
+            project_dir=args.project_dir,
+        )
+        print(json.dumps(diagnostic, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
     if args.live and args.snapshot:
         parser.error("--live and --snapshot are mutually exclusive")
     supported = tuple(item.strip() for item in args.supported.split(",") if item.strip())
@@ -606,6 +1201,22 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.print_role:
         print(profile["selected_role"])
+    elif args.print_selection:
+        selection = {
+            key: profile[key]
+            for key in (
+                "selected_role",
+                "selected_effort",
+                "fallback",
+                "capability_degraded",
+                "source_winner_effort",
+            )
+        }
+        if "reference_cost_comparison" in profile:
+            selection["reference_cost_comparison"] = profile[
+                "reference_cost_comparison"
+            ]
+        print(json.dumps(selection, ensure_ascii=False, sort_keys=True))
     else:
         print(json.dumps(profile, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
