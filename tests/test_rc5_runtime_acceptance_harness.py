@@ -434,11 +434,33 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 ]
             )
 
-    def test_runtime_path_classification_is_total(self):
+    def test_observed_runtime_path_classification_contract_is_total(self):
         approved = frozenset({"sqlite/codex-existing.db"})
+        observability = HARNESS._runtime_observability_metadata()
+        self.assertEqual(
+            observability["OBSERVED_RUNTIME_PATH_CLASSIFICATION_TOTAL"], "YES"
+        )
+        self.assertEqual(
+            observability["runtime_path_classification_scope"],
+            "OBSERVED_SNAPSHOT_CHANGES_ONLY",
+        )
+        self.assertEqual(
+            observability["unknown_fail_closed_scope"],
+            "OBSERVED_UNKNOWN_SNAPSHOT_CHANGES_ONLY",
+        )
+        self.assertEqual(
+            observability["FULL_TRANSIENT_FILESYSTEM_EVENT_CAPTURE"],
+            "OUT_OF_SCOPE",
+        )
         cases = {
             "sol-luna-v4/state/daily-profile.json": HARNESS.PROTECTED_SOL_LUNA_STATE,
             "sessions/2026/example.jsonl": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "plugins": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "plugins/cache": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "plugins/cache/marketplace/plugin/1.0.0/state.json": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "plugins/evil/state.json": HARNESS.UNKNOWN,
+            "plugins/data/state.json": HARNESS.UNKNOWN,
+            "plugins-other/state.json": HARNESS.UNKNOWN,
             "sqlite/goals_1.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
             "sqlite/codex-existing.db": HARNESS.CODEX_LOCAL_STORAGE_STATE,
             "sqlite/codex-evil.db": HARNESS.UNKNOWN,
@@ -922,37 +944,386 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 HARNESS._is_session_runtime_path("node_repl/unexpected.json")
             )
 
-    def test_plugin_install_marker_activity_allowed_without_allowing_cache_tree(self):
+    def test_plugin_cache_remote_curated_activity_is_platform_runtime(self):
         with tempfile.TemporaryDirectory() as temporary:
             real_home = self._make_real_home_fixture(Path(temporary))
-            marker_path = (
+            plugin_state = (
                 real_home
                 / "plugins"
                 / "cache"
                 / "openai-curated-remote"
-                / "github"
-                / ".codex-remote-plugin-install.json"
+                / "finances"
+                / "0.1.0"
+                / "runtime-state.json"
             )
-            marker_path.parent.mkdir(parents=True)
-            marker_path.write_bytes(b"before\n")
+            plugin_state.parent.mkdir(parents=True)
+            plugin_state.write_bytes(b"before\n")
             audits = {}
 
             HARNESS._run_with_real_home_audit(
-                label="PLUGIN_INSTALL_MARKER",
+                label="REMOTE_CURATED_PLUGIN_CACHE",
                 real_home=real_home,
                 audits=audits,
-                action=lambda: marker_path.write_bytes(b"after\n"),
+                action=lambda: plugin_state.write_bytes(b"after plugin state\n"),
             )
 
             self.assertEqual(
-                audits["PLUGIN_INSTALL_MARKER"]["activity_category"],
+                audits["REMOTE_CURATED_PLUGIN_CACHE"]["activity_category"],
                 HARNESS.SESSION_RUNTIME_ACTIVITY,
             )
-            self.assertFalse(
-                HARNESS._is_session_runtime_path(
-                    "plugins/cache/openai-curated-remote/github/unexpected.json"
-                )
+            self.assertEqual(
+                HARNESS._runtime_path_category(
+                    "plugins/cache/openai-curated-remote/finances/0.1.0/runtime-state.json"
+                ),
+                HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
             )
+
+    def test_plugin_cache_can_be_created_on_first_use(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            plugin_state = (
+                real_home
+                / "plugins"
+                / "cache"
+                / "community"
+                / "sample-plugin"
+                / "0.2.0"
+                / "runtime-state.json"
+            )
+            audits = {}
+
+            def create_plugin_cache_state():
+                plugin_state.parent.mkdir(parents=True)
+                plugin_state.write_bytes(b"created\n")
+
+            HARNESS._run_with_real_home_audit(
+                label="PLUGIN_CACHE_FIRST_USE",
+                real_home=real_home,
+                audits=audits,
+                action=create_plugin_cache_state,
+            )
+
+            self.assertEqual(
+                audits["PLUGIN_CACHE_FIRST_USE"]["activity_category"],
+                HARNESS.SESSION_RUNTIME_ACTIVITY,
+            )
+            self.assertTrue(
+                audits["PLUGIN_CACHE_FIRST_USE"]["unexpected_write_absent"]
+            )
+
+    def test_plugin_cache_observed_create_and_delete_are_classified(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            plugin_state = (
+                real_home
+                / "plugins"
+                / "cache"
+                / "community"
+                / "sample-plugin"
+                / "0.2.0"
+                / "observed.json"
+            )
+            audits = {}
+            observed_path = plugin_state.relative_to(real_home).as_posix()
+
+            def create_plugin_cache_state():
+                plugin_state.parent.mkdir(parents=True)
+                plugin_state.write_bytes(b"created\n")
+
+            HARNESS._run_with_real_home_audit(
+                label="PLUGIN_CACHE_OBSERVED_CREATE",
+                real_home=real_home,
+                audits=audits,
+                action=create_plugin_cache_state,
+            )
+
+            self.assertEqual(
+                audits["PLUGIN_CACHE_OBSERVED_CREATE"]["activity_category"],
+                HARNESS.SESSION_RUNTIME_ACTIVITY,
+            )
+            self.assertEqual(
+                HARNESS._runtime_path_category(observed_path),
+                HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            )
+            self.assertEqual(
+                audits["PLUGIN_CACHE_OBSERVED_CREATE"]["observability"][
+                    "activity_observation_scope"
+                ],
+                HARNESS.OBSERVED_RUNTIME_ACTIVITY,
+            )
+
+            def delete_plugin_cache_state():
+                plugin_state.unlink()
+                current = plugin_state.parent
+                while current != real_home:
+                    current.rmdir()
+                    current = current.parent
+
+            HARNESS._run_with_real_home_audit(
+                label="PLUGIN_CACHE_OBSERVED_DELETE",
+                real_home=real_home,
+                audits=audits,
+                action=delete_plugin_cache_state,
+            )
+            self.assertEqual(
+                audits["PLUGIN_CACHE_OBSERVED_DELETE"]["activity_category"],
+                HARNESS.SESSION_RUNTIME_ACTIVITY,
+            )
+            self.assertEqual(
+                audits["PLUGIN_CACHE_OBSERVED_DELETE"]["activity_categories"],
+                [HARNESS.SESSION_RUNTIME_ACTIVITY],
+            )
+            self.assertEqual(
+                HARNESS._runtime_path_category(observed_path),
+                HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            )
+
+    def test_fully_ephemeral_plugin_cache_activity_is_not_claimed_as_observed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            plugin_state = (
+                real_home
+                / "plugins"
+                / "cache"
+                / "example"
+                / "plugin"
+                / "1.0"
+                / "file"
+            )
+            audits = {}
+            before_runtime = HARNESS._session_runtime_snapshot(real_home)
+
+            def create_delete_and_cleanup():
+                plugin_state.parent.mkdir(parents=True)
+                plugin_state.write_bytes(b"transient\n")
+                plugin_state.unlink()
+                current = plugin_state.parent
+                while current != real_home:
+                    current.rmdir()
+                    current = current.parent
+
+            HARNESS._run_with_real_home_audit(
+                label="FULLY_EPHEMERAL_PLUGIN_CACHE",
+                real_home=real_home,
+                audits=audits,
+                action=create_delete_and_cleanup,
+            )
+            after_runtime = HARNESS._session_runtime_snapshot(real_home)
+            changed_runtime_paths = HARNESS._changed_entry_paths(
+                before_runtime, after_runtime
+            )
+
+            audit = audits["FULLY_EPHEMERAL_PLUGIN_CACHE"]
+            self.assertIsNone(audit["activity_category"])
+            self.assertEqual(audit["activity_categories"], [])
+            self.assertFalse(audit["session_runtime_activity"])
+            self.assertEqual(changed_runtime_paths, [])
+            self.assertEqual(audit["before"], audit["after"])
+            self.assertNotIn(HARNESS.SESSION_RUNTIME_ACTIVITY, repr(audit))
+            self.assertNotIn(HARNESS.CODEX_PLATFORM_RUNTIME_STATE, repr(audit))
+            self.assertEqual(
+                audit["observability"]["UNOBSERVED_TRANSIENT_ACTIVITY_CLAIM"],
+                "NO",
+            )
+
+    def test_other_marketplace_plugin_cache_is_allowed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            plugin_state = (
+                real_home
+                / "plugins"
+                / "cache"
+                / "another-marketplace"
+                / "another-plugin"
+                / "9.9.9"
+                / "state.bin"
+            )
+            plugin_state.parent.mkdir(parents=True)
+            plugin_state.write_bytes(b"before\n")
+            audits = {}
+
+            HARNESS._run_with_real_home_audit(
+                label="ANOTHER_MARKETPLACE_PLUGIN_CACHE",
+                real_home=real_home,
+                audits=audits,
+                action=lambda: plugin_state.write_bytes(b"after plugin state\n"),
+            )
+
+            self.assertEqual(
+                audits["ANOTHER_MARKETPLACE_PLUGIN_CACHE"]["activity_category"],
+                HARNESS.SESSION_RUNTIME_ACTIVITY,
+            )
+
+    def _assert_unknown_plugin_path_fails_closed(self, relative, label):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            candidate = real_home / relative
+            candidate.parent.mkdir(parents=True)
+            candidate.write_bytes(b"before\n")
+            audits = {}
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "unexpected write outside"
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label=label,
+                    real_home=real_home,
+                    audits=audits,
+                    action=lambda: candidate.write_bytes(b"after plugin state\n"),
+                )
+
+            self.assertEqual(
+                audits[label]["activity_category"], HARNESS.UNEXPECTED_WRITE
+            )
+            self.assertEqual(
+                HARNESS._runtime_path_category(relative), HARNESS.UNKNOWN
+            )
+            self.assertIn(relative, audits[label]["unexpected_changed_paths"])
+
+    def test_plugins_unknown_child_fails_closed(self):
+        self._assert_unknown_plugin_path_fails_closed(
+            "plugins/evil/state.json", "UNKNOWN_PLUGIN_CHILD"
+        )
+
+    def test_plugins_data_is_not_implicitly_allowed(self):
+        self._assert_unknown_plugin_path_fails_closed(
+            "plugins/data/state.json", "UNKNOWN_PLUGIN_DATA"
+        )
+
+    def test_plugins_other_root_is_not_plugin_cache(self):
+        self._assert_unknown_plugin_path_fails_closed(
+            "plugins-other/state.json", "UNKNOWN_PLUGINS_OTHER"
+        )
+
+    def test_plugin_cache_root_as_file_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            (real_home / "plugins").mkdir()
+            (real_home / "plugins" / "cache").write_bytes(b"not a directory\n")
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "not an expected safe entry"
+            ):
+                HARNESS._session_runtime_snapshot(real_home)
+
+    def test_plugins_root_as_symlink_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            external = root / "external-plugins"
+            external.mkdir()
+            try:
+                (real_home / "plugins").symlink_to(external, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"directory symlink creation is unavailable: {exc}")
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "unsafe object type or identity"
+            ):
+                HARNESS._session_runtime_snapshot(real_home)
+
+    def test_plugin_cache_reparse_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            (real_home / "plugins").mkdir()
+            external = root / "external-cache"
+            external.mkdir()
+            try:
+                (real_home / "plugins" / "cache").symlink_to(
+                    external, target_is_directory=True
+                )
+            except OSError as exc:
+                self.skipTest(f"directory symlink creation is unavailable: {exc}")
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "unsafe object type or identity"
+            ):
+                HARNESS._session_runtime_snapshot(real_home)
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_plugin_cache_junction_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            (real_home / "plugins").mkdir()
+            external = root / "external-cache"
+            external.mkdir()
+            cache = real_home / "plugins" / "cache"
+            completed = subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(cache), str(external)],
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            try:
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure, "unsafe object type or identity"
+                ):
+                    HARNESS._session_runtime_snapshot(real_home)
+            finally:
+                if os.path.lexists(cache):
+                    os.rmdir(cache)
+
+    def test_plugin_cache_path_escape_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            cache_root = real_home / "plugins" / "cache"
+            cache_root.mkdir(parents=True)
+            escaped_path = cache_root / ".." / "evil" / "state.json"
+            escaped_path.parent.mkdir(parents=True)
+            escaped_path.write_bytes(b"before\n")
+            audits = {}
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "unexpected write outside"
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label="PLUGIN_CACHE_PATH_ESCAPE",
+                    real_home=real_home,
+                    audits=audits,
+                    action=lambda: escaped_path.write_bytes(b"after\n"),
+                )
+
+            normalized_relative = "plugins/evil/state.json"
+            self.assertEqual(
+                HARNESS._runtime_path_category(normalized_relative),
+                HARNESS.UNKNOWN,
+            )
+            self.assertEqual(
+                audits["PLUGIN_CACHE_PATH_ESCAPE"]["activity_category"],
+                HARNESS.UNEXPECTED_WRITE,
+            )
+            self.assertEqual(
+                audits["PLUGIN_CACHE_PATH_ESCAPE"]["unexpected_changed_paths"],
+                [normalized_relative],
+            )
+
+    def test_plugin_cache_external_hardlink_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            external = root / "external-plugin-state.json"
+            external.write_bytes(b"external state\n")
+            plugin_state = (
+                real_home
+                / "plugins"
+                / "cache"
+                / "community"
+                / "sample-plugin"
+                / "0.2.0"
+                / "state.json"
+            )
+            plugin_state.parent.mkdir(parents=True)
+            os.link(external, plugin_state)
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "unsafe object type or identity"
+            ):
+                HARNESS._session_runtime_snapshot(real_home)
 
     def test_explicit_computer_use_local_storage_activity_allowed(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1176,6 +1547,44 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             self.assertEqual(
                 audits["PROTECTED_CHANGE"]["activity_category"],
                 HARNESS.UNEXPECTED_WRITE,
+            )
+
+    def test_protected_state_dominates_plugin_cache_activity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            plugin_state = (
+                real_home
+                / "plugins"
+                / "cache"
+                / "community"
+                / "sample-plugin"
+                / "0.2.0"
+                / "state.json"
+            )
+            plugin_state.parent.mkdir(parents=True)
+            plugin_state.write_bytes(b"before\n")
+            audits = {}
+
+            def change_plugin_and_protected_state():
+                plugin_state.write_bytes(b"after plugin state\n")
+                (real_home / "AGENTS.md").write_bytes(b"unexpected write\n")
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "protected state changed"
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label="PROTECTED_PLUGIN_DOMINANCE",
+                    real_home=real_home,
+                    audits=audits,
+                    action=change_plugin_and_protected_state,
+                )
+
+            self.assertEqual(
+                audits["PROTECTED_PLUGIN_DOMINANCE"]["activity_category"],
+                HARNESS.UNEXPECTED_WRITE,
+            )
+            self.assertFalse(
+                audits["PROTECTED_PLUGIN_DOMINANCE"]["protected_state_unchanged"]
             )
 
     def test_unknown_path_change_fails(self):

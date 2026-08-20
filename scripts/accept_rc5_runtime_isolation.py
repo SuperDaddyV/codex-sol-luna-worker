@@ -64,8 +64,13 @@ SESSION_RUNTIME_TREE_PATHS: tuple[str, ...] = (
     "node_repl/active_execs",
 )
 SESSION_RUNTIME_FILE_PATHS: tuple[str, ...] = ("session_index.jsonl",)
-SESSION_RUNTIME_DISCOVERY_ROOTS: tuple[str, ...] = ("plugins/cache",)
-SESSION_RUNTIME_DISCOVERED_FILE_NAMES = {".codex-remote-plugin-install.json"}
+CODEX_PLUGIN_CACHE_ROOT = "plugins/cache"
+CODEX_PLUGIN_ROOT = CODEX_PLUGIN_CACHE_ROOT.split("/", 1)[0]
+SESSION_RUNTIME_DISCOVERY_ROOTS: tuple[str, ...] = (CODEX_PLUGIN_CACHE_ROOT,)
+SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS: tuple[str, ...] = (
+    CODEX_PLUGIN_ROOT,
+    CODEX_PLUGIN_CACHE_ROOT,
+)
 EXPLICIT_SESSION_RUNTIME_PATHS: tuple[str, ...] = (
     *SESSION_RUNTIME_TREE_PATHS,
     *SESSION_RUNTIME_FILE_PATHS,
@@ -106,6 +111,13 @@ AUTH_RUNTIME_ACTIVITY = "AUTH_RUNTIME_ACTIVITY"
 SESSION_RUNTIME_ACTIVITY = "SESSION_RUNTIME_ACTIVITY"
 LOCAL_STORAGE_ACTIVITY = "LOCAL_STORAGE_ACTIVITY"
 UNEXPECTED_WRITE = "UNEXPECTED_WRITE"
+OBSERVED_RUNTIME_ACTIVITY = "OBSERVED_RUNTIME_ACTIVITY"
+UNOBSERVED_TRANSIENT_ACTIVITY = "UNOBSERVED_TRANSIENT_ACTIVITY"
+OBSERVED_RUNTIME_PATH_CLASSIFICATION_TOTAL = "YES"
+UNOBSERVED_TRANSIENT_ACTIVITY_CLAIM = "NO"
+RUNTIME_PATH_CLASSIFICATION_SCOPE = "OBSERVED_SNAPSHOT_CHANGES_ONLY"
+UNKNOWN_FAIL_CLOSED_SCOPE = "OBSERVED_UNKNOWN_SNAPSHOT_CHANGES_ONLY"
+FULL_TRANSIENT_FILESYSTEM_EVENT_CAPTURE = "OUT_OF_SCOPE"
 
 # Keep the old auth-specific constants above for the existing diagnostics and
 # tests.  New audit consumers should use the category fields below.
@@ -705,6 +717,38 @@ def _changed_entry_paths(
     )
 
 
+def _snapshot_activity_was_observed(
+    before: Mapping[str, Any], after: Mapping[str, Any] | None
+) -> bool:
+    """Return only activity visible in the before/after snapshot checkpoints.
+
+    This is not OS event monitoring.  A path created and removed within one
+    action can leave both checkpoints identical and is therefore unobserved.
+    """
+
+    return after is not None and before["entries"] != after["entries"]
+
+
+def _runtime_observability_metadata() -> dict[str, str]:
+    """Describe the bounded snapshot observation contract in emitted evidence."""
+
+    return {
+        "activity_observation_scope": OBSERVED_RUNTIME_ACTIVITY,
+        "unobserved_transient_activity_scope": UNOBSERVED_TRANSIENT_ACTIVITY,
+        "OBSERVED_RUNTIME_PATH_CLASSIFICATION_TOTAL": (
+            OBSERVED_RUNTIME_PATH_CLASSIFICATION_TOTAL
+        ),
+        "UNOBSERVED_TRANSIENT_ACTIVITY_CLAIM": (
+            UNOBSERVED_TRANSIENT_ACTIVITY_CLAIM
+        ),
+        "runtime_path_classification_scope": RUNTIME_PATH_CLASSIFICATION_SCOPE,
+        "unknown_fail_closed_scope": UNKNOWN_FAIL_CLOSED_SCOPE,
+        "FULL_TRANSIENT_FILESYSTEM_EVENT_CAPTURE": (
+            FULL_TRANSIENT_FILESYSTEM_EVENT_CAPTURE
+        ),
+    }
+
+
 def _is_under_relative_path(relative: str, root: str) -> bool:
     return relative == root or relative.startswith(f"{root}/")
 
@@ -837,20 +881,16 @@ def _is_valid_session_runtime_entry(
     relative: str,
     entry: Mapping[str, Any],
 ) -> bool:
+    if relative in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS:
+        return _is_safe_runtime_directory(entry)
     if relative in SESSION_RUNTIME_FILE_PATHS:
         return _is_safe_runtime_file(entry)
     if relative in SESSION_RUNTIME_TREE_PATHS:
         return _is_safe_runtime_directory(entry)
     if any(_is_under_relative_path(relative, root) for root in SESSION_RUNTIME_TREE_PATHS):
         return _is_safe_runtime_entry(entry)
-    if (
-        relative.rsplit("/", 1)[-1] in SESSION_RUNTIME_DISCOVERED_FILE_NAMES
-        and any(
-            relative.startswith(f"{root}/")
-            for root in SESSION_RUNTIME_DISCOVERY_ROOTS
-        )
-    ):
-        return _is_safe_runtime_file(entry)
+    if _is_under_relative_path(relative, CODEX_PLUGIN_CACHE_ROOT):
+        return _is_safe_runtime_entry(entry)
     return False
 
 
@@ -894,17 +934,17 @@ def _is_protected_runtime_path(relative: str) -> bool:
 
 
 def _is_session_runtime_path(relative: str) -> bool:
+    if relative in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS:
+        return True
+    if _is_under_relative_path(relative, CODEX_PLUGIN_CACHE_ROOT):
+        return True
     explicit_path = any(
         _is_under_relative_path(relative, root)
         for root in SESSION_RUNTIME_TREE_PATHS
     ) or relative in SESSION_RUNTIME_FILE_PATHS
     if explicit_path:
         return True
-    name = relative.rsplit("/", 1)[-1]
-    return name in SESSION_RUNTIME_DISCOVERED_FILE_NAMES and any(
-        relative.startswith(f"{root}/")
-        for root in SESSION_RUNTIME_DISCOVERY_ROOTS
-    )
+    return False
 
 
 def _is_session_runtime_metadata_directory(relative: str) -> bool:
@@ -912,7 +952,7 @@ def _is_session_runtime_metadata_directory(relative: str) -> bool:
         relative == root
         or relative.startswith(f"{root}/")
         or root.startswith(f"{relative}/")
-        for root in SESSION_RUNTIME_DISCOVERY_ROOTS
+        for root in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS
     )
 
 
@@ -1059,6 +1099,8 @@ def _session_runtime_snapshot(real_home: Path) -> dict[str, Any]:
     for relative in SESSION_RUNTIME_TREE_PATHS:
         records.update(_snapshot_runtime_tree(real_home, relative))
     for relative in SESSION_RUNTIME_FILE_PATHS:
+        records[relative] = _snapshot_runtime_entry(real_home / relative)
+    for relative in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS:
         records[relative] = _snapshot_runtime_entry(real_home / relative)
     for relative in SESSION_RUNTIME_DISCOVERY_ROOTS:
         records.update(
@@ -1655,12 +1697,10 @@ def _run_with_real_home_audit(
         after_local_storage_error is None and after_local_storage is not None
     )
     session_runtime_activity = (
-        after_sessions is not None
-        and before_sessions["entries"] != after_sessions["entries"]
+        _snapshot_activity_was_observed(before_sessions, after_sessions)
     )
     local_storage_activity = (
-        after_local_storage is not None
-        and before_local_storage["entries"] != after_local_storage["entries"]
+        _snapshot_activity_was_observed(before_local_storage, after_local_storage)
     )
     if (
         after_protected_error is not None
@@ -1714,6 +1754,7 @@ def _run_with_real_home_audit(
         "auth_classification": auth_classification,
         "activity_category": activity_category,
         "activity_categories": activity_categories,
+        "observability": _runtime_observability_metadata(),
         "classification": activity_category,
         "session_runtime_activity": session_runtime_activity,
         "local_storage_activity": local_storage_activity,
@@ -2218,6 +2259,7 @@ def main() -> int:
         },
         "product_runtime": {"rc5_code_modified": "NO"},
         "source_attribution": _source_attribution(None),
+        "observability": _runtime_observability_metadata(),
         "acceptance_audits": {},
         "artifacts": artifacts,
     }
@@ -2526,13 +2568,12 @@ def main() -> int:
     session_runtime_state_valid = after_sessions_error is None
     local_storage_state_valid = after_local_storage_error is None
     session_runtime_activity = (
-        after_sessions is not None
-        and baseline["sessions"]["entries"] != after_sessions["entries"]
+        _snapshot_activity_was_observed(baseline["sessions"], after_sessions)
     )
     local_storage_activity = (
-        after_local_storage is not None
-        and baseline["local_storage"]["entries"]
-        != after_local_storage["entries"]
+        _snapshot_activity_was_observed(
+            baseline["local_storage"], after_local_storage
+        )
     )
     if (
         after_protected_error is not None
