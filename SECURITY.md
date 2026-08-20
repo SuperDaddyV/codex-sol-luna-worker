@@ -18,6 +18,12 @@
 
 ## Runtime acceptance harness safety
 
+The acceptance-boundary redesign leaves the product runtime payload frozen at
+`src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`, and
+`.codex/agents/*`. The mutable acceptance contract is limited to
+`CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and this file.
+`PRODUCT_RUNTIME_CHANGED = NO`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+
 `scripts/accept_rc5_runtime_isolation.py` requires an explicit real
 `CODEX_HOME` audit root but installs Source Commit A only into a fresh fake
 home. Before the first installer write or authentication copy, it verifies that
@@ -27,20 +33,38 @@ hardlink redirection to the real runtime. The fixed macOS `/var` system alias is
 recognized for canonical platform temp directories. Authentication data is
 copied with exclusive creation to a distinct fake-home file identity; its bytes
 are never printed or committed. The Codex child inherits only a fixed minimal
-non-credential environment; home,
-application-data, temporary, and XDG locations are redirected into the fake
-home instead of inheriting the user's real locations.
+non-credential environment; `CODEX_HOME`, `HOME`, and `USERPROFILE` point to the
+fake home, while `APPDATA`, `LOCALAPPDATA`, temporary variables, and all `XDG_*`
+locations, including `XDG_RUNTIME_DIR`, are redirected into an
+acceptance-owned isolated runtime root instead of inheriting the user's real
+locations. One
+`isolated_runtime_env` is passed explicitly to selector, `codex exec`,
+installer, and repository subprocesses. O9 fail-soft and status/health checks
+run in-process under that same mapping and restore the caller environment, so
+no O4/O9 execution path inherits the real process environment.
 
-The audit distinguishes immutable managed Sol/Luna state
-(`PROTECTED_SOL_LUNA_STATE`) from enumerated Codex platform runtime activity
-(`CODEX_PLATFORM_RUNTIME_STATE`) and enumerated local storage activity
-(`CODEX_LOCAL_STORAGE_STATE`). Unsupported path types, reparse escapes,
-unexpected hardlinks, protected-state changes, and writes outside the explicit
+The real `CODEX_HOME` is audited only for immutable managed Sol/Luna state
+(`PROTECTED_SOL_LUNA_STATE`) and root identity. The entire
+`sol-luna-v4/state/**` tree, including Daily Profile, LKG, `selector.lock`, and
+other state contents, is compared for hash, type, device/file identity, link
+count, and reparse status. Unrelated real-home runtime activity is not used for
+RC5 attribution. Runtime changes are classified only inside the isolated home.
+`CODEX_PLATFORM_RUNTIME_STATE` retains the existing
+explicit session, session-index, app-cache, and active-exec paths and adds only
+the exact `browser/sessions`, `cache/remote_plugin_catalog`, `plugins/cache`,
+and `tmp/arg0` trees plus a structurally validated visualization subtree. Root
+SQLite storage accepts only the named `goals`, `logs`, `memories`, `queue`,
+`state`, and `thread_history` ID families, with `-wal` and `-shm` sidecars bound
+to a safe base. Internal plugin-cache directory reparses use the same
+resolved-target contract in real-home and isolated-home validation; external,
+protected, escaping, and looping targets are rejected. Unsupported path types,
+unexpected hardlinks, protected-state changes, and isolated writes outside the explicit
 categories fail closed. The result reports only inventory metadata, hashes,
 classifications, and symbolic category names, not credentials or real
-authentication content. Before JSON is printed, known real, fake, temporary,
-repository, and executable paths are replaced by symbolic locations and any
-remaining user-home path shape or credential-shaped value is redacted.
+authentication content. Before JSON
+is printed, known real, isolated, temporary, repository, and executable paths
+are replaced by symbolic locations and any remaining user-home path shape or
+credential-shaped value is redacted.
 
 Cleanup is ownership-gated: the target must remain the same direct
 harness-prefixed child of the validated temporary parent, retain the original

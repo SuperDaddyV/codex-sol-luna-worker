@@ -21,8 +21,12 @@ earlier `NOT RUN` state in this source-candidate protocol.
 - O6 Misconfigured precedence — `PASS`
 - O7 Safe diagnostic report — `PASS`
 - O8 Latest prerelease immutable discovery and notice — `PASS`
-- O9 Real RC4→RC5 Global upgrade, idempotency, and rollback readiness — `PASS`
+- O9 Fail-soft observability selection, status, and Receipt omission — `PASS`
 - O10 Fresh-session delegation and Receipt suffixes — `PASS`
+
+RC4→RC5 fake-home installer lifecycle validation is a separate recorded
+`PASS` and has no O-number. RC5 real Global upgrade, idempotency, and rollback
+readiness remain a separately authorized operation and are `NOT RUN`.
 
 `RC5_SOURCE_COMMIT_CREATED = YES`;
 `RC5_SOURCE_SHA = 5ae88ff9190b31174c55a6136c0c8c8611d0b34c`;
@@ -30,30 +34,54 @@ earlier `NOT RUN` state in this source-candidate protocol.
 `RC5_RUNTIME_ACCEPTANCE_COMPLETED = YES`;
 `RC5_RUNTIME_CATEGORY_MODEL_FIXED = YES`.
 
-The committed repeatable harness runs the isolated O2, O4, and O9 cases from
-Source Commit A in a fresh fake `CODEX_HOME`. Before any installer write or
-credential copy, it validates that the temporary root is outside the real
-runtime, is not a user-controlled symlink, junction, reparse point, or mount,
-and contains no hardlink into the real runtime. The fixed macOS `/var` system
-alias is recognized so canonical platform temp directories remain usable. A
-per-run ownership marker, token, and directory identity gate cleanup; cleanup
-removes reparse entries without traversing them
-and fails closed if ownership or identity changes.
+The acceptance-boundary redesign leaves the product runtime payload frozen at
+`src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`, and
+`.codex/agents/*`. This file, `CODEX_SOL_LUNA_SETUP.md`, `ARCHITECTURE.md`, and
+`SECURITY.md` are the acceptance contract and may track acceptance redesigns.
+`PRODUCT_RUNTIME_CHANGED = NO`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
-The real-runtime audit uses three explicit path categories:
+The committed repeatable harness runs O2, O4, and O9 from Source Commit A under
+a unique owned acceptance root. O4 and O9 execute with an isolated
+`CODEX_HOME`, home/profile, application-data, temporary-storage, and XDG
+environment. The harness constructs one `isolated_runtime_env`; selector
+subprocesses, `codex exec`, installer and repository subprocesses receive it
+explicitly, while in-process O9 fail-soft and status/health checks run under
+that same environment with the caller environment restored afterward. No
+O4/O9 path inherits the real process environment. Before any installer write
+or credential copy, the harness
+validates that the acceptance root is outside the real runtime, is not a
+user-controlled symlink, junction, reparse point, or mount, and contains no
+hardlink into the real runtime. The fixed macOS `/var` system alias is
+recognized so canonical platform temp directories remain usable. A per-run
+ownership marker, token, and directory identity gate cleanup; cleanup removes
+reparse entries without traversing them and fails closed if ownership or
+identity changes.
 
-- `PROTECTED_SOL_LUNA_STATE`: managed Sol/Luna policy, configuration, agents,
-  selector, manifest, selector state, and backups; this category must remain
-  unchanged.
-- `CODEX_PLATFORM_RUNTIME_STATE`: authentication and Codex platform session
-  activity; only explicitly enumerated, structurally valid runtime paths may
-  change.
-- `CODEX_LOCAL_STORAGE_STATE`: explicitly enumerated local storage, SQLite,
-  computer-use configuration, and memory content; only structurally valid
-  in-root activity may change.
+The real `CODEX_HOME` is used only for pre/post protected-state integrity and
+root-identity verification. Managed Sol/Luna policy, configuration, agents,
+selector, manifest, and the complete `sol-luna-v4/state/**` tree must remain
+unchanged. The state inventory covers the Daily Profile, LKG, `selector.lock`,
+and every other state entry; before/after hash, object type, device/file
+identity, link count, and reparse status are compared. Unrelated real-home
+runtime activity is not an RC5 runtime-attribution source and does not fail
+acceptance.
 
-Any reparse escape, unexpected hardlink, invalid runtime type, change to
-protected state, or write outside those explicit categories fails the harness.
+Runtime attribution is confined to the isolated home. The existing explicit
+Codex session, session-index, app-cache, and active-exec namespaces remain
+narrowly allowlisted. `CODEX_PLATFORM_RUNTIME_STATE` additionally accepts only
+structurally valid entries under `browser/sessions/**`,
+`cache/remote_plugin_catalog/**`, `plugins/cache/**`, `tmp/arg0/**`, and a
+validated runtime subtree under `visualizations/`; their broader parent trees
+are not allowlisted. An internal `plugins/cache/**` directory reparse is allowed
+only when its resolved target remains inside both the isolated `CODEX_HOME` and
+plugin-cache namespace, does not overlap protected state, and does not loop.
+Root SQLite storage is restricted to the `goals`, `logs`, `memories`, `queue`,
+`state`, and `thread_history` ID families with `-wal` and `-shm` sidecars coupled
+to a safe base. Global `*.sqlite` and `*.db` suffix rules are forbidden.
+
+Any isolated-home reparse escape, unexpected hardlink, invalid runtime type,
+change to protected real state, or write outside the exact isolated runtime
+categories fails the harness.
 Authentication bytes are copied only to the isolated fake home with a distinct
 file identity; they are not committed, printed, or included in the result. The
 Codex child receives a fixed minimal inherited environment plus fake-home

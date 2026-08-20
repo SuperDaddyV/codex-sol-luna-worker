@@ -7,6 +7,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 import copy
 from contextlib import contextmanager
+from datetime import date
 import hashlib
 import importlib.util
 import json
@@ -26,9 +27,9 @@ import uuid
 
 RC5_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 
-# The real CODEX_HOME boundary is intentionally split into the managed Sol/Luna
-# state and the runtime state that Codex is allowed to refresh while acceptance
-# is running.  Keep these path lists explicit: a broad ``**/*.sqlite`` or
+# The real CODEX_HOME boundary is intentionally limited to managed Sol/Luna
+# state and root identity.  Runtime attribution happens only in the isolated
+# fake home.  Keep all path lists explicit: a broad ``**/*.sqlite`` or
 # ``**/*`` allowlist would hide an unexpected write.
 PROTECTED_SOL_LUNA_STATE = "PROTECTED_SOL_LUNA_STATE"
 CODEX_PLATFORM_RUNTIME_STATE = "CODEX_PLATFORM_RUNTIME_STATE"
@@ -46,14 +47,20 @@ PROTECTED_REAL_PATHS = (
     "sol-luna-v4/selector.py",
     "sol-luna-v4/install-manifest.json",
     "sol-luna-v4/state",
+)
+PROTECTED_REAL_TREE_PATHS = frozenset({"sol-luna-v4/state"})
+PROTECTED_RUNTIME_PATHS = (
+    *PROTECTED_REAL_PATHS,
     "backups/sol-luna-v4",
 )
-PROTECTED_REAL_TREE_PATHS = {
-    "sol-luna-v4/state",
-    "backups/sol-luna-v4",
-}
+PROTECTED_RUNTIME_TREE_PATHS = frozenset(
+    {*PROTECTED_REAL_TREE_PATHS, "backups/sol-luna-v4"}
+)
 AUTH_RUNTIME_RELATIVE = "auth.json"
-SESSION_RUNTIME_TREE_PATHS: tuple[str, ...] = (
+# Runtime attribution is intentionally limited to these exact namespaces.  The
+# parent directories are structural only; they are not runtime namespaces in
+# their own right.
+PLATFORM_RUNTIME_ROOTS: tuple[str, ...] = (
     "sessions",
     "archived_sessions",
     "session-cache",
@@ -62,14 +69,47 @@ SESSION_RUNTIME_TREE_PATHS: tuple[str, ...] = (
     "cache/codex_apps_tools",
     "cache/codex_apps_server_info",
     "node_repl/active_execs",
+    "browser/sessions",
+    "cache/remote_plugin_catalog",
+    "plugins/cache",
+    "tmp/arg0",
+)
+VISUALIZATIONS_RUNTIME_ROOT = "visualizations"
+VISUALIZATION_RUNTIME_ROOT_PATTERN = re.compile(
+    r"^visualizations/(?P<year>[0-9]{4})/(?P<month>[0-9]{2})/"
+    r"(?P<day>[0-9]{2})/(?P<run>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-"
+    r"[0-9a-f]{4}-[0-9a-f]{12})(?:/.*)?$",
+    re.IGNORECASE,
+)
+SESSION_RUNTIME_TREE_PATHS: tuple[str, ...] = (
+    *PLATFORM_RUNTIME_ROOTS,
 )
 SESSION_RUNTIME_FILE_PATHS: tuple[str, ...] = ("session_index.jsonl",)
 CODEX_PLUGIN_CACHE_ROOT = "plugins/cache"
 CODEX_PLUGIN_ROOT = CODEX_PLUGIN_CACHE_ROOT.split("/", 1)[0]
-SESSION_RUNTIME_DISCOVERY_ROOTS: tuple[str, ...] = (CODEX_PLUGIN_CACHE_ROOT,)
+SESSION_RUNTIME_DISCOVERY_ROOTS: tuple[str, ...] = (
+    *PLATFORM_RUNTIME_ROOTS,
+    VISUALIZATIONS_RUNTIME_ROOT,
+)
 SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS: tuple[str, ...] = (
+    "sessions",
+    "archived_sessions",
+    "session-cache",
+    "session_cache",
+    "thread-writer-locks",
+    "browser",
+    "browser/sessions",
+    "cache",
+    "cache/codex_apps_tools",
+    "cache/codex_apps_server_info",
+    "cache/remote_plugin_catalog",
+    "node_repl",
+    "node_repl/active_execs",
     CODEX_PLUGIN_ROOT,
     CODEX_PLUGIN_CACHE_ROOT,
+    "tmp",
+    "tmp/arg0",
+    VISUALIZATIONS_RUNTIME_ROOT,
 )
 EXPLICIT_SESSION_RUNTIME_PATHS: tuple[str, ...] = (
     *SESSION_RUNTIME_TREE_PATHS,
@@ -102,6 +142,19 @@ MUTABLE_REAL_PATHS = (
 LOCAL_STORAGE_ANCESTOR_PATHS = (
     *ALL_LOCAL_STORAGE_TREE_PATHS,
     *LOCAL_STORAGE_PARENT_PATHS,
+)
+# Every runtime namespace root is expected to be a plain directory when it is
+# present. A missing root remains valid because the runtime may create it on
+# first use; a present file or reparse entry must fail closed.
+EXPECTED_RUNTIME_DIRECTORY_ROOTS: tuple[str, ...] = tuple(
+    dict.fromkeys(
+        (
+            *SESSION_RUNTIME_TREE_PATHS,
+            *SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS,
+            *ALL_LOCAL_STORAGE_TREE_PATHS,
+            *LOCAL_STORAGE_PARENT_PATHS,
+        )
+    )
 )
 AUTH_UNCHANGED = "AUTH_UNCHANGED"
 AUTH_RUNTIME_REFRESH_OBSERVED = "AUTH_RUNTIME_REFRESH_OBSERVED"
@@ -143,6 +196,18 @@ INHERITED_CODEX_ENVIRONMENT_NAMES = {
     "TERM",
     "WINDIR",
 }
+ISOLATED_RUNTIME_ENV_PATH_NAMES = (
+    "APPDATA",
+    "LOCALAPPDATA",
+    "TEMP",
+    "TMP",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "XDG_RUNTIME_DIR",
+    "XDG_STATE_HOME",
+)
 PRIVATE_HOME_PATH_PATTERNS = (
     re.compile(
         r"\b[A-Z]:[\\/]Users[\\/][^\\/\r\n\"']+(?:[\\/][^\r\n\"']*)?",
@@ -170,10 +235,12 @@ SQLITE_TREE_VALIDATED_BASE_PATTERN = (
     r"(?:goals|logs|memories|state)_[0-9]+\.sqlite"
 )
 SQLITE_ROOT_BASE_PATTERN = re.compile(
-    r"^(?P<base>state_[0-9]+\.sqlite)$"
+    r"^(?P<family>goals|logs|memories|queue|state|thread_history)_"
+    r"(?P<id>[0-9]+)\.sqlite$"
 )
 SQLITE_ROOT_SIDECAR_PATTERN = re.compile(
-    r"^(?P<base>state_[0-9]+\.sqlite)-"
+    r"^(?P<base>(?:goals|logs|memories|queue|state|thread_history)_"
+    r"[0-9]+\.sqlite)-"
     r"(?P<sidecar>wal|shm)$"
 )
 SQLITE_TREE_BASE_PATTERN = re.compile(
@@ -190,7 +257,10 @@ class HarnessFailure(RuntimeError):
 
 
 def _codex_environment(
-    fake_home: Path, source: Mapping[str, str] | None = None
+    fake_home: Path,
+    source: Mapping[str, str] | None = None,
+    *,
+    environment_root: Path | None = None,
 ) -> dict[str, str]:
     """Build an isolated child environment without unrelated user secrets."""
 
@@ -200,7 +270,7 @@ def _codex_environment(
         for name, value in inherited.items()
         if name.upper() in INHERITED_CODEX_ENVIRONMENT_NAMES
     }
-    runtime_environment = fake_home / "runtime-environment"
+    runtime_environment = environment_root or fake_home / "runtime-environment"
     isolated_paths = {
         "APPDATA": runtime_environment / "appdata",
         "HOME": fake_home,
@@ -212,6 +282,7 @@ def _codex_environment(
         "XDG_CACHE_HOME": runtime_environment / "xdg-cache",
         "XDG_CONFIG_HOME": runtime_environment / "xdg-config",
         "XDG_DATA_HOME": runtime_environment / "xdg-data",
+        "XDG_RUNTIME_DIR": runtime_environment / "xdg-runtime",
         "XDG_STATE_HOME": runtime_environment / "xdg-state",
     }
     environment.update({name: str(path) for name, path in isolated_paths.items()})
@@ -221,6 +292,22 @@ def _codex_environment(
     environment["CODEX_HOME"] = str(fake_home)
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     return environment
+
+
+@contextmanager
+def _isolated_process_environment(
+    isolated_runtime_env: Mapping[str, str],
+) -> Iterator[None]:
+    """Temporarily give in-process selector checks the isolated child env."""
+
+    original = dict(os.environ)
+    os.environ.clear()
+    os.environ.update(isolated_runtime_env)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(original)
 
 
 def _sanitize_evidence(
@@ -295,14 +382,14 @@ def _run(
     args: list[str],
     *,
     cwd: Path,
-    env: Mapping[str, str] | None = None,
+    env: Mapping[str, str],
     input_text: str | None = None,
     timeout: int = 900,
 ) -> subprocess.CompletedProcess[str]:
     completed = subprocess.run(
         args,
         cwd=cwd,
-        env=dict(env) if env is not None else None,
+        env=dict(env),
         input=input_text,
         text=True,
         encoding="utf-8",
@@ -631,6 +718,7 @@ def _inventory_tree(
             "device": details.st_dev,
             "file_id": details.st_ino,
             "link_count": details.st_nlink,
+            "reparse": reparse,
         }
         if kind == "reparse":
             try:
@@ -717,6 +805,19 @@ def _changed_entry_paths(
     )
 
 
+def _protected_changed_entry_paths(
+    before: Mapping[str, Any], after: Mapping[str, Any] | None
+) -> list[str]:
+    changed_paths = _changed_entry_paths(before, after)
+    if after is None:
+        return changed_paths
+    return [
+        relative
+        for relative in changed_paths
+        if _runtime_path_category(relative) == PROTECTED_SOL_LUNA_STATE
+    ]
+
+
 def _snapshot_activity_was_observed(
     before: Mapping[str, Any], after: Mapping[str, Any] | None
 ) -> bool:
@@ -750,7 +851,83 @@ def _runtime_observability_metadata() -> dict[str, str]:
 
 
 def _is_under_relative_path(relative: str, root: str) -> bool:
+    if "\\" in relative or any(
+        part in {"", ".", ".."} for part in relative.split("/")
+    ):
+        return False
     return relative == root or relative.startswith(f"{root}/")
+
+
+def _is_valid_visualization_runtime_subtree(relative: str) -> bool:
+    """Accept only a date/UUID-named visualization runtime subtree."""
+
+    if "\\" in relative:
+        return False
+    match = VISUALIZATION_RUNTIME_ROOT_PATTERN.fullmatch(relative)
+    if match is None:
+        return False
+    try:
+        date(
+            int(match.group("year")),
+            int(match.group("month")),
+            int(match.group("day")),
+        )
+    except ValueError:
+        return False
+    return all(part not in {"", ".", ".."} for part in relative.split("/"))
+
+
+def _visualization_runtime_root(relative: str) -> str | None:
+    """Return the validated visualization run root for a descendant path."""
+
+    parts = relative.split("/")
+    if len(parts) < 5:
+        return None
+    candidate = "/".join(parts[:5])
+    return candidate if _is_valid_visualization_runtime_subtree(candidate) else None
+
+
+def _is_visualization_runtime_path(relative: str) -> bool:
+    if relative == VISUALIZATIONS_RUNTIME_ROOT or "\\" in relative:
+        return False
+    if any(part in {"", ".", ".."} for part in relative.split("/")):
+        return False
+    return _is_valid_visualization_runtime_subtree(relative) or (
+        _visualization_runtime_root(relative) is not None
+    )
+
+
+def _platform_runtime_structural_path(relative: str) -> bool:
+    """Recognize only parents needed to reach an exact runtime namespace."""
+
+    if any(root.startswith(f"{relative}/") for root in SESSION_RUNTIME_TREE_PATHS):
+        return True
+    if relative == VISUALIZATIONS_RUNTIME_ROOT:
+        return True
+    parts = relative.split("/")
+    if len(parts) in {2, 3, 4} and parts[0] == VISUALIZATIONS_RUNTIME_ROOT:
+        # Date components are structural; the UUID component is validated as a
+        # complete run root before any descendant is accepted.
+        if len(parts) == 2:
+            return bool(re.fullmatch(r"[0-9]{4}", parts[1]))
+        if len(parts) == 3:
+            return bool(
+                re.fullmatch(r"[0-9]{4}", parts[1])
+                and re.fullmatch(r"[0-9]{2}", parts[2])
+                and 1 <= int(parts[2]) <= 12
+            )
+        if not (
+            re.fullmatch(r"[0-9]{4}", parts[1])
+            and re.fullmatch(r"[0-9]{2}", parts[2])
+            and re.fullmatch(r"[0-9]{2}", parts[3])
+        ):
+            return False
+        try:
+            date(int(parts[1]), int(parts[2]), int(parts[3]))
+        except ValueError:
+            return False
+        return True
+    return False
 
 
 def _is_codex_db_name(name: str) -> bool:
@@ -766,11 +943,12 @@ def _is_codex_db_name(name: str) -> bool:
 def _sqlite_family(relative: str) -> tuple[str, str] | None:
     """Return (base-relative-path, kind) for a known SQLite filename."""
 
+    if "\\" in relative:
+        return None
     if "/" not in relative:
-        name = relative
-        if SQLITE_ROOT_BASE_PATTERN.fullmatch(name):
-            return name, "base"
-        sidecar = SQLITE_ROOT_SIDECAR_PATTERN.fullmatch(name)
+        if SQLITE_ROOT_BASE_PATTERN.fullmatch(relative):
+            return relative, "base"
+        sidecar = SQLITE_ROOT_SIDECAR_PATTERN.fullmatch(relative)
         if sidecar:
             return sidecar.group("base"), "sidecar"
         return None
@@ -831,6 +1009,35 @@ def _is_safe_runtime_directory(entry: Mapping[str, Any]) -> bool:
         entry.get("type") == "directory"
         and not entry.get("reparse")
     )
+
+
+def _is_expected_runtime_directory_root(relative: str) -> bool:
+    visualization_root = _visualization_runtime_root(relative)
+    return relative in EXPECTED_RUNTIME_DIRECTORY_ROOTS or (
+        visualization_root is not None and relative == visualization_root
+    )
+
+
+def _validate_expected_runtime_directory_entry(
+    relative: str, entry: Mapping[str, Any]
+) -> None:
+    if not _is_expected_runtime_directory_root(relative):
+        return
+    if entry.get("type") == "missing":
+        return
+    if not _is_safe_runtime_directory(entry):
+        raise HarnessFailure(
+            "runtime namespace root is not an expected safe directory "
+            "(not an expected safe entry; unsafe object type or identity): "
+            f"{relative}"
+        )
+
+
+def _validate_expected_runtime_directory_entries(
+    entries: Mapping[str, Mapping[str, Any]],
+) -> None:
+    for relative, entry in entries.items():
+        _validate_expected_runtime_directory_entry(relative, entry)
 
 
 def _is_safe_plugin_cache_reparse(
@@ -954,19 +1161,23 @@ def _is_valid_session_runtime_entry(
     entry: Mapping[str, Any],
     real_home: Path | None = None,
 ) -> bool:
-    if relative in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS:
+    if _platform_runtime_structural_path(relative):
         return _is_safe_runtime_directory(entry)
     if relative in SESSION_RUNTIME_FILE_PATHS:
         return _is_safe_runtime_file(entry)
     if relative in SESSION_RUNTIME_TREE_PATHS:
         return _is_safe_runtime_directory(entry)
-    if any(_is_under_relative_path(relative, root) for root in SESSION_RUNTIME_TREE_PATHS):
+    if _is_visualization_runtime_path(relative):
         return _is_safe_runtime_entry(entry)
-    if _is_under_relative_path(relative, CODEX_PLUGIN_CACHE_ROOT):
-        if entry.get("reparse") or entry.get("type") == "reparse":
-            return real_home is not None and _is_safe_plugin_cache_reparse(
-                real_home, relative, entry
-            )
+    if _is_under_relative_path(relative, CODEX_PLUGIN_CACHE_ROOT) and (
+        entry.get("reparse") or entry.get("type") == "reparse"
+    ):
+        return real_home is not None and _is_safe_plugin_cache_reparse(
+            real_home, relative, entry
+        )
+    if any(
+        _is_under_relative_path(relative, root) for root in SESSION_RUNTIME_TREE_PATHS
+    ):
         return _is_safe_runtime_entry(entry)
     return False
 
@@ -1001,36 +1212,33 @@ def _is_valid_local_storage_entry(
 def _is_protected_runtime_path(relative: str) -> bool:
     return any(
         _is_under_relative_path(relative, protected)
-        for protected in PROTECTED_REAL_PATHS
-        if protected in PROTECTED_REAL_TREE_PATHS
+        for protected in PROTECTED_RUNTIME_PATHS
+        if protected in PROTECTED_RUNTIME_TREE_PATHS
     ) or relative in {
         protected
-        for protected in PROTECTED_REAL_PATHS
-        if protected not in PROTECTED_REAL_TREE_PATHS
+        for protected in PROTECTED_RUNTIME_PATHS
+        if protected not in PROTECTED_RUNTIME_TREE_PATHS
     }
 
 
 def _is_session_runtime_path(relative: str) -> bool:
-    if relative in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS:
+    if relative in SESSION_RUNTIME_FILE_PATHS:
         return True
-    if _is_under_relative_path(relative, CODEX_PLUGIN_CACHE_ROOT):
+    if relative in SESSION_RUNTIME_TREE_PATHS:
         return True
-    explicit_path = any(
-        _is_under_relative_path(relative, root)
-        for root in SESSION_RUNTIME_TREE_PATHS
-    ) or relative in SESSION_RUNTIME_FILE_PATHS
-    if explicit_path:
+    if any(
+        _is_under_relative_path(relative, root) for root in SESSION_RUNTIME_TREE_PATHS
+    ):
+        return True
+    if _is_visualization_runtime_path(relative):
         return True
     return False
 
 
 def _is_session_runtime_metadata_directory(relative: str) -> bool:
-    return any(
-        relative == root
-        or relative.startswith(f"{root}/")
-        or root.startswith(f"{relative}/")
-        for root in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS
-    )
+    return _platform_runtime_structural_path(relative) or relative in {
+        root for root in SESSION_RUNTIME_TREE_PATHS
+    }
 
 
 def _is_local_storage_path(
@@ -1061,7 +1269,7 @@ def _runtime_path_category(
     categories: list[str] = []
     if _is_protected_runtime_path(relative):
         categories.append(PROTECTED_SOL_LUNA_STATE)
-    if relative == AUTH_RUNTIME_RELATIVE or _is_session_runtime_path(relative):
+    if _is_session_runtime_path(relative):
         categories.append(CODEX_PLATFORM_RUNTIME_STATE)
     if _is_local_storage_path(relative, approved_codex_db_paths):
         categories.append(CODEX_LOCAL_STORAGE_STATE)
@@ -1081,6 +1289,237 @@ def _snapshot_from_entries(records: Mapping[str, Mapping[str, Any]]) -> dict[str
         "entry_count": len(normalized),
         "file_count": sum(row["type"] == "file" for row in normalized.values()),
     }
+
+
+def _is_protected_structure_path(relative: str) -> bool:
+    """Allow only ancestors needed by an explicit protected path."""
+
+    if relative == ".":
+        return True
+    protected_paths = (*PROTECTED_RUNTIME_PATHS, *EXPLICIT_LOCAL_STORAGE_FILE_PATHS)
+    return any(
+        protected.startswith(f"{relative}/") for protected in protected_paths
+    )
+
+
+def _is_allowed_isolated_structure_path(relative: str) -> bool:
+    return relative == AUTH_RUNTIME_RELATIVE or _is_protected_structure_path(relative) or (
+        _platform_runtime_structural_path(relative)
+    ) or any(
+        root.startswith(f"{relative}/") for root in ALL_LOCAL_STORAGE_TREE_PATHS
+    ) or any(
+        parent.startswith(f"{relative}/") for parent in LOCAL_STORAGE_PARENT_PATHS
+    )
+
+
+def _isolated_home_snapshot(fake_home: Path) -> dict[str, Any]:
+    """Snapshot the complete isolated home for observed runtime attribution."""
+
+    if not _lexists(fake_home) or not fake_home.is_dir():
+        raise HarnessFailure("isolated CODEX_HOME must be an existing directory")
+    snapshot = _inventory_tree(
+        fake_home,
+        hash_file=lambda relative: not (
+            relative == AUTH_RUNTIME_RELATIVE
+            or _is_session_runtime_path(relative)
+            or _is_local_storage_path(relative)
+        ),
+    )
+    _validate_expected_runtime_directory_entries(snapshot["entries"])
+    return snapshot
+
+
+def _validate_isolated_home_snapshot(
+    fake_home: Path,
+    snapshot: Mapping[str, Any],
+    *,
+    real_home: Path | None = None,
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> None:
+    """Fail closed for any unsafe or unknown object in the isolated home."""
+
+    fake_resolved = fake_home.resolve(strict=True)
+    entries = snapshot["entries"]
+    for relative, entry in entries.items():
+        _validate_expected_runtime_directory_entry(relative, entry)
+        if relative == ".":
+            if not _is_safe_runtime_directory(entry):
+                raise HarnessFailure("isolated CODEX_HOME root is not a plain directory")
+            continue
+        if entry.get("type") == "missing":
+            continue
+        category = _runtime_path_category(relative, approved_codex_db_paths)
+        allowed_structure = _is_allowed_isolated_structure_path(relative)
+        is_isolated_auth = relative == AUTH_RUNTIME_RELATIVE
+        if category == UNKNOWN and not allowed_structure and not is_isolated_auth:
+            raise HarnessFailure(f"unknown isolated-home path: {relative}")
+        is_reparse = entry.get("reparse") or entry.get("type") == "reparse"
+        safe_plugin_cache_reparse = (
+            category == CODEX_PLATFORM_RUNTIME_STATE
+            and _is_safe_plugin_cache_reparse(fake_home, relative, entry)
+        )
+        if is_reparse:
+            if not safe_plugin_cache_reparse:
+                raise HarnessFailure(f"isolated-home reparse path: {relative}")
+            if not _is_valid_session_runtime_entry(relative, entry, fake_home):
+                raise HarnessFailure(
+                    f"invalid isolated-home runtime path: {relative}"
+                )
+            continue
+        if not _is_safe_runtime_entry(entry):
+            raise HarnessFailure(
+                f"isolated-home path has unsafe object type or identity: {relative}"
+            )
+        target = fake_home / relative
+        try:
+            _assert_plain_ancestor_chain(target)
+            resolved = target.resolve(strict=True)
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise HarnessFailure(
+                f"isolated-home path cannot be validated: {relative}"
+            ) from exc
+        if not resolved.is_relative_to(fake_resolved):
+            raise HarnessFailure(f"isolated-home path escapes root: {relative}")
+        details = target.stat(follow_symlinks=False)
+        if entry["type"] == "file" and (
+            not stat.S_ISREG(details.st_mode)
+            or _is_reparse_point(target)
+            or details.st_nlink != 1
+        ):
+            raise HarnessFailure(
+                f"isolated-home runtime file is not a safe regular file: {relative}"
+            )
+        if entry["type"] == "directory" and (
+            not stat.S_ISDIR(details.st_mode) or _is_reparse_point(target)
+        ):
+            raise HarnessFailure(
+                f"isolated-home runtime directory is not a safe directory: {relative}"
+            )
+        if is_isolated_auth:
+            valid = _is_safe_runtime_file(entry)
+        elif category == CODEX_PLATFORM_RUNTIME_STATE:
+            valid = _is_valid_session_runtime_entry(relative, entry, fake_home)
+        elif category == CODEX_LOCAL_STORAGE_STATE:
+            valid = _is_valid_local_storage_entry(
+                relative,
+                entry,
+                entries,
+                approved_codex_db_paths,
+            )
+        else:
+            valid = category == PROTECTED_SOL_LUNA_STATE or allowed_structure
+        if not valid:
+            raise HarnessFailure(f"invalid isolated-home runtime path: {relative}")
+    if real_home is not None:
+        _assert_no_redirection(fake_home, real_home)
+
+
+def _run_with_isolated_home_audit(
+    *,
+    label: str,
+    fake_home: Path,
+    real_home: Path,
+    audits: dict[str, Any] | None = None,
+    action: Callable[[], Any],
+) -> Any:
+    """Attribute only observed runtime changes inside the isolated home."""
+
+    before = _isolated_home_snapshot(fake_home)
+    approved_codex_db_paths = _codex_db_allowlist_from_entries(before["entries"])
+    _validate_isolated_home_snapshot(
+        fake_home,
+        before,
+        real_home=real_home,
+        approved_codex_db_paths=approved_codex_db_paths,
+    )
+    before_identity = _plain_directory_identity(fake_home)
+    action_error: BaseException | None = None
+    outcome: Any = None
+    try:
+        outcome = action()
+    except BaseException as exc:
+        action_error = exc
+    after: dict[str, Any] | None = None
+    after_error: BaseException | None = None
+    try:
+        after = _isolated_home_snapshot(fake_home)
+        _validate_isolated_home_snapshot(
+            fake_home,
+            after,
+            real_home=real_home,
+            approved_codex_db_paths=approved_codex_db_paths,
+        )
+    except BaseException as exc:
+        after_error = exc
+    after_identity: tuple[int, int] | None = None
+    identity_error: BaseException | None = None
+    try:
+        after_identity = _plain_directory_identity(fake_home)
+    except BaseException as exc:
+        identity_error = exc
+    changed_paths = _changed_entry_paths(before, after)
+    protected_changed_paths = _protected_changed_entry_paths(before, after)
+    protected_state_unchanged = (
+        after_error is None
+        and after is not None
+        and not protected_changed_paths
+    )
+    unexpected_changed_paths: list[str] = []
+    if after is not None:
+        for relative in changed_paths:
+            candidate = after["entries"].get(relative) or before["entries"].get(
+                relative
+            )
+            if candidate is None:
+                continue
+            category = _runtime_path_category(relative, approved_codex_db_paths)
+            if category == UNKNOWN and not _is_allowed_isolated_structure_path(relative):
+                unexpected_changed_paths.append(relative)
+    root_identity_unchanged = (
+        identity_error is None
+        and after_identity is not None
+        and after_identity == before_identity
+    )
+    runtime_state_valid = (
+        after_error is None
+        and after is not None
+        and root_identity_unchanged
+        and protected_state_unchanged
+        and not unexpected_changed_paths
+    )
+    audit = {
+        "before": _inventory_summary(before),
+        "after": _inventory_summary(after) if after is not None else None,
+        "changed_paths": changed_paths,
+        "protected_changed_paths": protected_changed_paths,
+        "protected_state_unchanged": protected_state_unchanged,
+        "unexpected_changed_paths": unexpected_changed_paths,
+        "runtime_state_valid": runtime_state_valid,
+        "isolated_home_identity_unchanged": root_identity_unchanged,
+        "runtime_attribution": "ISOLATED_HOME_ONLY",
+    }
+    if audits is not None:
+        audits[label] = audit
+    if after_error is not None:
+        raise HarnessFailure(
+            f"isolated CODEX_HOME could not be validated during {label}"
+        ) from after_error
+    if not root_identity_unchanged:
+        raise HarnessFailure(
+            f"isolated CODEX_HOME identity changed during {label}"
+        ) from identity_error
+    if not protected_state_unchanged:
+        raise HarnessFailure(
+            f"isolated CODEX_HOME protected state changed during {label}"
+        ) from action_error
+    if unexpected_changed_paths:
+        raise HarnessFailure(
+            f"unexpected isolated-home write during {label}: "
+            + ", ".join(unexpected_changed_paths)
+        ) from action_error
+    if action_error is not None:
+        raise action_error
+    return outcome
 
 
 def _snapshot_runtime_tree(
@@ -1111,6 +1550,7 @@ def _validate_runtime_entries(
 ) -> None:
     real_resolved = real_home.resolve(strict=True)
     for relative, entry in entries.items():
+        _validate_expected_runtime_directory_entry(relative, entry)
         if entry["type"] == "missing":
             continue
         safe_plugin_cache_reparse = (
@@ -1282,6 +1722,7 @@ def _unexpected_write_snapshot(
         )
     records: dict[str, dict[str, Any]] = {}
     for relative, entry in inventory["entries"].items():
+        _validate_expected_runtime_directory_entry(relative, entry)
         if _is_session_runtime_path(relative) and _is_valid_session_runtime_entry(
             relative, entry, real_home
         ):
@@ -1468,6 +1909,11 @@ def _assert_no_redirection(fake_home: Path, real_home: Path) -> None:
     hardlinked: list[Path] = []
     for candidate in candidates:
         if _is_reparse_point(candidate):
+            relative = candidate.relative_to(fake_home).as_posix()
+            if _is_safe_plugin_cache_reparse(
+                fake_home, relative, {"type": "reparse"}
+            ):
+                continue
             raise HarnessFailure(f"reparse point found in isolation path: {candidate}")
         if os.path.ismount(candidate):
             raise HarnessFailure(f"mount point found in isolation path: {candidate}")
@@ -1481,6 +1927,41 @@ def _assert_no_redirection(fake_home: Path, real_home: Path) -> None:
         raise HarnessFailure("fake CODEX_HOME contains a hardlink to real CODEX_HOME")
     if hardlinked:
         raise HarnessFailure(f"hardlink found in isolation path: {hardlinked[0]}")
+
+
+def _assert_isolated_environment_root(
+    environment_root: Path,
+    acceptance_root: Path,
+    fake_home: Path,
+    real_home: Path,
+    isolated_runtime_env: Mapping[str, str] | None = None,
+) -> None:
+    """Keep application-data, temp, and XDG storage inside owned isolation."""
+
+    acceptance_resolved = acceptance_root.resolve(strict=True)
+    environment_resolved = environment_root.resolve(strict=True)
+    fake_resolved = fake_home.resolve(strict=True)
+    if not environment_resolved.is_relative_to(acceptance_resolved):
+        raise HarnessFailure("isolated environment root escapes acceptance root")
+    if _paths_overlap(environment_resolved, fake_resolved):
+        raise HarnessFailure("isolated environment root overlaps fake CODEX_HOME")
+    _assert_no_redirection(environment_root, real_home)
+    if _file_ids(environment_root) & _file_ids(fake_home):
+        raise HarnessFailure(
+            "isolated environment root shares file identity with fake CODEX_HOME"
+        )
+    if isolated_runtime_env is not None:
+        for name in ISOLATED_RUNTIME_ENV_PATH_NAMES:
+            raw_value = isolated_runtime_env.get(name)
+            if not raw_value:
+                raise HarnessFailure(
+                    f"isolated runtime environment is missing {name}"
+                )
+            path = Path(raw_value).resolve(strict=False)
+            if not path.is_relative_to(environment_resolved):
+                raise HarnessFailure(
+                    f"isolated runtime environment path escapes root: {name}"
+                )
 
 
 def _copy_auth_exclusive(real_auth: Path, fake_auth: Path) -> None:
@@ -1524,6 +2005,7 @@ def _apply_isolated_runtime(
     acceptance_root: Path,
     fake_home: Path,
     real_home: Path,
+    isolated_runtime_env: Mapping[str, str],
 ) -> subprocess.CompletedProcess[str]:
     _assert_safe_apply_target(acceptance_root, fake_home, real_home)
     return _run(
@@ -1537,6 +2019,7 @@ def _apply_isolated_runtime(
             source_commit,
         ],
         cwd=source_root,
+        env=isolated_runtime_env,
     )
 
 
@@ -1695,23 +2178,39 @@ def _run_with_real_home_audit(
     audits: dict[str, Any],
     action: Callable[[], Any],
     expected_home_identity: tuple[int, int] | None = None,
+    isolated_home: Path | None = None,
 ) -> Any:
+    """Audit only protected real-home state; attribute runtime in isolation.
+
+    The real home is deliberately not scanned for sessions, authentication
+    refreshes, SQLite files, or other runtime deltas.  Those observations are
+    non-deterministic host activity and are outside this acceptance boundary.
+    When ``isolated_home`` is supplied, the action is additionally audited in
+    that owned fake home.
+    """
+
     before = _protected_state_snapshot(real_home)
-    before_auth = _snapshot_file(real_home / AUTH_RUNTIME_RELATIVE)
-    before_sessions = _session_runtime_snapshot(real_home)
-    before_local_storage = _local_storage_snapshot(real_home)
-    approved_codex_db_paths = frozenset(
-        before_local_storage.get("approved_codex_db_paths", ())
-    )
-    before_unexpected = _unexpected_write_snapshot(
-        real_home,
-        approved_codex_db_paths=approved_codex_db_paths,
-    )
     before_home_identity = (
         expected_home_identity
         if expected_home_identity is not None
         else _plain_real_home_identity(real_home)
     )
+    isolated_before: dict[str, Any] | None = None
+    isolated_before_identity: tuple[int, int] | None = None
+    if isolated_home is not None:
+        isolated_before = _isolated_home_snapshot(isolated_home)
+        isolated_approved_codex_db_paths = _codex_db_allowlist_from_entries(
+            isolated_before["entries"]
+        )
+        _validate_isolated_home_snapshot(
+            isolated_home,
+            isolated_before,
+            real_home=real_home,
+            approved_codex_db_paths=isolated_approved_codex_db_paths,
+        )
+        isolated_before_identity = _plain_directory_identity(isolated_home)
+    else:
+        isolated_approved_codex_db_paths = frozenset()
     action_error: BaseException | None = None
     outcome: Any = None
     try:
@@ -1720,138 +2219,124 @@ def _run_with_real_home_audit(
         action_error = exc
     after: dict[str, Any] | None = None
     after_protected_error: BaseException | None = None
-    after_auth: dict[str, Any] | None = None
-    after_auth_error: BaseException | None = None
-    after_sessions: dict[str, Any] | None = None
-    after_sessions_error: BaseException | None = None
-    after_local_storage: dict[str, Any] | None = None
-    after_local_storage_error: BaseException | None = None
-    after_unexpected: dict[str, Any] | None = None
-    after_unexpected_error: BaseException | None = None
-    after_home_identity: tuple[int, int] | None = None
-    after_home_error: BaseException | None = None
     try:
         after = _protected_state_snapshot(real_home)
     except BaseException as exc:
         after_protected_error = exc
-    try:
-        after_auth = _snapshot_file(real_home / AUTH_RUNTIME_RELATIVE)
-    except BaseException as exc:
-        after_auth_error = exc
-    try:
-        after_sessions = _session_runtime_snapshot(real_home)
-    except BaseException as exc:
-        after_sessions_error = exc
-    try:
-        after_local_storage = _local_storage_snapshot(
-            real_home,
-            approved_codex_db_paths=approved_codex_db_paths,
-        )
-    except BaseException as exc:
-        after_local_storage_error = exc
-    try:
-        after_unexpected = _unexpected_write_snapshot(
-            real_home,
-            approved_codex_db_paths=approved_codex_db_paths,
-        )
-    except BaseException as exc:
-        after_unexpected_error = exc
+    after_home_identity: tuple[int, int] | None = None
+    after_home_error: BaseException | None = None
     try:
         after_home_identity = _plain_real_home_identity(real_home)
     except BaseException as exc:
         after_home_error = exc
+    protected_changed_paths = _changed_entry_paths(before, after)
     protected_unchanged = (
         after_protected_error is None
         and after is not None
-        and before["entries"] == after["entries"]
+        and not protected_changed_paths
     )
     home_identity_unchanged = (
         after_home_error is None
         and after_home_identity is not None
         and after_home_identity == before_home_identity
     )
-    unexpected_write_absent = (
-        after_unexpected_error is None
-        and after_unexpected is not None
-        and before_unexpected["entries"] == after_unexpected["entries"]
-    )
-    unexpected_changed_paths = _changed_entry_paths(
-        before_unexpected, after_unexpected
-    )
-    session_runtime_state_valid = (
-        after_sessions_error is None and after_sessions is not None
-    )
-    local_storage_state_valid = (
-        after_local_storage_error is None and after_local_storage is not None
-    )
-    session_runtime_activity = (
-        _snapshot_activity_was_observed(before_sessions, after_sessions)
-    )
-    local_storage_activity = (
-        _snapshot_activity_was_observed(before_local_storage, after_local_storage)
-    )
-    if (
-        after_protected_error is not None
-        or after_unexpected_error is not None
-        or after_home_error is not None
-        or not home_identity_unchanged
-    ):
-        auth_classification = UNEXPECTED_WRITE
-    elif not protected_unchanged or not unexpected_write_absent:
-        auth_classification = UNEXPECTED_WRITE
-    elif after_auth_error is not None or after_auth is None:
-        auth_classification = AUTH_RUNTIME_STATE_INVALID
-    else:
-        auth_classification = _classify_auth_runtime_change(
-            auth_path=real_home / "auth.json",
-            real_home=real_home,
-            before=before_auth,
-            after=after_auth,
+    isolated_audit: dict[str, Any] | None = None
+    isolated_after_error: BaseException | None = None
+    isolated_after: dict[str, Any] | None = None
+    isolated_after_identity: tuple[int, int] | None = None
+    if isolated_home is not None:
+        try:
+            isolated_after = _isolated_home_snapshot(isolated_home)
+            _validate_isolated_home_snapshot(
+                isolated_home,
+                isolated_after,
+                real_home=real_home,
+                approved_codex_db_paths=isolated_approved_codex_db_paths,
+            )
+            isolated_after_identity = _plain_directory_identity(isolated_home)
+        except BaseException as exc:
+            isolated_after_error = exc
+        isolated_changed_paths = _changed_entry_paths(
+            isolated_before or {"entries": {}}, isolated_after
         )
-    activity_categories: list[str] = []
-    if auth_classification == AUTH_RUNTIME_REFRESH_OBSERVED:
-        activity_categories.append(AUTH_RUNTIME_ACTIVITY)
-    if session_runtime_activity:
-        activity_categories.append(SESSION_RUNTIME_ACTIVITY)
-    if local_storage_activity:
-        activity_categories.append(LOCAL_STORAGE_ACTIVITY)
-    activity_category: str | list[str] | None
-    if (
-        after_protected_error is not None
-        or after_unexpected_error is not None
-        or after_home_error is not None
-        or not home_identity_unchanged
-        or not protected_unchanged
-        or not unexpected_write_absent
-        or auth_classification == AUTH_RUNTIME_STATE_INVALID
-        or not session_runtime_state_valid
-        or not local_storage_state_valid
-    ):
-        activity_category = UNEXPECTED_WRITE
-    elif len(activity_categories) == 1:
-        activity_category = activity_categories[0]
-    elif activity_categories:
-        activity_category = activity_categories
-    else:
-        activity_category = None
+        isolated_protected_changed_paths = _protected_changed_entry_paths(
+            isolated_before or {"entries": {}}, isolated_after
+        )
+        isolated_protected_unchanged = (
+            isolated_after_error is None
+            and isolated_after is not None
+            and not isolated_protected_changed_paths
+        )
+        isolated_unexpected = []
+        if isolated_after is not None:
+            before_entries = (
+                isolated_before.get("entries", {})
+                if isolated_before is not None
+                else {}
+            )
+            for relative in isolated_changed_paths:
+                candidate = isolated_after["entries"].get(relative) or before_entries.get(
+                    relative
+                )
+                if candidate is None:
+                    continue
+                if _runtime_path_category(
+                    relative, isolated_approved_codex_db_paths
+                ) == UNKNOWN and not (
+                    _is_allowed_isolated_structure_path(relative)
+                ):
+                    isolated_unexpected.append(relative)
+        isolated_identity_unchanged = (
+            isolated_after_error is None
+            and isolated_after_identity is not None
+            and isolated_before_identity is not None
+            and isolated_after_identity == isolated_before_identity
+        )
+        isolated_audit = {
+            "before": _inventory_summary(isolated_before)
+            if isolated_before is not None
+            else None,
+            "after": _inventory_summary(isolated_after)
+            if isolated_after is not None
+            else None,
+            "changed_paths": isolated_changed_paths,
+            "protected_changed_paths": isolated_protected_changed_paths,
+            "protected_state_unchanged": isolated_protected_unchanged,
+            "unexpected_changed_paths": isolated_unexpected,
+            "runtime_state_valid": (
+                isolated_after_error is None
+                and isolated_protected_unchanged
+                and not isolated_unexpected
+                and isolated_identity_unchanged
+            ),
+            "isolated_home_identity_unchanged": isolated_identity_unchanged,
+            "runtime_attribution": "ISOLATED_HOME_ONLY",
+        }
     audits[label] = {
         "before": _inventory_summary(before),
         "after": _inventory_summary(after) if after is not None else None,
+        "protected_changed_paths": protected_changed_paths,
         "byte_identical": protected_unchanged,
         "protected_state_unchanged": protected_unchanged,
-        "auth_classification": auth_classification,
-        "activity_category": activity_category,
-        "activity_categories": activity_categories,
+        "real_home_runtime_attribution": "NOT_USED",
+        # Compatibility keys remain explicitly non-attributive.  They prevent
+        # consumers of the pre-redesign evidence shape from mistaking the
+        # absence of a real-home scan for a failed read.
+        "auth_classification": None,
+        "activity_category": None,
+        "activity_categories": [],
+        "classification": None,
+        "session_runtime_activity": False,
+        "local_storage_activity": False,
+        "session_runtime_state_valid": None,
+        "local_storage_state_valid": None,
+        "unexpected_write_absent": None,
+        "unexpected_changed_paths": [],
         "observability": _runtime_observability_metadata(),
-        "classification": activity_category,
-        "session_runtime_activity": session_runtime_activity,
-        "local_storage_activity": local_storage_activity,
-        "session_runtime_state_valid": session_runtime_state_valid,
-        "local_storage_state_valid": local_storage_state_valid,
         "real_home_identity_unchanged": home_identity_unchanged,
-        "unexpected_write_absent": unexpected_write_absent,
-        "unexpected_changed_paths": unexpected_changed_paths,
     }
+    if isolated_audit is not None:
+        audits[label]["isolated_home"] = isolated_audit
     if (
         after_protected_error is not None
         or after_home_error is not None
@@ -1864,22 +2349,18 @@ def _run_with_real_home_audit(
         raise HarnessFailure(
             f"real CODEX_HOME protected state changed during {label}"
         ) from action_error
-    if after_unexpected_error is not None:
+    if (
+        isolated_audit is not None
+        and not isolated_audit["protected_state_unchanged"]
+        and isolated_after_error is None
+    ):
         raise HarnessFailure(
-            f"real CODEX_HOME unknown state could not be validated during {label}"
-        ) from after_unexpected_error
-    if not unexpected_write_absent:
-        raise HarnessFailure(
-            f"unexpected write outside the runtime allowlist during {label}"
+            f"isolated CODEX_HOME protected state changed during {label}"
         ) from action_error
-    if auth_classification == AUTH_RUNTIME_STATE_INVALID:
+    if isolated_audit is not None and not isolated_audit["runtime_state_valid"]:
         raise HarnessFailure(
-            f"real auth.json runtime state is invalid during {label}"
-        ) from action_error
-    if not session_runtime_state_valid or not local_storage_state_valid:
-        raise HarnessFailure(
-            f"real CODEX_HOME runtime state is invalid during {label}"
-        ) from action_error
+            f"isolated CODEX_HOME runtime state is invalid during {label}"
+        ) from isolated_after_error or action_error
     if action_error is not None:
         raise action_error
     return outcome
@@ -1938,7 +2419,7 @@ def _tool_calls(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _rollout_files(fake_home: Path) -> set[Path]:
-    return set((fake_home / "sessions").glob("**/*.jsonl"))
+    return set((fake_home / "browser/sessions").glob("**/*.jsonl"))
 
 
 def _validate_runtime_case(
@@ -2035,6 +2516,8 @@ def _run_codex_case(
     *,
     codex_command: str,
     fake_home: Path,
+    acceptance_root: Path,
+    real_home: Path,
     workspace: Path,
     evidence_dir: Path,
     case_name: str,
@@ -2044,36 +2527,43 @@ def _run_codex_case(
     expected_effort: str,
     expected_literal: str,
     expected_receipt: str,
+    isolated_runtime_env: Mapping[str, str],
 ) -> dict[str, Any]:
     before_rollouts = _rollout_files(fake_home)
     state_before = _fingerprint_tree(state_dir)
-    environment = _codex_environment(fake_home)
-    for name in (
-        "APPDATA",
-        "LOCALAPPDATA",
-        "TEMP",
-        "XDG_CACHE_HOME",
-        "XDG_CONFIG_HOME",
-        "XDG_DATA_HOME",
-        "XDG_STATE_HOME",
-    ):
-        Path(environment[name]).mkdir(parents=True, exist_ok=True)
-    completed = _run(
-        [
-            codex_command,
-            "exec",
-            "--json",
-            "--skip-git-repo-check",
-            "-s",
-            "read-only",
-            "-C",
-            str(workspace),
-            "-",
-        ],
-        cwd=workspace,
-        env=environment,
-        input_text=prompt,
+    runtime_environment = Path(isolated_runtime_env["TEMP"]).parent
+    _assert_isolated_environment_root(
+        runtime_environment,
+        acceptance_root,
+        fake_home,
+        real_home,
+        isolated_runtime_env,
     )
+    try:
+        completed = _run(
+            [
+                codex_command,
+                "exec",
+                "--json",
+                "--skip-git-repo-check",
+                "-s",
+                "read-only",
+                "-C",
+                str(workspace),
+                "-",
+            ],
+            cwd=workspace,
+            env=isolated_runtime_env,
+            input_text=prompt,
+        )
+    finally:
+        _assert_isolated_environment_root(
+            runtime_environment,
+            acceptance_root,
+            fake_home,
+            real_home,
+            isolated_runtime_env,
+        )
     (evidence_dir / f"{case_name}.stdout.jsonl").write_text(
         completed.stdout, encoding="utf-8"
     )
@@ -2101,7 +2591,12 @@ def _load_selector(selector_path: Path) -> Any:
     if spec is None or spec.loader is None:
         raise HarnessFailure("could not load isolated selector")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    original_dont_write_bytecode = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = original_dont_write_bytecode
     return module
 
 
@@ -2111,6 +2606,7 @@ def _ensure_selection(
     snapshot_path: Path,
     state_dir: Path,
     *,
+    isolated_runtime_env: Mapping[str, str],
     supported: str | None = None,
 ) -> dict[str, Any]:
     args = [
@@ -2125,7 +2621,11 @@ def _ensure_selection(
     if supported is not None:
         args.extend(("--supported", supported))
     args.append("--print-selection")
-    completed = _run(args, cwd=selector_path.parent)
+    completed = _run(
+        args,
+        cwd=selector_path.parent,
+        env=isolated_runtime_env,
+    )
     return json.loads(completed.stdout)
 
 
@@ -2139,8 +2639,9 @@ def _selection_prompt(
 ) -> str:
     saved_selection = json.dumps(selection, sort_keys=True, separators=(",", ":"))
     return f"""Controlled RC5 {case_name} runtime acceptance.
-The process CODEX_HOME, authentication, config, agents, manifest, state, sessions,
-workspace, and evidence are all inside one independent fake CODEX_HOME. Do not
+    The process CODEX_HOME, authentication, config, agents, manifest, and state are
+    inside one independent fake CODEX_HOME. Workspace, evidence, temporary storage,
+    and selector state are sibling artifacts under the owned acceptance root. Do not
 inspect or modify any path outside the current workspace. Do not run selector,
 status, diagnostics, installer, release discovery, shell, file, or web/network
 tools.
@@ -2165,11 +2666,33 @@ calls, zero selector-state reads/writes, and zero extra child work.
 
 
 def _run_o9_fail_soft(
-    *, selector_path: Path, fake_home: Path, snapshot_path: Path
+    *,
+    selector_path: Path,
+    fake_home: Path,
+    snapshot_path: Path,
+    isolated_runtime_env: Mapping[str, str],
+    state_root: Path | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    with _isolated_process_environment(isolated_runtime_env):
+        return _run_o9_fail_soft_checks(
+            selector_path=selector_path,
+            fake_home=fake_home,
+            snapshot_path=snapshot_path,
+            state_root=state_root,
+        )
+
+
+def _run_o9_fail_soft_checks(
+    *,
+    selector_path: Path,
+    fake_home: Path,
+    snapshot_path: Path,
+    state_root: Path | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     selector = _load_selector(selector_path)
     source_payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
     results: dict[str, Any] = {}
+    state_root = state_root or fake_home / "sol-luna-v4" / "acceptance-state"
     selected_profile: dict[str, Any] | None = None
     for mode in ("missing", "invalid"):
         payload = copy.deepcopy(source_payload)
@@ -2184,7 +2707,7 @@ def _run_o9_fail_soft(
         adapted = selector.adapt_modeldial_api(
             payload, source_url=f"controlled-{mode}-cost"
         )
-        state_dir = fake_home / "sol-luna-v4" / "acceptance-state" / f"o9-{mode}"
+        state_dir = state_root / f"o9-{mode}"
         profile = selector.ensure_daily_profile(adapted, state_dir=state_dir)
         status = selector.read_status(codex_home=fake_home, state_dir=state_dir)
         if profile.get("selected_role") != "luna_max":
@@ -2205,9 +2728,7 @@ def _run_o9_fail_soft(
         if mode == "missing":
             selected_profile = profile
 
-    read_failure_state = (
-        fake_home / "sol-luna-v4" / "acceptance-state" / "o9-read-failure"
-    )
+    read_failure_state = state_root / "o9-read-failure"
     state_existed_before = read_failure_state.exists()
     original_reader = selector._read_daily_profile
     selector._read_daily_profile = lambda _: ("READ_FAILED", None)
@@ -2233,11 +2754,19 @@ def _run_o9_fail_soft(
     return results, selected_profile
 
 
-def _git_state(repo_root: Path) -> dict[str, str]:
+def _git_state(
+    repo_root: Path, isolated_runtime_env: Mapping[str, str]
+) -> dict[str, str]:
     status = _run(
-        ["git", "status", "--porcelain=v1", "--untracked-files=all"], cwd=repo_root
+        ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+        cwd=repo_root,
+        env=isolated_runtime_env,
     ).stdout
-    head = _run(["git", "rev-parse", "HEAD"], cwd=repo_root).stdout.strip()
+    head = _run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_root,
+        env=isolated_runtime_env,
+    ).stdout.strip()
     return {"head": head, "status": status}
 
 
@@ -2289,30 +2818,23 @@ def main() -> int:
     if _file_identity(real_auth)[2] != 1:
         raise HarnessFailure("real auth.json must not be hardlinked")
     temp_parent = _validate_temp_parent(args.temp_parent, real_home)
+    stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
+    acceptance_root = temp_parent / (
+        f"{HARNESS_ROOT_PREFIX}{stamp}-{os.getpid()}-{uuid.uuid4().hex}"
+    )
+    fake_home = acceptance_root / "codex-home"
+    environment_root = acceptance_root / "runtime-environment"
+    isolated_runtime_env = _codex_environment(
+        fake_home,
+        environment_root=environment_root,
+    )
 
     protected_state = _protected_state_snapshot(real_home)
     _validate_protected_state_snapshot(protected_state)
-    session_runtime = _session_runtime_snapshot(real_home)
-    local_storage = _local_storage_snapshot(real_home)
-    approved_codex_db_paths = frozenset(
-        local_storage.get("approved_codex_db_paths", ())
-    )
     baseline = {
-        "auth": _snapshot_file(real_auth),
         "protected": protected_state,
-        "sessions": session_runtime,
-        "local_storage": local_storage,
-        "unexpected": _unexpected_write_snapshot(
-            real_home,
-            approved_codex_db_paths=approved_codex_db_paths,
-        ),
-        "repo": _git_state(repo_root),
+        "repo": _git_state(repo_root, isolated_runtime_env),
     }
-    stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
-    acceptance_root = temp_parent / (
-        f"{HARNESS_ROOT_PREFIX}{stamp}-{os.getpid()}"
-    )
-    fake_home = acceptance_root / "codex-home"
     source_root = acceptance_root / "source"
     archive_path = acceptance_root / "source.tar"
     artifacts: dict[str, Any] = {
@@ -2324,7 +2846,7 @@ def main() -> int:
     }
 
     result: dict[str, Any] = {
-        "decision": "RC5_ACCEPTANCE_HARNESS_SECURITY_FAILED",
+        "decision": "RC5_ACCEPTANCE_BOUNDARY_IMPLEMENTATION_NEEDS_FIX",
         "harness_root": str(acceptance_root),
         "real_codex_home": {
             "before_hash": baseline["protected"]["hash"],
@@ -2333,19 +2855,17 @@ def main() -> int:
             "before_protected_state": _inventory_summary(baseline["protected"]),
             "after_inventory": None,
             "after_protected_state": None,
-            "auth_before": baseline["auth"],
-            "auth_after": None,
-            "auth_classification": None,
-            "activity_category": None,
-            "activity_categories": [],
-            "classification": None,
-            "session_runtime_before": _inventory_summary(baseline["sessions"]),
-            "session_runtime_after": None,
-            "local_storage_before": _inventory_summary(baseline["local_storage"]),
-            "local_storage_after": None,
+            "real_home_runtime_attribution": "NOT_USED",
+            "protected_state_unchanged": None,
+            "real_home_identity_unchanged": None,
             "changed": None,
         },
         "product_runtime": {"rc5_code_modified": "NO"},
+        "boundary_classification": {
+            "runtime_payload_frozen": "YES",
+            "acceptance_contract_updated": "YES",
+            "product_runtime_changed": "NO",
+        },
         "source_attribution": _source_attribution(None),
         "observability": _runtime_observability_metadata(),
         "acceptance_audits": {},
@@ -2367,6 +2887,18 @@ def main() -> int:
             real_home=real_home,
             artifacts=artifacts,
         ):
+            for name in (
+                "APPDATA",
+                "LOCALAPPDATA",
+                "TEMP",
+                "XDG_CACHE_HOME",
+                "XDG_CONFIG_HOME",
+                "XDG_DATA_HOME",
+                "XDG_RUNTIME_DIR",
+                "XDG_STATE_HOME",
+            ):
+                Path(isolated_runtime_env[name]).mkdir(parents=True, exist_ok=True)
+            _assert_no_redirection(environment_root, real_home)
             source_root.mkdir()
             _track_artifact(artifacts, source_root)
             _run(
@@ -2378,6 +2910,7 @@ def main() -> int:
                     args.source_commit,
                 ],
                 cwd=repo_root,
+                env=isolated_runtime_env,
             )
             _track_artifact(artifacts, archive_path)
             with tarfile.open(archive_path, "r") as archive:
@@ -2390,12 +2923,20 @@ def main() -> int:
                 acceptance_root=acceptance_root,
                 fake_home=fake_home,
                 real_home=real_home,
+                isolated_runtime_env=isolated_runtime_env,
             )
             install_result = json.loads(install.stdout)
             if install_result.get("status") not in {"INSTALLED", "UPGRADED"}:
                 raise HarnessFailure("isolated RC5 install did not complete")
             _track_artifact(artifacts, fake_home)
             _assert_no_redirection(fake_home, real_home)
+            _assert_isolated_environment_root(
+                environment_root,
+                acceptance_root,
+                fake_home,
+                real_home,
+                isolated_runtime_env,
+            )
             installed_source_commit = _read_installed_source_commit(fake_home)
             result["source_attribution"] = _source_attribution(
                 installed_source_commit
@@ -2413,14 +2954,20 @@ def main() -> int:
 
             selector_path = fake_home / "sol-luna-v4/selector.py"
             snapshot_path = source_root / "fixtures/modeldial/api-complete.json"
-            workspace = fake_home / "acceptance-workspace"
-            evidence_dir = fake_home / "acceptance-evidence"
+            # Harness workspace, evidence, and selector state are owned
+            # acceptance artifacts, not CODEX_HOME runtime namespaces.
+            workspace = acceptance_root / "acceptance-workspace"
+            evidence_dir = acceptance_root / "acceptance-evidence"
             workspace.mkdir()
             evidence_dir.mkdir()
 
-            o2_state = fake_home / "sol-luna-v4/acceptance-state/o2"
+            o2_state = acceptance_root / "acceptance-state/o2"
             o2_selection = _ensure_selection(
-                args.python_command, selector_path, snapshot_path, o2_state
+                args.python_command,
+                selector_path,
+                snapshot_path,
+                o2_state,
+                isolated_runtime_env=isolated_runtime_env,
             )
             if (
                 o2_selection.get("selected_role") != "luna_max"
@@ -2439,9 +2986,12 @@ def main() -> int:
                 real_home=real_home,
                 audits=result["acceptance_audits"],
                 expected_home_identity=real_home_identity,
+                isolated_home=fake_home,
                 action=lambda: _run_codex_case(
                     codex_command=args.codex_command,
                     fake_home=fake_home,
+                    acceptance_root=acceptance_root,
+                    real_home=real_home,
                     workspace=workspace,
                     evidence_dir=evidence_dir,
                     case_name="O2",
@@ -2457,15 +3007,17 @@ def main() -> int:
                     expected_effort="max",
                     expected_literal=o2_literal,
                     expected_receipt=o2_receipt,
+                    isolated_runtime_env=isolated_runtime_env,
                 ),
             )
 
-            o4_state = fake_home / "sol-luna-v4/acceptance-state/o4"
+            o4_state = acceptance_root / "acceptance-state/o4"
             o4_selection = _ensure_selection(
                 args.python_command,
                 selector_path,
                 snapshot_path,
                 o4_state,
+                isolated_runtime_env=isolated_runtime_env,
                 supported="high,medium,low",
             )
             if (
@@ -2486,9 +3038,12 @@ def main() -> int:
                 real_home=real_home,
                 audits=result["acceptance_audits"],
                 expected_home_identity=real_home_identity,
+                isolated_home=fake_home,
                 action=lambda: _run_codex_case(
                     codex_command=args.codex_command,
                     fake_home=fake_home,
+                    acceptance_root=acceptance_root,
+                    real_home=real_home,
                     workspace=workspace,
                     evidence_dir=evidence_dir,
                     case_name="O4",
@@ -2504,6 +3059,7 @@ def main() -> int:
                     expected_effort="high",
                     expected_literal=o4_literal,
                     expected_receipt=o4_receipt,
+                    isolated_runtime_env=isolated_runtime_env,
                 ),
             )
 
@@ -2512,8 +3068,10 @@ def main() -> int:
                     selector_path=selector_path,
                     fake_home=fake_home,
                     snapshot_path=snapshot_path,
+                    isolated_runtime_env=isolated_runtime_env,
+                    state_root=acceptance_root / "acceptance-state",
                 )
-                o9_state = fake_home / "sol-luna-v4/acceptance-state/o9-missing"
+                o9_state = acceptance_root / "acceptance-state/o9-missing"
                 receipt_selection = {
                     key: o9_selection[key]
                     for key in (
@@ -2529,6 +3087,8 @@ def main() -> int:
                 o9_receipt_result = _run_codex_case(
                     codex_command=args.codex_command,
                     fake_home=fake_home,
+                    acceptance_root=acceptance_root,
+                    real_home=real_home,
                     workspace=workspace,
                     evidence_dir=evidence_dir,
                     case_name="O9",
@@ -2544,6 +3104,7 @@ def main() -> int:
                     expected_effort="max",
                     expected_literal=o9_literal,
                     expected_receipt=o9_receipt,
+                    isolated_runtime_env=isolated_runtime_env,
                 )
                 if "ref-cost" in o9_receipt_result["receipt"]:
                     raise HarnessFailure("O9 Receipt did not omit ref-cost")
@@ -2558,18 +3119,12 @@ def main() -> int:
                 real_home=real_home,
                 audits=result["acceptance_audits"],
                 expected_home_identity=real_home_identity,
+                isolated_home=fake_home,
                 action=run_o9,
             )
             _assert_no_redirection(fake_home, real_home)
     except Exception as exc:  # final safety audit still runs on every failure
         failure = f"{type(exc).__name__}: {exc}"
-
-    after_auth = _missing_entry()
-    after_auth_error: BaseException | None = None
-    try:
-        after_auth = _snapshot_file(real_auth)
-    except BaseException as exc:
-        after_auth_error = exc
 
     after_protected: dict[str, Any] | None = None
     after_protected_error: BaseException | None = None
@@ -2578,33 +3133,6 @@ def main() -> int:
     except BaseException as exc:
         after_protected_error = exc
 
-    after_unexpected: dict[str, Any] | None = None
-    after_unexpected_error: BaseException | None = None
-    try:
-        after_unexpected = _unexpected_write_snapshot(
-            real_home,
-            approved_codex_db_paths=approved_codex_db_paths,
-        )
-    except BaseException as exc:
-        after_unexpected_error = exc
-
-    after_sessions: dict[str, Any] | None = None
-    after_sessions_error: BaseException | None = None
-    try:
-        after_sessions = _session_runtime_snapshot(real_home)
-    except BaseException as exc:
-        after_sessions_error = exc
-
-    after_local_storage: dict[str, Any] | None = None
-    after_local_storage_error: BaseException | None = None
-    try:
-        after_local_storage = _local_storage_snapshot(
-            real_home,
-            approved_codex_db_paths=approved_codex_db_paths,
-        )
-    except BaseException as exc:
-        after_local_storage_error = exc
-
     after_home_identity: tuple[int, int] | None = None
     after_home_error: BaseException | None = None
     try:
@@ -2612,12 +3140,7 @@ def main() -> int:
     except BaseException as exc:
         after_home_error = exc
 
-    after = {
-        "auth": after_auth,
-        "protected": after_protected,
-        "unexpected": after_unexpected,
-        "repo": _git_state(repo_root),
-    }
+    after_repo = _git_state(repo_root, isolated_runtime_env)
     result["real_codex_home"]["after_hash"] = (
         after_protected["hash"] if after_protected is not None else None
     )
@@ -2627,129 +3150,41 @@ def main() -> int:
     result["real_codex_home"]["after_protected_state"] = result["real_codex_home"][
         "after_inventory"
     ]
-    result["real_codex_home"]["auth_after"] = after["auth"]
-    result["real_codex_home"]["session_runtime_after"] = (
-        _inventory_summary(after_sessions) if after_sessions is not None else None
-    )
-    result["real_codex_home"]["local_storage_after"] = (
-        _inventory_summary(after_local_storage)
-        if after_local_storage is not None
-        else None
-    )
     if after_protected is None or after_protected_error is not None:
         protected_state_unchanged = False
+        protected_changed_paths = ["<snapshot unavailable>"]
     else:
-        protected_state_unchanged = (
-            baseline["protected"]["entries"] == after_protected["entries"]
+        protected_changed_paths = _changed_entry_paths(
+            baseline["protected"], after_protected
         )
+        protected_state_unchanged = not protected_changed_paths
     real_home_identity_unchanged = (
         after_home_error is None and after_home_identity == real_home_identity
     )
-    unexpected_write_absent = (
-        after_unexpected_error is None
-        and after_unexpected is not None
-        and baseline["unexpected"]["entries"] == after_unexpected["entries"]
+    result["real_codex_home"]["protected_state_unchanged"] = (
+        protected_state_unchanged
     )
-    unexpected_changed_paths = _changed_entry_paths(
-        baseline["unexpected"], after_unexpected
+    result["real_codex_home"]["protected_changed_paths"] = protected_changed_paths
+    result["real_codex_home"]["real_home_identity_unchanged"] = (
+        real_home_identity_unchanged
     )
-    session_runtime_state_valid = after_sessions_error is None
-    local_storage_state_valid = after_local_storage_error is None
-    session_runtime_activity = (
-        _snapshot_activity_was_observed(baseline["sessions"], after_sessions)
-    )
-    local_storage_activity = (
-        _snapshot_activity_was_observed(
-            baseline["local_storage"], after_local_storage
-        )
-    )
-    if (
-        after_protected_error is not None
-        or after_unexpected_error is not None
-        or after_home_error is not None
-    ):
-        auth_classification = UNEXPECTED_WRITE
-    elif after_auth_error is not None:
-        auth_classification = AUTH_RUNTIME_STATE_INVALID
-    else:
-        auth_classification = _classify_auth_runtime_change(
-            auth_path=real_auth,
-            real_home=real_home,
-            before=baseline["auth"],
-            after=after["auth"],
-        )
-        if (
-            not protected_state_unchanged
-            or not unexpected_write_absent
-            or not real_home_identity_unchanged
-            or not session_runtime_state_valid
-            or not local_storage_state_valid
-        ):
-            auth_classification = UNEXPECTED_WRITE
-    activity_categories: list[str] = []
-    if auth_classification == AUTH_RUNTIME_REFRESH_OBSERVED:
-        activity_categories.append(AUTH_RUNTIME_ACTIVITY)
-    if session_runtime_activity:
-        activity_categories.append(SESSION_RUNTIME_ACTIVITY)
-    if local_storage_activity:
-        activity_categories.append(LOCAL_STORAGE_ACTIVITY)
-    if (
-        after_protected_error is not None
-        or after_unexpected_error is not None
-        or after_home_error is not None
-        or after_sessions_error is not None
-        or after_local_storage_error is not None
-        or not protected_state_unchanged
-        or not unexpected_write_absent
-        or not real_home_identity_unchanged
-        or auth_classification == AUTH_RUNTIME_STATE_INVALID
-    ):
-        activity_category: str | list[str] | None = UNEXPECTED_WRITE
-    elif len(activity_categories) == 1:
-        activity_category = activity_categories[0]
-    elif activity_categories:
-        activity_category = activity_categories
-    else:
-        activity_category = None
-    result["real_codex_home"]["auth_classification"] = auth_classification
-    result["real_codex_home"]["activity_category"] = activity_category
-    result["real_codex_home"]["activity_categories"] = activity_categories
-    result["real_codex_home"]["classification"] = activity_category
-    result["real_codex_home"][
-        "unexpected_changed_paths"
-    ] = unexpected_changed_paths
-    auth_runtime_state_valid = auth_classification != AUTH_RUNTIME_STATE_INVALID
-    auth_mutation_allowlisted = auth_classification in {
-        AUTH_UNCHANGED,
-        AUTH_RUNTIME_REFRESH_OBSERVED,
-    }
     safety = {
         "protected_state_unchanged": protected_state_unchanged,
-        "auth_runtime_state_valid": auth_runtime_state_valid,
-        "auth_mutation_allowlisted": auth_mutation_allowlisted,
-        "session_runtime_state_valid": session_runtime_state_valid,
-        "local_storage_state_valid": local_storage_state_valid,
-        "unexpected_write_absent": unexpected_write_absent,
         "real_home_identity_unchanged": real_home_identity_unchanged,
-        "repo_identical_during_run": baseline["repo"] == after["repo"],
+        "repo_identical_during_run": baseline["repo"] == after_repo,
         "artifacts_removed": not artifacts["residual"]
         and not _lexists(acceptance_root),
     }
     result["safety"] = safety
     result["real_codex_home"]["changed"] = (
-        auth_classification != AUTH_UNCHANGED
-        or session_runtime_activity
-        or local_storage_activity
-        or not protected_state_unchanged
-        or not unexpected_write_absent
-        or not real_home_identity_unchanged
+        not protected_state_unchanged or not real_home_identity_unchanged
     )
     if failure is not None:
         result["failure"] = failure
     elif all(safety.values()) and all(
         result.get(case, {}).get("result") == "PASS" for case in ("o2", "o4", "o9")
     ):
-        result["decision"] = "RC5_ACCEPTANCE_HARNESS_SECURITY_FIXED"
+        result["decision"] = "RC5_ACCEPTANCE_BOUNDARY_IMPLEMENTED"
 
     symbolic_values = _evidence_symbolic_values(
         fake_home=fake_home,
@@ -2766,7 +3201,7 @@ def main() -> int:
     print(json.dumps(sanitized_result, indent=2, sort_keys=True))
     return (
         0
-        if result["decision"] == "RC5_ACCEPTANCE_HARNESS_SECURITY_FIXED"
+        if result["decision"] == "RC5_ACCEPTANCE_BOUNDARY_IMPLEMENTED"
         else 1
     )
 

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -16,6 +17,9 @@ if SPEC is None or SPEC.loader is None:
     raise RuntimeError("could not load RC5 runtime acceptance harness")
 HARNESS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(HARNESS)
+SYNTHETIC_VISUALIZATION_RUN_ID = "-".join(
+    ("11111111", "2222", "4333", "8444", "555555555555")
+)
 
 
 class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
@@ -26,9 +30,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
         (real_home / "backups" / "sol-luna-v4").mkdir(parents=True)
         (real_home / "AGENTS.md").write_bytes(b"protected policy\n")
         (real_home / "config.toml").write_bytes(b"[agents]\n")
-        (real_home / "agents" / "luna-low.toml").write_bytes(
-            b"[agents]\nenabled = false\n"
-        )
+        for role in ("low", "medium", "high", "xhigh", "max"):
+            (real_home / "agents" / f"luna-{role}.toml").write_bytes(
+                b"[agents]\nenabled = false\n"
+            )
         (real_home / "sol-luna-v4" / "selector.py").write_bytes(
             b"protected selector\n"
         )
@@ -41,11 +46,23 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
         (real_home / "sol-luna-v4" / "state" / "last-good-profile.json").write_bytes(
             b"{}\n"
         )
+        (real_home / "sol-luna-v4" / "state" / "selector.lock").write_bytes(
+            b"lock\n"
+        )
+        (real_home / "sol-luna-v4" / "state" / "other-state.bin").write_bytes(
+            b"other state\n"
+        )
         (real_home / "backups" / "sol-luna-v4" / "metadata.json").write_bytes(
             b"{}\n"
         )
         (real_home / "auth.json").write_bytes(b'{"fixture":"auth"}\n')
         return real_home
+
+    def _make_isolated_home_fixture(self, root: Path) -> tuple[Path, Path]:
+        real_home = self._make_real_home_fixture(root)
+        fake_home = root / "fake"
+        shutil.copytree(real_home, fake_home)
+        return real_home, fake_home
 
     def _create_junction(self, link: Path, target: Path) -> None:
         completed = subprocess.run(
@@ -68,6 +85,7 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 "SystemRoot": "safe-system-root",
                 "HOME": "private-home",
                 "USERPROFILE": "private-profile",
+                "XDG_RUNTIME_DIR": "host-runtime-dir",
                 "OPENAI_API_KEY": "secret-value",
                 "GITHUB_TOKEN": "secret-value",
                 "API_KEY": "secret-value",
@@ -92,11 +110,35 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             "XDG_CACHE_HOME",
             "XDG_CONFIG_HOME",
             "XDG_DATA_HOME",
+            "XDG_RUNTIME_DIR",
             "XDG_STATE_HOME",
         ):
             self.assertTrue(Path(environment[name]).is_relative_to(fake_home))
         for forbidden in ("OPENAI_API_KEY", "GITHUB_TOKEN", "API_KEY"):
             self.assertNotIn(forbidden, environment)
+
+    def test_o4_selector_uses_isolated_env(self):
+        isolated_runtime_env = {
+            "CODEX_HOME": "isolated-home",
+            "HOME": "isolated-home",
+            "PATH": "safe-path",
+        }
+        completed = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="{}", stderr=""
+        )
+
+        with mock.patch.object(HARNESS, "_run", return_value=completed) as runner:
+            HARNESS._ensure_selection(
+                "python",
+                Path("isolated-home/sol-luna-v4/selector.py"),
+                Path("snapshot.json"),
+                Path("acceptance-state/o4"),
+                isolated_runtime_env=isolated_runtime_env,
+                supported="high,medium,low",
+            )
+
+        runner.assert_called_once()
+        self.assertIs(runner.call_args.kwargs["env"], isolated_runtime_env)
 
     def test_real_home_identity_excludes_mutable_directory_link_count(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -262,13 +304,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             self.assertNotEqual(before_identity, HARNESS._file_identity(auth_path)[:2])
             self.assertTrue(audits["AUTH_REFRESH"]["protected_state_unchanged"])
             self.assertEqual(
-                audits["AUTH_REFRESH"]["auth_classification"],
-                HARNESS.AUTH_RUNTIME_REFRESH_OBSERVED,
+                audits["AUTH_REFRESH"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
-            self.assertEqual(
-                audits["AUTH_REFRESH"]["activity_category"],
-                HARNESS.AUTH_RUNTIME_ACTIVITY,
-            )
+            self.assertIsNone(audits["AUTH_REFRESH"]["auth_classification"])
 
     def test_session_jsonl_activity_allowed(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -288,13 +327,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["SESSION_JSONL"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
+                audits["SESSION_JSONL"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
-            self.assertEqual(
-                audits["SESSION_JSONL"]["activity_categories"],
-                [HARNESS.SESSION_RUNTIME_ACTIVITY],
-            )
+            self.assertEqual(audits["SESSION_JSONL"]["activity_categories"], [])
 
     def test_sqlite_wal_activity_allowed(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -312,8 +348,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["SQLITE_WAL"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                audits["SQLITE_WAL"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
 
     def test_sqlite_shm_activity_allowed(self):
@@ -332,11 +368,11 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["SQLITE_SHM"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                audits["SQLITE_SHM"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
 
-    def test_sqlite_db_activity_allowed_only_in_expected_runtime_path(self):
+    def test_sqlite_db_activity_is_not_a_real_home_attribution_source(self):
         with tempfile.TemporaryDirectory() as temporary:
             real_home = self._make_real_home_fixture(Path(temporary))
             database_path = real_home / "sqlite" / "codex-dev.db"
@@ -352,8 +388,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["SQLITE_DB"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                audits["SQLITE_DB"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
             self.assertFalse(HARNESS._is_local_storage_path("unexpected.db"))
             self.assertFalse(HARNESS._is_local_storage_path("sqlite/random.db"))
@@ -367,26 +403,22 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             candidate = real_home / "sqlite" / "codex-evil.db"
             audits = {}
 
-            with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
-            ):
-                HARNESS._run_with_real_home_audit(
-                    label="NEW_ARBITRARY_CODEX_DB",
-                    real_home=real_home,
-                    audits=audits,
-                    action=lambda: (
-                        candidate.parent.mkdir(),
-                        candidate.write_bytes(b"unexpected\n"),
-                    ),
-                )
+            HARNESS._run_with_real_home_audit(
+                label="NEW_ARBITRARY_CODEX_DB",
+                real_home=real_home,
+                audits=audits,
+                action=lambda: (
+                    candidate.parent.mkdir(),
+                    candidate.write_bytes(b"unexpected\n"),
+                ),
+            )
 
             self.assertEqual(
                 HARNESS._runtime_path_category("sqlite/codex-evil.db"),
                 HARNESS.UNKNOWN,
             )
-            self.assertIn(
-                "sqlite/codex-evil.db",
-                audits["NEW_ARBITRARY_CODEX_DB"]["unexpected_changed_paths"],
+            self.assertEqual(
+                audits["NEW_ARBITRARY_CODEX_DB"]["unexpected_changed_paths"], []
             )
 
     def test_baseline_existing_codex_db_mutation_is_allowed(self):
@@ -405,11 +437,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["BASELINE_CODEX_DB_MUTATION"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
-            )
-            self.assertTrue(
-                audits["BASELINE_CODEX_DB_MUTATION"]["unexpected_write_absent"]
+                audits["BASELINE_CODEX_DB_MUTATION"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
 
     def test_baseline_codex_db_safe_regular_file_replacement_is_allowed(self):
@@ -437,17 +466,14 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 HARNESS._file_identity(database_path)[:2], replacement_identity
             )
             self.assertEqual(
-                audits["BASELINE_CODEX_DB_SAFE_REPLACEMENT"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
-            )
-            self.assertTrue(
                 audits["BASELINE_CODEX_DB_SAFE_REPLACEMENT"][
-                    "unexpected_write_absent"
-                ]
+                    "real_home_runtime_attribution"
+                ],
+                "NOT_USED",
             )
 
     def test_observed_runtime_path_classification_contract_is_total(self):
-        approved = frozenset({"sqlite/codex-existing.db"})
+        approved = frozenset()
         observability = HARNESS._runtime_observability_metadata()
         self.assertEqual(
             observability["OBSERVED_RUNTIME_PATH_CLASSIFICATION_TOTAL"], "YES"
@@ -467,15 +493,29 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
         cases = {
             "sol-luna-v4/state/daily-profile.json": HARNESS.PROTECTED_SOL_LUNA_STATE,
             "sessions/2026/example.jsonl": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
-            "plugins": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "session_index.jsonl": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "cache/codex_apps_tools/tools.json": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "node_repl/active_execs/exec.json": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "browser/sessions/2026/example.jsonl": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "cache/remote_plugin_catalog/catalog.json": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
             "plugins/cache": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
             "plugins/cache/marketplace/plugin/1.0.0/state.json": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "tmp/arg0/command.log": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            f"visualizations/2026/08/20/{SYNTHETIC_VISUALIZATION_RUN_ID}/frame.png": HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            "goals_1.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
+            "logs_2.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
+            "memories_3.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
+            "queue_4.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
+            "state_5.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
+            "sqlite/goals_1.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
             "plugins/evil/state.json": HARNESS.UNKNOWN,
             "plugins/data/state.json": HARNESS.UNKNOWN,
             "plugins-other/state.json": HARNESS.UNKNOWN,
-            "sqlite/goals_1.sqlite": HARNESS.CODEX_LOCAL_STORAGE_STATE,
-            "sqlite/codex-existing.db": HARNESS.CODEX_LOCAL_STORAGE_STATE,
             "sqlite/codex-evil.db": HARNESS.UNKNOWN,
+            "browser/other.json": HARNESS.UNKNOWN,
+            "cache/other.json": HARNESS.UNKNOWN,
+            "tmp/other.json": HARNESS.UNKNOWN,
+            "visualizations/other/frame.png": HARNESS.UNKNOWN,
         }
         valid_categories = {
             HARNESS.PROTECTED_SOL_LUNA_STATE,
@@ -504,22 +544,18 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             candidate = real_home / "sqlite" / "codex-evil.db-wal"
             audits = {}
 
-            with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
-            ):
-                HARNESS._run_with_real_home_audit(
-                    label="NEW_CODEX_DB_WAL",
-                    real_home=real_home,
-                    audits=audits,
-                    action=lambda: (
-                        candidate.parent.mkdir(),
-                        candidate.write_bytes(b"unexpected wal\n"),
-                    ),
-                )
+            HARNESS._run_with_real_home_audit(
+                label="NEW_CODEX_DB_WAL",
+                real_home=real_home,
+                audits=audits,
+                action=lambda: (
+                    candidate.parent.mkdir(),
+                    candidate.write_bytes(b"unexpected wal\n"),
+                ),
+            )
 
-            self.assertIn(
-                "sqlite/codex-evil.db-wal",
-                audits["NEW_CODEX_DB_WAL"]["unexpected_changed_paths"],
+            self.assertEqual(
+                audits["NEW_CODEX_DB_WAL"]["unexpected_changed_paths"], []
             )
 
     def test_new_codex_db_shm_is_unknown(self):
@@ -528,73 +564,71 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             candidate = real_home / "sqlite" / "codex-evil.db-shm"
             audits = {}
 
-            with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
-            ):
-                HARNESS._run_with_real_home_audit(
-                    label="NEW_CODEX_DB_SHM",
-                    real_home=real_home,
-                    audits=audits,
-                    action=lambda: (
-                        candidate.parent.mkdir(),
-                        candidate.write_bytes(b"unexpected shm\n"),
-                    ),
-                )
-
-            self.assertIn(
-                "sqlite/codex-evil.db-shm",
-                audits["NEW_CODEX_DB_SHM"]["unexpected_changed_paths"],
+            HARNESS._run_with_real_home_audit(
+                label="NEW_CODEX_DB_SHM",
+                real_home=real_home,
+                audits=audits,
+                action=lambda: (
+                    candidate.parent.mkdir(),
+                    candidate.write_bytes(b"unexpected shm\n"),
+                ),
             )
 
-    def test_baseline_codex_db_sidecars_are_allowed_only_with_approved_base(self):
+            self.assertEqual(
+                audits["NEW_CODEX_DB_SHM"]["unexpected_changed_paths"], []
+            )
+
+    def test_sqlite_sidecars_require_one_of_the_named_root_bases(self):
         with tempfile.TemporaryDirectory() as temporary:
             real_home = self._make_real_home_fixture(Path(temporary))
-            database_path = real_home / "sqlite" / "codex-approved.db"
-            database_path.parent.mkdir()
+            database_path = real_home / "goals-1.sqlite"
+            database_path.write_bytes(b"before\n")
+            self.assertFalse(HARNESS._is_local_storage_path(database_path.name))
+            database_path = real_home / "goals_1.sqlite"
             database_path.write_bytes(b"before\n")
             audits = {}
 
             def create_sidecars():
-                (database_path.with_name("codex-approved.db-wal")).write_bytes(
+                (database_path.with_name("goals_1.sqlite-wal")).write_bytes(
                     b"wal\n"
                 )
-                (database_path.with_name("codex-approved.db-shm")).write_bytes(
+                (database_path.with_name("goals_1.sqlite-shm")).write_bytes(
                     b"shm\n"
                 )
 
             HARNESS._run_with_real_home_audit(
-                label="BASELINE_CODEX_DB_SIDECARS",
+                label="SQLITE_ROOT_SIDECARS",
                 real_home=real_home,
                 audits=audits,
                 action=create_sidecars,
             )
 
-            approved = frozenset(
-                HARNESS._local_storage_snapshot(real_home)[
-                    "approved_codex_db_paths"
-                ]
-            )
-            self.assertIn("sqlite/codex-approved.db", approved)
+            approved = frozenset()
             self.assertTrue(
                 HARNESS._is_local_storage_path(
-                    "sqlite/codex-approved.db-wal", approved
+                    "goals_1.sqlite-wal", approved
                 )
             )
             self.assertFalse(
-                HARNESS._is_local_storage_path(
-                    "sqlite/codex-other.db-wal", approved
+                HARNESS._is_valid_sqlite_entry(
+                    "goals_2.sqlite-wal",
+                    {"type": "file", "reparse": False, "link_count": 1},
+                    {},
                 )
             )
             self.assertEqual(
-                audits["BASELINE_CODEX_DB_SIDECARS"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                HARNESS._runtime_path_category("goals_2.sqlite-wal"),
+                HARNESS.CODEX_LOCAL_STORAGE_STATE,
+            )
+            self.assertEqual(
+                audits["SQLITE_ROOT_SIDECARS"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
 
     def test_baseline_codex_db_replaced_by_directory_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
-            real_home = self._make_real_home_fixture(Path(temporary))
-            database_path = real_home / "sqlite" / "codex-approved.db"
-            database_path.parent.mkdir()
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            database_path = fake_home / "goals_1.sqlite"
             database_path.write_bytes(b"before\n")
             audits = {}
 
@@ -603,26 +637,28 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 database_path.mkdir()
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
                 HARNESS._run_with_real_home_audit(
                     label="BASELINE_CODEX_DB_DIRECTORY",
                     real_home=real_home,
                     audits=audits,
+                    isolated_home=fake_home,
                     action=replace_with_directory,
                 )
 
             self.assertIn(
-                "sqlite/codex-approved.db",
-                audits["BASELINE_CODEX_DB_DIRECTORY"]["unexpected_changed_paths"],
+                "goals_1.sqlite",
+                audits["BASELINE_CODEX_DB_DIRECTORY"]["isolated_home"][
+                    "changed_paths"
+                ],
             )
 
     def test_baseline_codex_db_replaced_by_symlink_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            real_home = self._make_real_home_fixture(root)
-            database_path = real_home / "sqlite" / "codex-approved.db"
-            database_path.parent.mkdir()
+            real_home, fake_home = self._make_isolated_home_fixture(root)
+            database_path = fake_home / "goals_1.sqlite"
             database_path.write_bytes(b"before\n")
             external = root / "external.db"
             external.write_bytes(b"external\n")
@@ -643,26 +679,28 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 database_path.symlink_to(external)
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
                 HARNESS._run_with_real_home_audit(
                     label="BASELINE_CODEX_DB_SYMLINK",
                     real_home=real_home,
                     audits=audits,
+                    isolated_home=fake_home,
                     action=replace_with_symlink,
                 )
 
             self.assertIn(
-                "sqlite/codex-approved.db",
-                audits["BASELINE_CODEX_DB_SYMLINK"]["unexpected_changed_paths"],
+                "goals_1.sqlite",
+                audits["BASELINE_CODEX_DB_SYMLINK"]["isolated_home"][
+                    "changed_paths"
+                ],
             )
 
     def test_baseline_codex_db_replaced_by_hardlink_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            real_home = self._make_real_home_fixture(root)
-            database_path = real_home / "sqlite" / "codex-approved.db"
-            database_path.parent.mkdir()
+            real_home, fake_home = self._make_isolated_home_fixture(root)
+            database_path = fake_home / "goals_1.sqlite"
             database_path.write_bytes(b"before\n")
             external = root / "external.db"
             external.write_bytes(b"external\n")
@@ -681,27 +719,29 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 os.link(external, database_path)
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
                 HARNESS._run_with_real_home_audit(
                     label="BASELINE_CODEX_DB_HARDLINK",
                     real_home=real_home,
                     audits=audits,
+                    isolated_home=fake_home,
                     action=replace_with_hardlink,
                 )
 
             self.assertIn(
-                "sqlite/codex-approved.db",
-                audits["BASELINE_CODEX_DB_HARDLINK"]["unexpected_changed_paths"],
+                "goals_1.sqlite",
+                audits["BASELINE_CODEX_DB_HARDLINK"]["isolated_home"][
+                    "changed_paths"
+                ],
             )
 
     @unittest.skipUnless(os.name == "nt", "Windows junction regression")
     def test_baseline_codex_db_replaced_by_junction_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            real_home = self._make_real_home_fixture(root)
-            database_path = real_home / "sqlite" / "codex-approved.db"
-            database_path.parent.mkdir()
+            real_home, fake_home = self._make_isolated_home_fixture(root)
+            database_path = fake_home / "goals_1.sqlite"
             database_path.write_bytes(b"before\n")
             external = root / "external-directory"
             external.mkdir()
@@ -742,12 +782,14 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
 
             try:
                 with self.assertRaisesRegex(
-                    HARNESS.HarnessFailure, "unexpected write outside"
+                    HARNESS.HarnessFailure,
+                    "isolated CODEX_HOME runtime state is invalid",
                 ):
                     HARNESS._run_with_real_home_audit(
                         label="BASELINE_CODEX_DB_JUNCTION",
                         real_home=real_home,
                         audits=audits,
+                        isolated_home=fake_home,
                         action=replace_with_junction,
                     )
             finally:
@@ -755,8 +797,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                     os.rmdir(database_path)
 
             self.assertIn(
-                "sqlite/codex-approved.db",
-                audits["BASELINE_CODEX_DB_JUNCTION"]["unexpected_changed_paths"],
+                "goals_1.sqlite",
+                audits["BASELINE_CODEX_DB_JUNCTION"]["isolated_home"][
+                    "changed_paths"
+                ],
             )
 
     def test_valid_state_sqlite_family_activity_is_allowed(self):
@@ -778,44 +822,33 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["SQLITE_FAMILY_CREATE"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
-            )
-            self.assertTrue(
-                audits["SQLITE_FAMILY_CREATE"]["unexpected_write_absent"]
+                audits["SQLITE_FAMILY_CREATE"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
 
     def test_arbitrary_root_sqlite_is_unknown(self):
-        for relative in ("evil.sqlite", "goals_1.sqlite", "random.db"):
-            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+        for relative in ("evil.sqlite", "random.db"):
+            with (
+                self.subTest(relative=relative),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
                 real_home = self._make_real_home_fixture(Path(temporary))
                 candidate = real_home / relative
                 audits = {}
 
-                with self.assertRaisesRegex(
-                    HARNESS.HarnessFailure, "unexpected write outside"
-                ):
-                    HARNESS._run_with_real_home_audit(
-                        label="ARBITRARY_ROOT_SQLITE",
-                        real_home=real_home,
-                        audits=audits,
-                        action=lambda: candidate.write_bytes(b"unexpected\n"),
-                    )
+                HARNESS._run_with_real_home_audit(
+                    label="ARBITRARY_ROOT_SQLITE",
+                    real_home=real_home,
+                    audits=audits,
+                    action=lambda: candidate.write_bytes(b"unexpected\n"),
+                )
 
-                self.assertIn(
-                    relative,
-                    audits["ARBITRARY_ROOT_SQLITE"]["unexpected_changed_paths"],
+                self.assertEqual(
+                    audits["ARBITRARY_ROOT_SQLITE"]["unexpected_changed_paths"], []
                 )
 
     def test_arbitrary_sqlite_wal_and_shm_are_unknown(self):
-        for relative in (
-            "evil.sqlite-wal",
-            "evil.sqlite-shm",
-            "sqlite/codex-dev.db-wal",
-            "sqlite/codex-dev.db-shm",
-            "state_5.sqlite-wal",
-            "state_5.sqlite-shm",
-        ):
+        for relative in ("evil.sqlite-wal", "evil.sqlite-shm"):
             with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
                 real_home = self._make_real_home_fixture(Path(temporary))
                 candidate = real_home / relative
@@ -825,41 +858,34 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                     candidate.parent.mkdir(parents=True, exist_ok=True)
                     candidate.write_bytes(b"unexpected\n")
 
-                with self.assertRaisesRegex(
-                    HARNESS.HarnessFailure, "unexpected write outside"
-                ):
-                    HARNESS._run_with_real_home_audit(
-                        label="ARBITRARY_SQLITE_SIDECAR",
-                        real_home=real_home,
-                        audits=audits,
-                        action=create_candidate,
-                    )
-                self.assertIn(
-                    relative,
+                HARNESS._run_with_real_home_audit(
+                    label="ARBITRARY_SQLITE_SIDECAR",
+                    real_home=real_home,
+                    audits=audits,
+                    action=create_candidate,
+                )
+                self.assertEqual(
                     audits["ARBITRARY_SQLITE_SIDECAR"]["unexpected_changed_paths"],
+                    [],
                 )
 
     def test_valid_sqlite_validated_family_activity_is_allowed(self):
         with tempfile.TemporaryDirectory() as temporary:
             real_home = self._make_real_home_fixture(Path(temporary))
-            sqlite_dir = real_home / "sqlite"
-            sqlite_dir.mkdir()
-            codex_base = sqlite_dir / "codex-history-snapshots-dev.db"
-            codex_base.write_bytes(b"before\n")
             audits = {}
             bases = (
                 "goals_1.sqlite",
                 "logs_2.sqlite",
                 "memories_1.sqlite",
+                "queue_4.sqlite",
                 "state_5.sqlite",
             )
 
             def create_sqlite_family():
-                codex_base.write_bytes(b"after\n")
                 for name in bases:
-                    (sqlite_dir / name).write_bytes(b"base\n")
-                    (sqlite_dir / f"{name}-wal").write_bytes(b"wal\n")
-                    (sqlite_dir / f"{name}-shm").write_bytes(b"shm\n")
+                    (real_home / name).write_bytes(b"base\n")
+                    (real_home / f"{name}-wal").write_bytes(b"wal\n")
+                    (real_home / f"{name}-shm").write_bytes(b"shm\n")
 
             HARNESS._run_with_real_home_audit(
                 label="SQLITE_VALIDATED_FAMILY",
@@ -869,8 +895,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["SQLITE_VALIDATED_FAMILY"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                audits["SQLITE_VALIDATED_FAMILY"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
 
     def test_allowed_volatile_storage_is_not_content_hashed(self):
@@ -898,8 +924,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 )
 
             self.assertEqual(
-                audits["VOLATILE_STORAGE"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                audits["VOLATILE_STORAGE"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
             self.assertTrue(
                 audits["VOLATILE_STORAGE"]["protected_state_unchanged"]
@@ -926,8 +952,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["PLATFORM_CACHE"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
+                audits["PLATFORM_CACHE"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
             self.assertFalse(
                 HARNESS._is_session_runtime_path("cache/unexpected.json")
@@ -949,8 +975,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["NODE_REPL_ACTIVE_EXEC"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
+                audits["NODE_REPL_ACTIVE_EXEC"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
             self.assertFalse(
                 HARNESS._is_session_runtime_path("node_repl/unexpected.json")
@@ -980,8 +1006,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["REMOTE_CURATED_PLUGIN_CACHE"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
+                audits["REMOTE_CURATED_PLUGIN_CACHE"][
+                    "real_home_runtime_attribution"
+                ],
+                "NOT_USED",
             )
             self.assertEqual(
                 HARNESS._runtime_path_category(
@@ -1016,11 +1044,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["PLUGIN_CACHE_FIRST_USE"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
-            )
-            self.assertTrue(
-                audits["PLUGIN_CACHE_FIRST_USE"]["unexpected_write_absent"]
+                audits["PLUGIN_CACHE_FIRST_USE"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
 
     def test_plugin_cache_observed_create_and_delete_are_classified(self):
@@ -1050,8 +1075,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["PLUGIN_CACHE_OBSERVED_CREATE"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
+                audits["PLUGIN_CACHE_OBSERVED_CREATE"][
+                    "real_home_runtime_attribution"
+                ],
+                "NOT_USED",
             )
             self.assertEqual(
                 HARNESS._runtime_path_category(observed_path),
@@ -1078,12 +1105,13 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 action=delete_plugin_cache_state,
             )
             self.assertEqual(
-                audits["PLUGIN_CACHE_OBSERVED_DELETE"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
+                audits["PLUGIN_CACHE_OBSERVED_DELETE"][
+                    "real_home_runtime_attribution"
+                ],
+                "NOT_USED",
             )
             self.assertEqual(
-                audits["PLUGIN_CACHE_OBSERVED_DELETE"]["activity_categories"],
-                [HARNESS.SESSION_RUNTIME_ACTIVITY],
+                audits["PLUGIN_CACHE_OBSERVED_DELETE"]["activity_categories"], []
             )
             self.assertEqual(
                 HARNESS._runtime_path_category(observed_path),
@@ -1162,35 +1190,40 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["ANOTHER_MARKETPLACE_PLUGIN_CACHE"]["activity_category"],
-                HARNESS.SESSION_RUNTIME_ACTIVITY,
+                audits["ANOTHER_MARKETPLACE_PLUGIN_CACHE"][
+                    "real_home_runtime_attribution"
+                ],
+                "NOT_USED",
             )
 
     def _assert_unknown_plugin_path_fails_closed(self, relative, label):
         with tempfile.TemporaryDirectory() as temporary:
-            real_home = self._make_real_home_fixture(Path(temporary))
-            candidate = real_home / relative
-            candidate.parent.mkdir(parents=True)
-            candidate.write_bytes(b"before\n")
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            candidate = fake_home / relative
             audits = {}
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
+                def write_candidate():
+                    candidate.parent.mkdir(parents=True, exist_ok=True)
+                    candidate.write_bytes(b"after plugin state\n")
+
                 HARNESS._run_with_real_home_audit(
                     label=label,
                     real_home=real_home,
                     audits=audits,
-                    action=lambda: candidate.write_bytes(b"after plugin state\n"),
+                    isolated_home=fake_home,
+                    action=write_candidate,
                 )
 
             self.assertEqual(
-                audits[label]["activity_category"], HARNESS.UNEXPECTED_WRITE
+                audits[label]["isolated_home"]["runtime_state_valid"], False
             )
             self.assertEqual(
                 HARNESS._runtime_path_category(relative), HARNESS.UNKNOWN
             )
-            self.assertIn(relative, audits[label]["unexpected_changed_paths"])
+            self.assertIn(relative, audits[label]["isolated_home"]["changed_paths"])
 
     def test_plugins_unknown_child_fails_closed(self):
         self._assert_unknown_plugin_path_fails_closed(
@@ -1467,22 +1500,25 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
 
     def test_plugin_cache_path_escape_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
-            real_home = self._make_real_home_fixture(Path(temporary))
-            cache_root = real_home / "plugins" / "cache"
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            cache_root = fake_home / "plugins" / "cache"
             cache_root.mkdir(parents=True)
             escaped_path = cache_root / ".." / "evil" / "state.json"
-            escaped_path.parent.mkdir(parents=True)
-            escaped_path.write_bytes(b"before\n")
             audits = {}
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
+                def write_escape():
+                    escaped_path.parent.mkdir(parents=True, exist_ok=True)
+                    escaped_path.write_bytes(b"after\n")
+
                 HARNESS._run_with_real_home_audit(
                     label="PLUGIN_CACHE_PATH_ESCAPE",
                     real_home=real_home,
                     audits=audits,
-                    action=lambda: escaped_path.write_bytes(b"after\n"),
+                    isolated_home=fake_home,
+                    action=write_escape,
                 )
 
             normalized_relative = "plugins/evil/state.json"
@@ -1491,12 +1527,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 HARNESS.UNKNOWN,
             )
             self.assertEqual(
-                audits["PLUGIN_CACHE_PATH_ESCAPE"]["activity_category"],
-                HARNESS.UNEXPECTED_WRITE,
-            )
-            self.assertEqual(
-                audits["PLUGIN_CACHE_PATH_ESCAPE"]["unexpected_changed_paths"],
-                [normalized_relative],
+                audits["PLUGIN_CACHE_PATH_ESCAPE"]["isolated_home"][
+                    "runtime_state_valid"
+                ],
+                False,
             )
 
     def test_plugin_cache_external_hardlink_fails(self):
@@ -1538,8 +1572,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["COMPUTER_USE_CONFIG"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                audits["COMPUTER_USE_CONFIG"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
             self.assertFalse(
                 HARNESS._is_local_storage_path("computer-use/unexpected.json")
@@ -1563,40 +1597,40 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["COMPUTER_USE_CONFIG_CREATE"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
-            )
-            self.assertTrue(
-                audits["COMPUTER_USE_CONFIG_CREATE"]["unexpected_write_absent"]
+                audits["COMPUTER_USE_CONFIG_CREATE"][
+                    "real_home_runtime_attribution"
+                ],
+                "NOT_USED",
             )
 
     def test_unexpected_computer_use_child_fails_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
-            real_home = self._make_real_home_fixture(Path(temporary))
-            child = real_home / "computer-use" / "unexpected.json"
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            child = fake_home / "computer-use" / "unexpected.json"
             audits = {}
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
+                def write_child():
+                    child.parent.mkdir(parents=True, exist_ok=True)
+                    child.write_bytes(b"unexpected\n")
+
                 HARNESS._run_with_real_home_audit(
                     label="COMPUTER_USE_CHILD",
                     real_home=real_home,
                     audits=audits,
-                    action=lambda: (
-                        child.parent.mkdir(),
-                        child.write_bytes(b"unexpected\n"),
-                    ),
+                    isolated_home=fake_home,
+                    action=write_child,
                 )
 
             self.assertIn(
                 "computer-use/unexpected.json",
-                audits["COMPUTER_USE_CHILD"]["unexpected_changed_paths"],
+                audits["COMPUTER_USE_CHILD"]["isolated_home"]["changed_paths"],
             )
 
     def test_expected_runtime_file_replaced_by_directory_fails_closed(self):
         cases = (
-            ("session_index.jsonl", HARNESS._session_runtime_snapshot),
             ("computer-use/config.json", HARNESS._local_storage_snapshot),
         )
         for relative, snapshotter in cases:
@@ -1612,7 +1646,6 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
 
     def test_expected_runtime_file_directory_children_are_not_hidden(self):
         cases = (
-            "session_index.jsonl",
             "computer-use/config.json",
         )
         for relative in cases:
@@ -1645,8 +1678,8 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                audits["MEMORIES_TREE"]["activity_category"],
-                HARNESS.LOCAL_STORAGE_ACTIVITY,
+                audits["MEMORIES_TREE"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
             self.assertFalse(
                 HARNESS._is_local_storage_path("unlisted-memories/one.md")
@@ -1655,66 +1688,165 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
     def test_auth_symlink_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            real_home = self._make_real_home_fixture(root)
+            real_home, fake_home = self._make_isolated_home_fixture(root)
             external = root / "external-auth.json"
             external.write_bytes(b"external auth target")
             audits = {}
 
             def redirect_auth():
-                (real_home / "auth.json").unlink()
-                (real_home / "auth.json").symlink_to(external)
+                (fake_home / "auth.json").unlink()
+                (fake_home / "auth.json").symlink_to(external)
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "auth.json runtime state is invalid"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
                 HARNESS._run_with_real_home_audit(
                     label="AUTH_SYMLINK",
                     real_home=real_home,
                     audits=audits,
+                    isolated_home=fake_home,
                     action=redirect_auth,
                 )
 
             self.assertEqual(
-                audits["AUTH_SYMLINK"]["auth_classification"],
-                HARNESS.AUTH_RUNTIME_STATE_INVALID,
+                audits["AUTH_SYMLINK"]["isolated_home"]["runtime_state_valid"],
+                False,
             )
 
     @unittest.skipUnless(os.name == "nt", "Windows junction regression")
     def test_auth_junction_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            real_home = self._make_real_home_fixture(root)
+            real_home, fake_home = self._make_isolated_home_fixture(root)
             external = root / "external-auth-directory"
             external.mkdir()
             audits = {}
-            auth_path = real_home / "auth.json"
-            auth_path.unlink()
-            completed = subprocess.run(
-                ["cmd", "/c", "mklink", "/J", str(auth_path), str(external)],
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                capture_output=True,
-                check=False,
-            )
-            self.assertEqual(completed.returncode, 0, completed.stderr)
+            auth_path = fake_home / "auth.json"
+
+            def redirect_auth():
+                auth_path.unlink()
+                completed = subprocess.run(
+                    ["cmd", "/c", "mklink", "/J", str(auth_path), str(external)],
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    capture_output=True,
+                    check=False,
+                )
+                if completed.returncode != 0:
+                    raise RuntimeError(completed.stderr)
+
             try:
                 with self.assertRaisesRegex(
-                    HARNESS.HarnessFailure, "auth.json runtime state is invalid"
+                    HARNESS.HarnessFailure,
+                    "isolated CODEX_HOME runtime state is invalid",
                 ):
                     HARNESS._run_with_real_home_audit(
                         label="AUTH_JUNCTION",
                         real_home=real_home,
                         audits=audits,
-                        action=lambda: None,
+                        isolated_home=fake_home,
+                        action=redirect_auth,
                     )
                 self.assertEqual(
-                    audits["AUTH_JUNCTION"]["auth_classification"],
-                    HARNESS.AUTH_RUNTIME_STATE_INVALID,
+                    audits["AUTH_JUNCTION"]["isolated_home"][
+                        "runtime_state_valid"
+                    ],
+                    False,
                 )
             finally:
                 if os.path.lexists(auth_path):
                     os.rmdir(auth_path)
+
+    def test_protected_state_new_file_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            target = fake_home / "sol-luna-v4/state/new-state.bin"
+            audits = {}
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure,
+                "isolated CODEX_HOME protected state changed",
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label="PROTECTED_NEW_FILE",
+                    real_home=real_home,
+                    audits=audits,
+                    isolated_home=fake_home,
+                    action=lambda: target.write_bytes(b"new state\n"),
+                )
+
+            self.assertFalse(
+                audits["PROTECTED_NEW_FILE"]["isolated_home"][
+                    "protected_state_unchanged"
+                ]
+            )
+            self.assertIn(
+                "sol-luna-v4/state/new-state.bin",
+                audits["PROTECTED_NEW_FILE"]["isolated_home"][
+                    "protected_changed_paths"
+                ],
+            )
+
+    def test_protected_state_modified_file_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            target = fake_home / "sol-luna-v4/state/daily-profile.json"
+            audits = {}
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure,
+                "isolated CODEX_HOME protected state changed",
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label="PROTECTED_MODIFIED_FILE",
+                    real_home=real_home,
+                    audits=audits,
+                    isolated_home=fake_home,
+                    action=lambda: target.write_bytes(b"modified state\n"),
+                )
+
+            self.assertFalse(
+                audits["PROTECTED_MODIFIED_FILE"]["isolated_home"][
+                    "protected_state_unchanged"
+                ]
+            )
+            self.assertIn(
+                "sol-luna-v4/state/daily-profile.json",
+                audits["PROTECTED_MODIFIED_FILE"]["isolated_home"][
+                    "protected_changed_paths"
+                ],
+            )
+
+    def test_protected_state_deleted_file_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            target = fake_home / "sol-luna-v4/state/other-state.bin"
+            audits = {}
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure,
+                "isolated CODEX_HOME protected state changed",
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label="PROTECTED_DELETED_FILE",
+                    real_home=real_home,
+                    audits=audits,
+                    isolated_home=fake_home,
+                    action=target.unlink,
+                )
+
+            self.assertFalse(
+                audits["PROTECTED_DELETED_FILE"]["isolated_home"][
+                    "protected_state_unchanged"
+                ]
+            )
+            self.assertIn(
+                "sol-luna-v4/state/other-state.bin",
+                audits["PROTECTED_DELETED_FILE"]["isolated_home"][
+                    "protected_changed_paths"
+                ],
+            )
 
     def test_protected_state_change_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1738,13 +1870,97 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 audits["PROTECTED_CHANGE"]["protected_state_unchanged"]
             )
             self.assertEqual(
-                audits["PROTECTED_CHANGE"]["auth_classification"],
-                HARNESS.UNEXPECTED_WRITE,
+                audits["PROTECTED_CHANGE"]["real_home_runtime_attribution"],
+                "NOT_USED",
             )
-            self.assertEqual(
-                audits["PROTECTED_CHANGE"]["activity_category"],
-                HARNESS.UNEXPECTED_WRITE,
+
+    def test_daily_profile_and_lkg_changes_fail_real_home_integrity(self):
+        for relative in (
+            "sol-luna-v4/state/daily-profile.json",
+            "sol-luna-v4/state/last-good-profile.json",
+        ):
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                real_home = self._make_real_home_fixture(Path(temporary))
+                protected = real_home / relative
+                audits = {}
+
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure, "protected state changed"
+                ):
+                    HARNESS._run_with_real_home_audit(
+                        label="PROFILE_OR_LKG_CHANGE",
+                        real_home=real_home,
+                        audits=audits,
+                        action=lambda: protected.write_bytes(b"changed\n"),
+                    )
+
+                self.assertFalse(
+                    audits["PROFILE_OR_LKG_CHANGE"]["protected_state_unchanged"]
+                )
+
+    def test_real_state_tree_immutable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            snapshot = HARNESS._protected_state_snapshot(real_home)
+            protected_relatives = (
+                "sol-luna-v4/state",
+                "sol-luna-v4/state/daily-profile.json",
+                "sol-luna-v4/state/last-good-profile.json",
+                "sol-luna-v4/state/selector.lock",
+                "sol-luna-v4/state/other-state.bin",
             )
+
+            for relative in protected_relatives:
+                self.assertIn(relative, snapshot["entries"])
+                entry = snapshot["entries"][relative]
+                for field in (
+                    "type",
+                    "device",
+                    "file_id",
+                    "link_count",
+                    "reparse",
+                ):
+                    self.assertIn(field, entry)
+            for relative in protected_relatives[1:]:
+                self.assertIsNotNone(snapshot["entries"][relative]["sha256"])
+
+            audits = {}
+            HARNESS._run_with_real_home_audit(
+                label="REAL_STATE_UNCHANGED",
+                real_home=real_home,
+                audits=audits,
+                action=lambda: None,
+            )
+            self.assertTrue(
+                audits["REAL_STATE_UNCHANGED"]["protected_state_unchanged"]
+            )
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "protected state changed"
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label="OTHER_STATE_CHANGE",
+                    real_home=real_home,
+                    audits={},
+                    action=lambda: (
+                        real_home / "sol-luna-v4/state/other-state.bin"
+                    ).write_bytes(b"changed\n"),
+                )
+
+    def test_selector_lock_change_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            selector_lock = real_home / "sol-luna-v4/state/selector.lock"
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "protected state changed"
+            ):
+                HARNESS._run_with_real_home_audit(
+                    label="SELECTOR_LOCK_CHANGE",
+                    real_home=real_home,
+                    audits={},
+                    action=lambda: selector_lock.write_bytes(b"changed lock\n"),
+                )
 
     def test_protected_state_dominates_plugin_cache_activity(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1777,8 +1993,10 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 )
 
             self.assertEqual(
-                audits["PROTECTED_PLUGIN_DOMINANCE"]["activity_category"],
-                HARNESS.UNEXPECTED_WRITE,
+                audits["PROTECTED_PLUGIN_DOMINANCE"][
+                    "real_home_runtime_attribution"
+                ],
+                "NOT_USED",
             )
             self.assertFalse(
                 audits["PROTECTED_PLUGIN_DOMINANCE"]["protected_state_unchanged"]
@@ -1786,39 +2004,31 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
 
     def test_unknown_path_change_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
-            real_home = self._make_real_home_fixture(Path(temporary))
-            mutable_candidate = real_home / "unlisted-runtime.json"
-            mutable_candidate.write_bytes(b"before\n")
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            mutable_candidate = fake_home / "unlisted-runtime.json"
             audits = {}
 
             def change_unlisted_state():
+                mutable_candidate.write_bytes(b"before\n")
                 mutable_candidate.write_bytes(b"after\n")
 
             with self.assertRaisesRegex(
-                HARNESS.HarnessFailure, "unexpected write outside the runtime allowlist"
+                HARNESS.HarnessFailure, "isolated CODEX_HOME runtime state is invalid"
             ):
                 HARNESS._run_with_real_home_audit(
                     label="UNEXPECTED_WRITE",
                     real_home=real_home,
                     audits=audits,
+                    isolated_home=fake_home,
                     action=change_unlisted_state,
                 )
 
             self.assertTrue(
                 audits["UNEXPECTED_WRITE"]["protected_state_unchanged"]
             )
-            self.assertFalse(audits["UNEXPECTED_WRITE"]["unexpected_write_absent"])
-            self.assertEqual(
-                audits["UNEXPECTED_WRITE"]["auth_classification"],
-                HARNESS.UNEXPECTED_WRITE,
-            )
-            self.assertEqual(
-                audits["UNEXPECTED_WRITE"]["activity_category"],
-                HARNESS.UNEXPECTED_WRITE,
-            )
-            self.assertEqual(
-                audits["UNEXPECTED_WRITE"]["unexpected_changed_paths"],
-                ["unlisted-runtime.json"],
+            self.assertIn(
+                "unlisted-runtime.json",
+                audits["UNEXPECTED_WRITE"]["isolated_home"]["changed_paths"],
             )
 
     def test_copied_auth_has_distinct_file_identity(self):
@@ -1897,6 +2107,9 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                             acceptance_root=acceptance_root,
                             fake_home=fake_home,
                             real_home=real_home,
+                            isolated_runtime_env={
+                                "PATH": os.environ.get("PATH", "")
+                            },
                         )
 
             runner.assert_not_called()
@@ -2097,6 +2310,535 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             self.assertEqual(record["mtime_ns"], auth.stat().st_mtime_ns)
             self.assertEqual(record["link_count"], 1)
             self.assertEqual(inventory["file_count"], 1)
+
+    def test_environment_roots_can_be_siblings_inside_owned_acceptance_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            acceptance_root = root / "acceptance"
+            fake_home = acceptance_root / "codex-home"
+            environment_root = acceptance_root / "runtime-environment"
+            environment = HARNESS._codex_environment(
+                fake_home,
+                {"HOME": "real-home", "OPENAI_API_KEY": "must-drop"},
+                environment_root=environment_root,
+            )
+
+            self.assertEqual(environment["CODEX_HOME"], str(fake_home))
+            self.assertEqual(environment["HOME"], str(fake_home))
+            self.assertEqual(environment["USERPROFILE"], str(fake_home))
+            for name in (
+                "APPDATA",
+                "LOCALAPPDATA",
+                "TEMP",
+                "TMP",
+                "TMPDIR",
+                "XDG_CACHE_HOME",
+                "XDG_CONFIG_HOME",
+                "XDG_DATA_HOME",
+                "XDG_RUNTIME_DIR",
+                "XDG_STATE_HOME",
+            ):
+                self.assertTrue(
+                    Path(environment[name]).is_relative_to(environment_root)
+                )
+            self.assertNotIn("OPENAI_API_KEY", environment)
+            real_home = root / "real"
+            real_home.mkdir()
+            fake_home.mkdir(parents=True)
+            environment_root.mkdir()
+            HARNESS._assert_isolated_environment_root(
+                environment_root,
+                acceptance_root,
+                fake_home,
+                real_home,
+                environment,
+            )
+
+    def test_isolated_environment_root_rejects_external_hardlink(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            acceptance_root = root / "acceptance"
+            fake_home = acceptance_root / "codex-home"
+            environment_root = acceptance_root / "runtime-environment"
+            real_home = root / "real"
+            fake_home.mkdir(parents=True)
+            environment_root.mkdir()
+            real_home.mkdir()
+            external = real_home / "external.bin"
+            external.write_bytes(b"external")
+            os.link(external, environment_root / "linked.bin")
+
+            with self.assertRaisesRegex(HARNESS.HarnessFailure, "hardlink"):
+                HARNESS._assert_isolated_environment_root(
+                    environment_root,
+                    acceptance_root,
+                    fake_home,
+                    real_home,
+                )
+
+    def test_owned_marker_and_fake_auth_are_preserved_during_case(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            temp_parent = root / "temp"
+            temp_parent.mkdir()
+            acceptance_root = temp_parent / (
+                f"{HARNESS.HARNESS_ROOT_PREFIX}marker-test"
+            )
+            fake_home = acceptance_root / "codex-home"
+            artifacts = {}
+
+            with HARNESS._owned_acceptance_directory(
+                temp_parent=temp_parent,
+                acceptance_root=acceptance_root,
+                fake_home=fake_home,
+                real_home=real_home,
+                artifacts=artifacts,
+            ):
+                marker = acceptance_root / HARNESS.OWNERSHIP_MARKER
+                payload = json.loads(marker.read_text(encoding="utf-8"))
+                self.assertEqual(payload["schema"], HARNESS.OWNERSHIP_SCHEMA)
+                self.assertEqual(payload["root"], str(acceptance_root))
+                fake_home.mkdir()
+                fake_auth = fake_home / "auth.json"
+                HARNESS._copy_auth_exclusive(real_home / "auth.json", fake_auth)
+                HARNESS._assert_independent_auth(real_home / "auth.json", fake_auth)
+                self.assertTrue(marker.is_file())
+                self.assertTrue(fake_auth.is_file())
+
+    def test_real_home_unrelated_runtime_activity_is_tolerated(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            unrelated = real_home / "sessions/host-runtime.jsonl"
+            audits = {}
+
+            def write_unrelated_runtime():
+                unrelated.parent.mkdir()
+                unrelated.write_bytes(b"host activity")
+
+            HARNESS._run_with_real_home_audit(
+                label="REAL_HOME_UNRELATED",
+                real_home=real_home,
+                audits=audits,
+                action=write_unrelated_runtime,
+            )
+
+            self.assertTrue(audits["REAL_HOME_UNRELATED"]["protected_state_unchanged"])
+            self.assertTrue(audits["REAL_HOME_UNRELATED"]["real_home_identity_unchanged"])
+            self.assertEqual(
+                audits["REAL_HOME_UNRELATED"]["real_home_runtime_attribution"],
+                "NOT_USED",
+            )
+            self.assertNotIn("auth_before", audits["REAL_HOME_UNRELATED"])
+
+    def test_exact_platform_namespaces_and_visualization_validation(self):
+        allowed = (
+            "sessions/2026/08/20/session.jsonl",
+            "archived_sessions/2026/session.jsonl",
+            "session-cache/index.json",
+            "session_cache/index.json",
+            "thread-writer-locks/thread.lock",
+            "session_index.jsonl",
+            "cache/codex_apps_tools/tools.json",
+            "cache/codex_apps_server_info/server.json",
+            "node_repl/active_execs/exec.json",
+            "browser/sessions/2026/08/20/session.jsonl",
+            "cache/remote_plugin_catalog/catalog.json",
+            "plugins/cache/openai/plugin/1.0/state.json",
+            "tmp/arg0/stdout.txt",
+            f"visualizations/2026/08/20/{SYNTHETIC_VISUALIZATION_RUN_ID}/frame.png",
+        )
+        for relative in allowed:
+            with self.subTest(relative=relative):
+                self.assertEqual(
+                    HARNESS._runtime_path_category(relative),
+                    HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+                )
+        rejected = (
+            "auth.json",
+            "browser/sessions/../other.json",
+            "browser/other.json",
+            "cache/other.json",
+            "node_repl/other.json",
+            "plugins/other/state.json",
+            "tmp/other.txt",
+            "visualizations/other/frame.png",
+            f"visualizations/2026/13/20/{SYNTHETIC_VISUALIZATION_RUN_ID}/frame.png",
+            "visualizations/2026/08/20/not-a-uuid/frame.png",
+            f"visualizations/2026/08/20/{SYNTHETIC_VISUALIZATION_RUN_ID}/../frame.png",
+        )
+        for relative in rejected:
+            with self.subTest(relative=relative):
+                self.assertEqual(HARNESS._runtime_path_category(relative), HARNESS.UNKNOWN)
+
+    def test_namespace_root_replaced_by_file_fails(self):
+        for relative in HARNESS.EXPECTED_RUNTIME_DIRECTORY_ROOTS:
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+                HARNESS._isolated_home_snapshot(fake_home)
+                target = fake_home / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b"runtime namespace must be a directory\n")
+
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure,
+                    "runtime namespace root is not an expected safe directory",
+                ):
+                    HARNESS._isolated_home_snapshot(fake_home)
+
+    def test_visualization_runtime_file_is_not_a_directory_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            run_root = (
+                fake_home
+                / "visualizations/2026/08/20"
+                / SYNTHETIC_VISUALIZATION_RUN_ID
+            )
+            run_root.mkdir(parents=True)
+            (run_root / "frame.png").write_bytes(b"frame\n")
+
+            snapshot = HARNESS._isolated_home_snapshot(fake_home)
+
+            self.assertEqual(
+                snapshot["entries"][
+                    f"visualizations/2026/08/20/"
+                    f"{SYNTHETIC_VISUALIZATION_RUN_ID}/frame.png"
+                ]["type"],
+                "file",
+            )
+
+    def test_invalid_visualization_structural_directory_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            audits = {}
+
+            def create_invalid_date_directory():
+                (fake_home / "visualizations/2026/13").mkdir(parents=True)
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure,
+                "isolated CODEX_HOME could not be validated",
+            ):
+                HARNESS._run_with_isolated_home_audit(
+                    label="INVALID_VISUALIZATION_STRUCTURE",
+                    fake_home=fake_home,
+                    real_home=real_home,
+                    audits=audits,
+                    action=create_invalid_date_directory,
+                )
+            self.assertIn(
+                "visualizations/2026/13",
+                audits["INVALID_VISUALIZATION_STRUCTURE"]["changed_paths"],
+            )
+
+    def test_isolated_home_all_five_sqlite_families_and_coupled_sidecars(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            names = (
+                "goals_1.sqlite",
+                "logs_2.sqlite",
+                "memories_3.sqlite",
+                "queue_4.sqlite",
+                "state_5.sqlite",
+            )
+            audits = {}
+
+            def create_sqlite_families():
+                for name in names:
+                    (fake_home / name).write_bytes(b"base")
+                    (fake_home / f"{name}-wal").write_bytes(b"wal")
+                    (fake_home / f"{name}-shm").write_bytes(b"shm")
+
+            HARNESS._run_with_isolated_home_audit(
+                label="ISOLATED_SQLITE_FAMILIES",
+                fake_home=fake_home,
+                real_home=real_home,
+                audits=audits,
+                action=create_sqlite_families,
+            )
+            self.assertTrue(audits["ISOLATED_SQLITE_FAMILIES"]["runtime_state_valid"])
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "isolated CODEX_HOME could not be validated"
+            ):
+                HARNESS._run_with_isolated_home_audit(
+                    label="ORPHAN_SQLITE_SIDECAR",
+                    fake_home=fake_home,
+                    real_home=real_home,
+                    action=lambda: (fake_home / "queue_99.sqlite-wal").write_bytes(
+                        b"orphan"
+                    ),
+                )
+
+    def test_thread_history_sqlite_family_allowed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            base_relative = "thread_history_123.sqlite"
+            audits = {}
+
+            def create_thread_history_sqlite_family():
+                for relative, content in (
+                    (base_relative, b"base"),
+                    (f"{base_relative}-wal", b"wal"),
+                    (f"{base_relative}-shm", b"shm"),
+                ):
+                    (fake_home / relative).write_bytes(content)
+
+            HARNESS._run_with_isolated_home_audit(
+                label="THREAD_HISTORY_SQLITE_FAMILY",
+                fake_home=fake_home,
+                real_home=real_home,
+                audits=audits,
+                action=create_thread_history_sqlite_family,
+            )
+
+            self.assertTrue(
+                audits["THREAD_HISTORY_SQLITE_FAMILY"]["runtime_state_valid"]
+            )
+            for relative in (
+                base_relative,
+                f"{base_relative}-wal",
+                f"{base_relative}-shm",
+            ):
+                self.assertEqual(
+                    HARNESS._runtime_path_category(relative),
+                    HARNESS.CODEX_LOCAL_STORAGE_STATE,
+                )
+
+    def test_thread_history_orphan_sidecar_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            orphan_relative = "thread_history_123.sqlite-wal"
+            audits = {}
+
+            self.assertEqual(
+                HARNESS._runtime_path_category(orphan_relative),
+                HARNESS.CODEX_LOCAL_STORAGE_STATE,
+            )
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure,
+                "isolated CODEX_HOME could not be validated",
+            ):
+                HARNESS._run_with_isolated_home_audit(
+                    label="THREAD_HISTORY_ORPHAN_SIDECAR",
+                    fake_home=fake_home,
+                    real_home=real_home,
+                    audits=audits,
+                    action=lambda: (fake_home / orphan_relative).write_bytes(b"orphan"),
+                )
+
+            self.assertIn(
+                orphan_relative,
+                audits["THREAD_HISTORY_ORPHAN_SIDECAR"]["changed_paths"],
+            )
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_isolated_plugin_cache_internal_junction_allowed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            target = (
+                fake_home
+                / "plugins"
+                / "cache"
+                / "openai-bundled"
+                / "chrome"
+                / "1.0.0"
+            )
+            junction = target.parent / "latest"
+            relative = junction.relative_to(fake_home).as_posix()
+            audits = {}
+
+            def create_internal_junction():
+                target.mkdir(parents=True)
+                (target / "runtime-state.json").write_bytes(b"internal target\n")
+                self._create_junction(junction, target)
+
+            try:
+                HARNESS._run_with_isolated_home_audit(
+                    label="ISOLATED_PLUGIN_CACHE_INTERNAL_JUNCTION",
+                    fake_home=fake_home,
+                    real_home=real_home,
+                    audits=audits,
+                    action=create_internal_junction,
+                )
+                self.assertTrue(
+                    audits["ISOLATED_PLUGIN_CACHE_INTERNAL_JUNCTION"][
+                        "runtime_state_valid"
+                    ]
+                )
+                snapshot = HARNESS._isolated_home_snapshot(fake_home)
+                self.assertEqual(
+                    snapshot["entries"][relative]["type"],
+                    "reparse",
+                )
+            finally:
+                if os.path.lexists(junction):
+                    os.rmdir(junction)
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_isolated_plugin_cache_external_junction_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home, fake_home = self._make_isolated_home_fixture(root)
+            external = root / "external-plugin-cache"
+            external.mkdir()
+            junction = fake_home / "plugins" / "cache" / "external"
+            audits = {}
+
+            def create_external_junction():
+                junction.parent.mkdir(parents=True)
+                self._create_junction(junction, external)
+
+            try:
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure,
+                    "isolated CODEX_HOME could not be validated",
+                ):
+                    HARNESS._run_with_isolated_home_audit(
+                        label="ISOLATED_PLUGIN_CACHE_EXTERNAL_JUNCTION",
+                        fake_home=fake_home,
+                        real_home=real_home,
+                        audits=audits,
+                        action=create_external_junction,
+                    )
+                self.assertFalse(
+                    audits["ISOLATED_PLUGIN_CACHE_EXTERNAL_JUNCTION"][
+                        "runtime_state_valid"
+                    ]
+                )
+            finally:
+                if os.path.lexists(junction):
+                    os.rmdir(junction)
+
+    def test_o4_case_uses_isolated_home_and_exact_session_namespace(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            environment_root = Path(temporary) / "acceptance" / "runtime"
+            audits = {}
+            observed: dict[str, str] = {}
+
+            def run_o4_like_case():
+                environment = HARNESS._codex_environment(
+                    fake_home, environment_root=environment_root
+                )
+                observed.update(environment)
+                for relative in (
+                    "sessions/2026/08/20/o4.jsonl",
+                    "browser/sessions/2026/08/20/o4.jsonl",
+                ):
+                    session = fake_home / relative
+                    session.parent.mkdir(parents=True)
+                    session.write_text("{}\n", encoding="utf-8")
+                return "O4-ISOLATED"
+
+            result = HARNESS._run_with_real_home_audit(
+                label="O4_ISOLATED",
+                real_home=real_home,
+                audits=audits,
+                isolated_home=fake_home,
+                action=run_o4_like_case,
+            )
+
+            self.assertEqual(result, "O4-ISOLATED")
+            self.assertEqual(observed["CODEX_HOME"], str(fake_home))
+            self.assertEqual(observed["HOME"], str(fake_home))
+            self.assertTrue(
+                Path(observed["TEMP"]).is_relative_to(environment_root)
+            )
+            self.assertTrue(audits["O4_ISOLATED"]["isolated_home"]["runtime_state_valid"])
+
+    def test_o9_selector_loader_does_not_create_pycache(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fake_home = Path(temporary) / "fake-home"
+            selector_path = fake_home / "sol-luna-v4" / "selector.py"
+            selector_path.parent.mkdir(parents=True)
+            selector_path.write_text("SELECTOR_MARKER = 'loaded'\n", encoding="utf-8")
+            original_dont_write_bytecode = sys.dont_write_bytecode
+
+            module = HARNESS._load_selector(selector_path)
+
+            self.assertEqual(module.SELECTOR_MARKER, "loaded")
+            self.assertEqual(sys.dont_write_bytecode, original_dont_write_bytecode)
+            self.assertFalse((selector_path.parent / "__pycache__").exists())
+
+            failing_selector = selector_path.parent / "failing_selector.py"
+            failing_selector.write_text(
+                "raise RuntimeError('loader failure')\n", encoding="utf-8"
+            )
+            with self.assertRaisesRegex(RuntimeError, "loader failure"):
+                HARNESS._load_selector(failing_selector)
+            self.assertEqual(sys.dont_write_bytecode, original_dont_write_bytecode)
+
+    def test_o9_failsoft_uses_isolated_env(self):
+        class FakeSelector:
+            def __init__(self):
+                self._read_daily_profile = lambda _: ("OK", {})
+                self.observed_environments = []
+
+            def _record_environment(self):
+                self.observed_environments.append(dict(os.environ))
+
+            def adapt_modeldial_api(self, payload, *, source_url):
+                self._record_environment()
+                return payload
+
+            def ensure_daily_profile(self, adapted, *, state_dir):
+                self._record_environment()
+                return {"selected_role": "luna_max", "selected_effort": "max"}
+
+            def read_status(self, *, codex_home, state_dir):
+                self._record_environment()
+                if state_dir.name == "o9-read-failure":
+                    return {
+                        "health": "Misconfigured",
+                        "reason_codes": ["DAILY_PROFILE_READ_FAILED"],
+                    }
+                return {
+                    "health": "Healthy",
+                    "reference_cost_metadata_available": False,
+                }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home, fake_home = self._make_isolated_home_fixture(root)
+            snapshot = root / "snapshot.json"
+            snapshot.write_text(
+                json.dumps({"rankings": [{"model": "gpt-5.6-luna", "reasoningEffort": "max"}]}),
+                encoding="utf-8",
+            )
+            selector = FakeSelector()
+            state_root = root / "acceptance-state"
+            isolated_runtime_env = HARNESS._codex_environment(
+                fake_home,
+                {
+                    "PATH": "safe-path",
+                    "SYSTEMROOT": "safe-system-root",
+                    "HOST_ONLY_SECRET": "must-not-leak",
+                },
+                environment_root=root / "runtime-environment",
+            )
+            with mock.patch.dict(
+                os.environ, {"HOST_ONLY_SECRET": "host-value"}, clear=False
+            ), mock.patch.object(HARNESS, "_load_selector", return_value=selector):
+                results, profile = HARNESS._run_o9_fail_soft(
+                    selector_path=fake_home / "sol-luna-v4/selector.py",
+                    fake_home=fake_home,
+                    snapshot_path=snapshot,
+                    isolated_runtime_env=isolated_runtime_env,
+                    state_root=state_root,
+                )
+                self.assertEqual(os.environ["HOST_ONLY_SECRET"], "host-value")
+
+            self.assertEqual(profile["selected_role"], "luna_max")
+            self.assertEqual(results["missing"]["health"], "Healthy")
+            self.assertEqual(results["invalid"]["health"], "Healthy")
+            self.assertEqual(results["read_failure"]["health"], "Misconfigured")
+            self.assertEqual(results["read_failure"]["state_created"], False)
+            self.assertFalse((fake_home / "upgrade").exists())
+            self.assertGreaterEqual(len(selector.observed_environments), 7)
+            for observed in selector.observed_environments:
+                self.assertEqual(observed, isolated_runtime_env)
+                self.assertNotIn("HOST_ONLY_SECRET", observed)
 
 
 if __name__ == "__main__":

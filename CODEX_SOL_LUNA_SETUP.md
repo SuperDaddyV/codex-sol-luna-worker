@@ -26,6 +26,15 @@ Approved RC5 runtime source commit:
 
 This setup contract installs the immutable RC5 runtime payload from Source Commit A shown above. The repository README may later pin this contract document from a documentation commit. That documentation commit is not the runtime payload source and is never passed to the installer.
 
+The RC5 acceptance-boundary redesign keeps the product runtime payload frozen:
+`src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`, and
+`.codex/agents/*` do not change. The acceptance contract consists of this
+setup contract, `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and `SECURITY.md`; those
+documents may change when the acceptance design changes. Such contract-only
+updates are not a product-runtime change.
+
+`PRODUCT_RUNTIME_CHANGED = NO`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+
 `SETUP_CONTRACT_SELF_REFERENCE_REQUIRED = NO`.
 
 ## 0. Document Role
@@ -322,8 +331,11 @@ The Source Commit A result of `152/152` tests and its Windows / Ubuntu / macOS C
 - O6 Misconfigured precedence — `NOT RUN`;
 - O7 Safe diagnostic report — `NOT RUN`;
 - O8 Latest prerelease immutable discovery and notice — `NOT RUN`;
-- O9 Real RC4→RC5 Global upgrade, idempotency, and rollback readiness — `NOT RUN`;
+- O9 Fail-soft observability selection, status, and Receipt omission — `NOT RUN`;
 - O10 Fresh-session delegation and Receipt suffixes — `NOT RUN`.
+
+RC5 real Global upgrade, idempotency, and rollback readiness are a separate
+acceptance operation, not O9, and remain `NOT RUN`.
 
 ## 17. Fresh Session Requirement
 

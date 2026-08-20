@@ -69,31 +69,51 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 
 ## RC5 runtime acceptance isolation boundary
 
-The RC5 acceptance harness builds Source Commit A in a fresh fake `CODEX_HOME`
-and keeps product-runtime validation separate from the real installed-state
-audit. It validates the temporary parent and planned fake home before the first
-installer write or credential copy. Symlinks, junctions, reparse points, mount
-points, path overlap, and hardlinks across the fake/real boundary fail closed;
-the fixed macOS `/var` system alias is the only platform-root exception.
+This acceptance-boundary redesign does not modify the frozen product runtime
+payload: `src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`,
+and `.codex/agents/*`. `CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, this
+architecture note, and `SECURITY.md` form the acceptance contract and may be
+updated as that boundary evolves. `PRODUCT_RUNTIME_CHANGED = NO`;
+`ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
-The real `CODEX_HOME` inventory has three non-overlapping path categories:
+The RC5 acceptance harness builds Source Commit A under a unique owned
+acceptance root. O4 and O9 run with an isolated `CODEX_HOME`, home/profile,
+application-data, temporary-storage, and XDG environment. One
+`isolated_runtime_env` is explicitly propagated to every harness subprocess;
+the O9 in-process fail-soft and status/health path runs under the same mapping
+and restores the caller environment afterward. Before the first installer
+write or credential copy, the harness validates the temporary parent
+and planned isolated home. Symlinks, junctions, reparse points, mount points,
+path overlap, shared identity, and hardlinks across the isolated/real boundary
+fail closed; the fixed macOS `/var` system alias is the only platform-root
+exception.
 
-- `PROTECTED_SOL_LUNA_STATE` is the managed Sol/Luna policy, configuration,
-  agents, selector, manifest, selector state, and backup boundary. Its recorded
-  entries must remain unchanged.
-- `CODEX_PLATFORM_RUNTIME_STATE` is the explicit authentication and Codex
-  session/runtime boundary. Valid activity is reported separately from product
-  configuration changes.
-- `CODEX_LOCAL_STORAGE_STATE` is the explicit local storage, SQLite,
-  computer-use configuration, and memory-content boundary. Valid activity is
-  likewise reported without treating it as a Sol/Luna mutation.
+The real `CODEX_HOME` is not a runtime-attribution source. Its role is limited
+to pre/post `PROTECTED_SOL_LUNA_STATE` integrity and root-identity verification.
+Managed Sol/Luna policy, configuration, agents, selector, manifest, Daily
+Profile, LKG, `selector.lock`, and every other entry in
+`sol-luna-v4/state/**` must remain unchanged. The tree comparison includes
+hash, type, device/file identity, link count, and reparse status; unrelated
+real-home runtime activity is ignored by the RC5 case decision.
 
-Anything outside those categories is an unexpected write. Every recorded path
-must remain inside the real runtime root, use a supported file or directory
-type, avoid reparse redirection, and have no unexpected hardlinks. Temporary
-cleanup is limited to a direct child with the harness prefix, the original
-directory identity, and a matching per-run ownership marker and token. Reparse
-entries are removed as entries and are never traversed.
+Runtime attribution is performed inside the isolated home. The
+`CODEX_PLATFORM_RUNTIME_STATE` namespace retains the previously enumerated
+session, session-index, app-cache, and active-exec paths and adds only
+`browser/sessions/**`, `cache/remote_plugin_catalog/**`, `plugins/cache/**`,
+`tmp/arg0/**`, and a validated `visualizations/` runtime subtree. It does not
+allow their broader parent trees. Root SQLite storage accepts only the
+`goals`, `logs`, `memories`, `queue`, `state`, and `thread_history` ID families,
+with `-wal` and `-shm` sidecars strongly coupled to a safe base; global
+`*.sqlite` and `*.db` matching is forbidden. Anything outside the exact
+isolated categories is an unexpected write. Every allowed entry must remain
+inside the isolated root, use a supported file or directory type, and have no
+unexpected hardlinks. The only runtime reparse exception is an internal
+`plugins/cache/**` directory target that passes the shared safe-plugin-cache
+contract; external, protected, escaping, and looping targets fail closed.
+
+Temporary cleanup is limited to a direct child with the harness prefix, the
+original directory identity, and a matching per-run ownership marker and
+token. Reparse entries are removed as entries and are never traversed.
 
 ## Global migration transaction
 
