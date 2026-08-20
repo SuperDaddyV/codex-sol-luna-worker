@@ -33,6 +33,7 @@ RC5_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 PROTECTED_SOL_LUNA_STATE = "PROTECTED_SOL_LUNA_STATE"
 CODEX_PLATFORM_RUNTIME_STATE = "CODEX_PLATFORM_RUNTIME_STATE"
 CODEX_LOCAL_STORAGE_STATE = "CODEX_LOCAL_STORAGE_STATE"
+UNKNOWN = "UNKNOWN"
 
 PROTECTED_REAL_PATHS = (
     "AGENTS.md",
@@ -83,6 +84,10 @@ ALL_LOCAL_STORAGE_TREE_PATHS = (
     *EXPLICIT_LOCAL_STORAGE_TREE_PATHS,
     *EXPLICIT_LOCAL_STORAGE_CONTENT_TREE_PATHS,
 )
+# ``computer-use`` is a structural parent for one explicitly allowed file.  It
+# is represented as a runtime root in the unknown snapshot so that creating
+# the parent does not hide an unexpected sibling or child.
+LOCAL_STORAGE_PARENT_PATHS: tuple[str, ...] = ("computer-use",)
 MUTABLE_REAL_PATHS = (
     AUTH_RUNTIME_RELATIVE,
     *EXPLICIT_SESSION_RUNTIME_PATHS,
@@ -91,6 +96,7 @@ MUTABLE_REAL_PATHS = (
 )
 LOCAL_STORAGE_ANCESTOR_PATHS = (
     *ALL_LOCAL_STORAGE_TREE_PATHS,
+    *LOCAL_STORAGE_PARENT_PATHS,
 )
 AUTH_UNCHANGED = "AUTH_UNCHANGED"
 AUTH_RUNTIME_REFRESH_OBSERVED = "AUTH_RUNTIME_REFRESH_OBSERVED"
@@ -146,6 +152,24 @@ EVIDENCE_SECRET_PATTERNS = (
         r"[\"']?[A-Za-z0-9][A-Za-z0-9._-]{14,}[\"']?",
         re.IGNORECASE,
     ),
+)
+
+SQLITE_TREE_VALIDATED_BASE_PATTERN = (
+    r"(?:goals|logs|memories|state)_[0-9]+\.sqlite"
+)
+SQLITE_ROOT_BASE_PATTERN = re.compile(
+    r"^(?P<base>state_[0-9]+\.sqlite)$"
+)
+SQLITE_ROOT_SIDECAR_PATTERN = re.compile(
+    r"^(?P<base>state_[0-9]+\.sqlite)-"
+    r"(?P<sidecar>wal|shm)$"
+)
+SQLITE_TREE_BASE_PATTERN = re.compile(
+    rf"^(?:{SQLITE_TREE_VALIDATED_BASE_PATTERN})$"
+)
+SQLITE_TREE_SIDECAR_PATTERN = re.compile(
+    rf"^(?P<base>{SQLITE_TREE_VALIDATED_BASE_PATTERN})-"
+    r"(?P<sidecar>wal|shm)$"
 )
 
 
@@ -685,25 +709,176 @@ def _is_under_relative_path(relative: str, root: str) -> bool:
     return relative == root or relative.startswith(f"{root}/")
 
 
-def _is_sqlite_filename(relative: str) -> bool:
-    name = relative.rsplit("/", 1)[-1].lower()
-    return name.endswith((".sqlite", ".sqlite-wal", ".sqlite-shm"))
+def _is_codex_db_name(name: str) -> bool:
+    """Recognize the Codex database shape without treating it as trusted."""
 
-
-def _is_expected_sqlite_storage_filename(relative: str) -> bool:
-    name = relative.rsplit("/", 1)[-1].lower()
-    return name.endswith(
-        (
-            ".sqlite",
-            ".sqlite-wal",
-            ".sqlite-shm",
-            ".sqlite-journal",
-            ".db",
-            ".db-wal",
-            ".db-shm",
-            ".db-journal",
-        )
+    return (
+        name.startswith("codex-")
+        and name.endswith(".db")
+        and len(name) > len("codex-.db")
     )
+
+
+def _sqlite_family(relative: str) -> tuple[str, str] | None:
+    """Return (base-relative-path, kind) for a known SQLite filename."""
+
+    if "/" not in relative:
+        name = relative
+        if SQLITE_ROOT_BASE_PATTERN.fullmatch(name):
+            return name, "base"
+        sidecar = SQLITE_ROOT_SIDECAR_PATTERN.fullmatch(name)
+        if sidecar:
+            return sidecar.group("base"), "sidecar"
+        return None
+
+    parent, name = relative.rsplit("/", 1)
+    if parent != "sqlite":
+        return None
+    if _is_codex_db_name(name) or SQLITE_TREE_BASE_PATTERN.fullmatch(name):
+        return relative, "base"
+    sidecar = SQLITE_TREE_SIDECAR_PATTERN.fullmatch(name)
+    if sidecar:
+        return f"sqlite/{sidecar.group('base')}", "sidecar"
+    if name.endswith(("-wal", "-shm")):
+        base_name, _, sidecar_name = name.rpartition("-")
+        if sidecar_name in {"wal", "shm"} and _is_codex_db_name(base_name):
+            return f"sqlite/{base_name}", "sidecar"
+    return None
+
+
+def _is_sqlite_filename(relative: str) -> bool:
+    return _sqlite_family(relative) is not None
+
+
+def _is_expected_sqlite_storage_filename(
+    relative: str,
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> bool:
+    family = _sqlite_family(relative)
+    if family is None:
+        return False
+    base_relative, _ = family
+    if _is_codex_db_relative(base_relative):
+        return (
+            approved_codex_db_paths is not None
+            and base_relative in approved_codex_db_paths
+        )
+    return True
+
+
+def _is_safe_runtime_entry(entry: Mapping[str, Any]) -> bool:
+    if entry.get("reparse") or entry.get("type") == "reparse":
+        return False
+    if entry.get("type") == "directory":
+        return True
+    return entry.get("type") == "file" and entry.get("link_count") == 1
+
+
+def _is_safe_runtime_file(entry: Mapping[str, Any]) -> bool:
+    return (
+        entry.get("type") == "file"
+        and not entry.get("reparse")
+        and entry.get("link_count") == 1
+    )
+
+
+def _is_safe_runtime_directory(entry: Mapping[str, Any]) -> bool:
+    return (
+        entry.get("type") == "directory"
+        and not entry.get("reparse")
+    )
+
+
+def _is_codex_db_relative(relative: str) -> bool:
+    family = _sqlite_family(relative)
+    if family is None or family[1] != "base":
+        return False
+    return relative.startswith("sqlite/") and _is_codex_db_name(
+        relative.rsplit("/", 1)[-1]
+    )
+
+
+def _codex_db_allowlist_from_entries(
+    entries: Mapping[str, Mapping[str, Any]],
+) -> frozenset[str]:
+    """Derive safe Codex DB base paths from a pre-run runtime snapshot."""
+
+    return frozenset(
+        relative
+        for relative, entry in entries.items()
+        if _is_codex_db_relative(relative) and _is_safe_runtime_file(entry)
+    )
+
+
+def _is_valid_sqlite_entry(
+    relative: str,
+    entry: Mapping[str, Any],
+    entries: Mapping[str, Mapping[str, Any]],
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> bool:
+    family = _sqlite_family(relative)
+    if family is None or not _is_safe_runtime_file(entry):
+        return False
+    base_relative, kind = family
+    if _is_codex_db_relative(base_relative):
+        if approved_codex_db_paths is None or base_relative not in approved_codex_db_paths:
+            return False
+        if kind == "base":
+            return True
+        base_entry = entries.get(base_relative)
+        return base_entry is not None and _is_safe_runtime_file(base_entry)
+    if kind == "base":
+        return True
+    base_entry = entries.get(base_relative)
+    return base_entry is not None and _is_safe_runtime_file(base_entry)
+
+
+def _is_valid_session_runtime_entry(
+    relative: str,
+    entry: Mapping[str, Any],
+) -> bool:
+    if relative in SESSION_RUNTIME_FILE_PATHS:
+        return _is_safe_runtime_file(entry)
+    if relative in SESSION_RUNTIME_TREE_PATHS:
+        return _is_safe_runtime_directory(entry)
+    if any(_is_under_relative_path(relative, root) for root in SESSION_RUNTIME_TREE_PATHS):
+        return _is_safe_runtime_entry(entry)
+    if (
+        relative.rsplit("/", 1)[-1] in SESSION_RUNTIME_DISCOVERED_FILE_NAMES
+        and any(
+            relative.startswith(f"{root}/")
+            for root in SESSION_RUNTIME_DISCOVERY_ROOTS
+        )
+    ):
+        return _is_safe_runtime_file(entry)
+    return False
+
+
+def _is_valid_local_storage_entry(
+    relative: str,
+    entry: Mapping[str, Any],
+    entries: Mapping[str, Mapping[str, Any]] | None = None,
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> bool:
+    if relative in EXPLICIT_LOCAL_STORAGE_FILE_PATHS:
+        return _is_safe_runtime_file(entry)
+    if relative in LOCAL_STORAGE_PARENT_PATHS:
+        return _is_safe_runtime_directory(entry)
+    if relative in ALL_LOCAL_STORAGE_TREE_PATHS:
+        return _is_safe_runtime_directory(entry)
+    if any(
+        _is_under_relative_path(relative, root)
+        for root in EXPLICIT_LOCAL_STORAGE_CONTENT_TREE_PATHS
+    ):
+        return _is_safe_runtime_entry(entry)
+    if _sqlite_family(relative) is not None:
+        return _is_valid_sqlite_entry(
+            relative,
+            entry,
+            entries or {},
+            approved_codex_db_paths,
+        )
+    return False
 
 
 def _is_protected_runtime_path(relative: str) -> bool:
@@ -741,8 +916,13 @@ def _is_session_runtime_metadata_directory(relative: str) -> bool:
     )
 
 
-def _is_local_storage_path(relative: str) -> bool:
+def _is_local_storage_path(
+    relative: str,
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> bool:
     if relative in EXPLICIT_LOCAL_STORAGE_FILE_PATHS:
+        return True
+    if relative in LOCAL_STORAGE_PARENT_PATHS:
         return True
     if relative in ALL_LOCAL_STORAGE_TREE_PATHS:
         return True
@@ -751,23 +931,26 @@ def _is_local_storage_path(relative: str) -> bool:
         for root in EXPLICIT_LOCAL_STORAGE_CONTENT_TREE_PATHS
     ):
         return True
-    if "/" not in relative and _is_sqlite_filename(relative):
-        return True
-    return any(
-        _is_under_relative_path(relative, root)
-        and _is_expected_sqlite_storage_filename(relative)
-        for root in EXPLICIT_LOCAL_STORAGE_TREE_PATHS
+    return _is_expected_sqlite_storage_filename(
+        relative,
+        approved_codex_db_paths,
     )
 
 
-def _runtime_path_category(relative: str) -> str | None:
+def _runtime_path_category(
+    relative: str,
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> str:
+    categories: list[str] = []
     if _is_protected_runtime_path(relative):
-        return PROTECTED_SOL_LUNA_STATE
+        categories.append(PROTECTED_SOL_LUNA_STATE)
     if relative == AUTH_RUNTIME_RELATIVE or _is_session_runtime_path(relative):
-        return CODEX_PLATFORM_RUNTIME_STATE
-    if _is_local_storage_path(relative):
-        return CODEX_LOCAL_STORAGE_STATE
-    return None
+        categories.append(CODEX_PLATFORM_RUNTIME_STATE)
+    if _is_local_storage_path(relative, approved_codex_db_paths):
+        categories.append(CODEX_LOCAL_STORAGE_STATE)
+    if len(categories) > 1:
+        raise HarnessFailure(f"runtime path has multiple categories: {relative}")
+    return categories[0] if categories else UNKNOWN
 
 
 def _snapshot_from_entries(records: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
@@ -807,28 +990,21 @@ def _validate_runtime_entries(
     real_home: Path,
     entries: Mapping[str, Mapping[str, Any]],
     category: str,
+    approved_codex_db_paths: frozenset[str] | None = None,
 ) -> None:
     real_resolved = real_home.resolve(strict=True)
     for relative, entry in entries.items():
         if entry["type"] == "missing":
             continue
-        if entry["type"] not in {"directory", "file"}:
+        if not _is_safe_runtime_entry(entry):
             raise HarnessFailure(
-                f"{category} runtime path has unsupported type: {relative}"
-            )
-        if (
-            category == CODEX_PLATFORM_RUNTIME_STATE
-            and relative in SESSION_RUNTIME_TREE_PATHS
-            and entry["type"] != "directory"
-        ) or (
-            category == CODEX_LOCAL_STORAGE_STATE
-            and relative in ALL_LOCAL_STORAGE_TREE_PATHS
-            and entry["type"] != "directory"
-        ):
-            raise HarnessFailure(
-                f"{category} runtime root is not a directory: {relative}"
+                f"{category} runtime path has unsafe object type or identity: {relative}"
             )
         target = real_home / relative
+        if entry["type"] == "directory" and os.path.ismount(target):
+            raise HarnessFailure(
+                f"{category} runtime path is a mount point: {relative}"
+            )
         try:
             _assert_plain_ancestor_chain(target)
             resolved = target.resolve(strict=True)
@@ -836,13 +1012,45 @@ def _validate_runtime_entries(
             raise HarnessFailure(
                 f"{category} path cannot be validated inside real CODEX_HOME: {relative}"
             ) from exc
-        if entry["type"] == "reparse" or not resolved.is_relative_to(real_resolved):
+        if not resolved.is_relative_to(real_resolved):
             raise HarnessFailure(
                 f"{category} path escapes real CODEX_HOME: {relative}"
             )
-        if entry["type"] == "file" and entry["link_count"] != 1:
+        try:
+            current = target.stat(follow_symlinks=False)
+        except OSError as exc:
             raise HarnessFailure(
-                f"{category} runtime file has unexpected hardlinks: {relative}"
+                f"{category} path identity cannot be revalidated: {relative}"
+            ) from exc
+        current_is_file = stat.S_ISREG(current.st_mode)
+        current_is_directory = stat.S_ISDIR(current.st_mode)
+        current_is_reparse = _is_reparse_point(target)
+        if entry["type"] == "file" and (
+            not current_is_file or current_is_reparse or current.st_nlink != 1
+        ):
+            raise HarnessFailure(
+                f"{category} runtime file is not a safe replacement: {relative}"
+            )
+        if entry["type"] == "directory" and (
+            not current_is_directory or current_is_reparse
+        ):
+            raise HarnessFailure(
+                f"{category} runtime directory is not a safe replacement: {relative}"
+            )
+        if category == CODEX_PLATFORM_RUNTIME_STATE:
+            valid = _is_valid_session_runtime_entry(relative, entry)
+        elif category == CODEX_LOCAL_STORAGE_STATE:
+            valid = _is_valid_local_storage_entry(
+                relative,
+                entry,
+                entries,
+                approved_codex_db_paths,
+            )
+        else:
+            valid = True
+        if not valid:
+            raise HarnessFailure(
+                f"{category} runtime path is not an expected safe entry: {relative}"
             )
 
 
@@ -867,18 +1075,18 @@ def _session_runtime_snapshot(real_home: Path) -> dict[str, Any]:
     return snapshot
 
 
-def _local_storage_snapshot(real_home: Path) -> dict[str, Any]:
+def _local_storage_snapshot(
+    real_home: Path,
+    *,
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> dict[str, Any]:
     records: dict[str, dict[str, Any]] = {}
     for relative in EXPLICIT_LOCAL_STORAGE_FILE_PATHS:
         records[relative] = _snapshot_runtime_entry(real_home / relative)
     for relative in EXPLICIT_LOCAL_STORAGE_TREE_PATHS:
-        records.update(
-            _snapshot_runtime_tree(
-                real_home,
-                relative,
-                include=_is_local_storage_path,
-            )
-        )
+        # Capture every child so a syntactically unknown SQLite file cannot be
+        # hidden by the allowed ``sqlite`` directory.
+        records.update(_snapshot_runtime_tree(real_home, relative))
     for relative in EXPLICIT_LOCAL_STORAGE_CONTENT_TREE_PATHS:
         records.update(_snapshot_runtime_tree(real_home, relative))
 
@@ -886,32 +1094,56 @@ def _local_storage_snapshot(real_home: Path) -> dict[str, Any]:
         real_home,
         excluded_relatives=(
             AUTH_RUNTIME_RELATIVE,
-            *EXPLICIT_SESSION_RUNTIME_PATHS,
+            *SESSION_RUNTIME_TREE_PATHS,
+            *EXPLICIT_LOCAL_STORAGE_TREE_PATHS,
             *EXPLICIT_LOCAL_STORAGE_CONTENT_TREE_PATHS,
         ),
         hash_file=lambda _: False,
     )
     for relative, entry in inventory["entries"].items():
-        if _is_local_storage_path(relative):
+        if _is_local_storage_path(relative, approved_codex_db_paths):
             records[relative] = dict(entry)
+    if approved_codex_db_paths is None:
+        approved_codex_db_paths = _codex_db_allowlist_from_entries(records)
     snapshot = _snapshot_from_entries(records)
     _validate_runtime_entries(
-        real_home, snapshot["entries"], CODEX_LOCAL_STORAGE_STATE
+        real_home,
+        snapshot["entries"],
+        CODEX_LOCAL_STORAGE_STATE,
+        approved_codex_db_paths,
     )
+    snapshot["approved_codex_db_paths"] = sorted(approved_codex_db_paths)
     return snapshot
 
 
-def _unexpected_write_snapshot(real_home: Path) -> dict[str, Any]:
+def _unexpected_write_snapshot(
+    real_home: Path,
+    *,
+    approved_codex_db_paths: frozenset[str] | None = None,
+) -> dict[str, Any]:
     """Snapshot unknown state without reading mutable auth content."""
 
+    approved_codex_db_paths_provided = approved_codex_db_paths is not None
+    if approved_codex_db_paths is None:
+        # Build the inventory first, then derive the baseline names from its
+        # safe regular-file entries.  This keeps this low-level snapshot helper
+        # usable with synthetic inventory tests whose root is not on disk.
+        approved_codex_db_paths = frozenset()
     inventory = _inventory_tree(
         real_home,
-        excluded_relatives=MUTABLE_REAL_PATHS,
+        # Keep explicit files and storage roots in the inventory.  Their
+        # classifiers below exclude only validated safe entries; an expected
+        # file replaced by a directory must expose its children as unknown.
+        excluded_relatives=(AUTH_RUNTIME_RELATIVE,),
         hash_file=lambda relative: not (
             _is_session_runtime_path(relative)
-            or _is_local_storage_path(relative)
+            or _is_local_storage_path(relative, approved_codex_db_paths)
         ),
     )
+    if not approved_codex_db_paths_provided:
+        approved_codex_db_paths = _codex_db_allowlist_from_entries(
+            inventory["entries"]
+        )
     mutable_ancestors = {"."}
     for relative in (*MUTABLE_REAL_PATHS, *LOCAL_STORAGE_ANCESTOR_PATHS):
         parts = relative.split("/")
@@ -920,10 +1152,17 @@ def _unexpected_write_snapshot(real_home: Path) -> dict[str, Any]:
         )
     records: dict[str, dict[str, Any]] = {}
     for relative, entry in inventory["entries"].items():
-        if _is_session_runtime_path(relative):
+        if _is_session_runtime_path(relative) and _is_valid_session_runtime_entry(
+            relative, entry
+        ):
             continue
-        if _is_local_storage_path(relative):
-            if relative in ALL_LOCAL_STORAGE_TREE_PATHS:
+        if _is_local_storage_path(relative, approved_codex_db_paths) and _is_valid_local_storage_entry(
+            relative,
+            entry,
+            inventory["entries"],
+            approved_codex_db_paths,
+        ):
+            if relative in (*ALL_LOCAL_STORAGE_TREE_PATHS, *LOCAL_STORAGE_PARENT_PATHS):
                 records[relative] = {"type": "runtime-root"}
             continue
         sanitized = dict(entry)
@@ -1049,6 +1288,15 @@ def _plain_real_home_identity(real_home: Path) -> tuple[int, int]:
     if os.path.ismount(real_home) or not real_home.is_dir():
         raise HarnessFailure("real CODEX_HOME must remain a plain directory")
     return _file_identity(real_home)[:2]
+
+
+def _plain_directory_identity(path: Path) -> tuple[int, int]:
+    _assert_plain_ancestor_chain(path)
+    if not _lexists(path) or _is_reparse_point(path):
+        raise HarnessFailure("cleanup parent must remain a plain directory")
+    if os.path.ismount(path) or not path.is_dir():
+        raise HarnessFailure("cleanup parent must remain a plain directory")
+    return _file_identity(path)[:2]
 
 
 def _assert_independent_auth(real_auth: Path, fake_auth: Path) -> None:
@@ -1202,10 +1450,16 @@ def _remove_owned_tree(path: Path) -> None:
 
 
 def _cleanup_owned_acceptance_root(
-    artifacts: dict[str, Any], ownership_token: str, root_identity: tuple[int, int]
+    artifacts: dict[str, Any],
+    ownership_token: str,
+    root_identity: tuple[int, int],
+    temp_parent_identity: tuple[int, int],
 ) -> None:
     acceptance_root = Path(artifacts["harness_root"])
     temp_parent = Path(artifacts["temp_parent"])
+    current_parent_identity = _plain_directory_identity(temp_parent)
+    if current_parent_identity != temp_parent_identity:
+        raise HarnessFailure("cleanup parent identity changed")
     if acceptance_root.parent != temp_parent:
         raise HarnessFailure("cleanup target is not a direct temp-parent child")
     if not acceptance_root.name.startswith(HARNESS_ROOT_PREFIX):
@@ -1263,6 +1517,7 @@ def _owned_acceptance_directory(
         ):
             raise HarnessFailure("new acceptance root escaped temp parent")
         root_identity = _file_identity(acceptance_root)[:2]
+        temp_parent_identity = _plain_directory_identity(temp_parent)
         ownership_token = uuid.uuid4().hex
         marker.write_text(
             json.dumps(
@@ -1295,7 +1550,12 @@ def _owned_acceptance_directory(
     try:
         yield artifacts
     finally:
-        _cleanup_owned_acceptance_root(artifacts, ownership_token, root_identity)
+        _cleanup_owned_acceptance_root(
+            artifacts,
+            ownership_token,
+            root_identity,
+            temp_parent_identity,
+        )
 
 
 def _run_with_real_home_audit(
@@ -1310,7 +1570,13 @@ def _run_with_real_home_audit(
     before_auth = _snapshot_file(real_home / AUTH_RUNTIME_RELATIVE)
     before_sessions = _session_runtime_snapshot(real_home)
     before_local_storage = _local_storage_snapshot(real_home)
-    before_unexpected = _unexpected_write_snapshot(real_home)
+    approved_codex_db_paths = frozenset(
+        before_local_storage.get("approved_codex_db_paths", ())
+    )
+    before_unexpected = _unexpected_write_snapshot(
+        real_home,
+        approved_codex_db_paths=approved_codex_db_paths,
+    )
     before_home_identity = (
         expected_home_identity
         if expected_home_identity is not None
@@ -1347,11 +1613,17 @@ def _run_with_real_home_audit(
     except BaseException as exc:
         after_sessions_error = exc
     try:
-        after_local_storage = _local_storage_snapshot(real_home)
+        after_local_storage = _local_storage_snapshot(
+            real_home,
+            approved_codex_db_paths=approved_codex_db_paths,
+        )
     except BaseException as exc:
         after_local_storage_error = exc
     try:
-        after_unexpected = _unexpected_write_snapshot(real_home)
+        after_unexpected = _unexpected_write_snapshot(
+            real_home,
+            approved_codex_db_paths=approved_codex_db_paths,
+        )
     except BaseException as exc:
         after_unexpected_error = exc
     try:
@@ -1840,6 +2112,24 @@ def _git_state(repo_root: Path) -> dict[str, str]:
     return {"head": head, "status": status}
 
 
+def _read_installed_source_commit(fake_home: Path) -> str | None:
+    manifest = fake_home / "sol-luna-v4/install-manifest.json"
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError):
+        return None
+    value = payload.get("source_commit") if isinstance(payload, dict) else None
+    return value if isinstance(value, str) else None
+
+
+def _source_attribution(installed: str | None) -> dict[str, Any]:
+    return {
+        "installed": installed,
+        "expected": RC5_SOURCE_COMMIT,
+        "match": "YES" if installed == RC5_SOURCE_COMMIT else "NO",
+    }
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1851,7 +2141,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--source-commit",
         default=RC5_SOURCE_COMMIT,
-        help="Immutable RC5 source commit used only to build the fake runtime",
+        help="Immutable RC5 source commit; must equal the fixed RC5 source commit",
     )
     parser.add_argument("--codex-command", default=shutil.which("codex") or "codex")
     parser.add_argument("--python-command", default=sys.executable)
@@ -1875,12 +2165,18 @@ def main() -> int:
     _validate_protected_state_snapshot(protected_state)
     session_runtime = _session_runtime_snapshot(real_home)
     local_storage = _local_storage_snapshot(real_home)
+    approved_codex_db_paths = frozenset(
+        local_storage.get("approved_codex_db_paths", ())
+    )
     baseline = {
         "auth": _snapshot_file(real_auth),
         "protected": protected_state,
         "sessions": session_runtime,
         "local_storage": local_storage,
-        "unexpected": _unexpected_write_snapshot(real_home),
+        "unexpected": _unexpected_write_snapshot(
+            real_home,
+            approved_codex_db_paths=approved_codex_db_paths,
+        ),
         "repo": _git_state(repo_root),
     }
     stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
@@ -1921,11 +2217,19 @@ def main() -> int:
             "changed": None,
         },
         "product_runtime": {"rc5_code_modified": "NO"},
+        "source_attribution": _source_attribution(None),
         "acceptance_audits": {},
         "artifacts": artifacts,
     }
     failure: str | None = None
     try:
+        if not (
+            isinstance(args.source_commit, str)
+            and args.source_commit.lower() == RC5_SOURCE_COMMIT
+        ):
+            raise HarnessFailure(
+                "requested source commit does not match expected RC5 source commit"
+            )
         with _owned_acceptance_directory(
             temp_parent=temp_parent,
             acceptance_root=acceptance_root,
@@ -1961,8 +2265,16 @@ def main() -> int:
             if install_result.get("status") not in {"INSTALLED", "UPGRADED"}:
                 raise HarnessFailure("isolated RC5 install did not complete")
             _track_artifact(artifacts, fake_home)
-
             _assert_no_redirection(fake_home, real_home)
+            installed_source_commit = _read_installed_source_commit(fake_home)
+            result["source_attribution"] = _source_attribution(
+                installed_source_commit
+            )
+            if result["source_attribution"]["match"] != "YES":
+                raise HarnessFailure(
+                    "installed source commit does not match expected RC5 source commit"
+                )
+
             fake_auth = fake_home / "auth.json"
             _copy_auth_exclusive(real_auth, fake_auth)
             _track_artifact(artifacts, fake_auth)
@@ -2139,7 +2451,10 @@ def main() -> int:
     after_unexpected: dict[str, Any] | None = None
     after_unexpected_error: BaseException | None = None
     try:
-        after_unexpected = _unexpected_write_snapshot(real_home)
+        after_unexpected = _unexpected_write_snapshot(
+            real_home,
+            approved_codex_db_paths=approved_codex_db_paths,
+        )
     except BaseException as exc:
         after_unexpected_error = exc
 
@@ -2153,7 +2468,10 @@ def main() -> int:
     after_local_storage: dict[str, Any] | None = None
     after_local_storage_error: BaseException | None = None
     try:
-        after_local_storage = _local_storage_snapshot(real_home)
+        after_local_storage = _local_storage_snapshot(
+            real_home,
+            approved_codex_db_paths=approved_codex_db_paths,
+        )
     except BaseException as exc:
         after_local_storage_error = exc
 

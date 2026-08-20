@@ -199,7 +199,26 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(RC5_SETUP_CONTRACT_COMMIT, content)
             self.assertIn(candidate_heading, content)
             self.assertIn(publication_row, content)
-            self.assertIn("| Runtime acceptance O1–O10 | `NOT RUN` |", content)
+            self.assertIn(
+                "| Runtime acceptance O1–O10 | "
+                "`documented-environment recorded PASS` |",
+                content,
+            )
+            if path == README:
+                self.assertIn(
+                    "The documented-environment record for RC5 O1–O10 is `PASS`",
+                    content,
+                )
+            else:
+                self.assertIn(
+                    "RC5 O1–O10 已在 documented environment 中留档为 `PASS`",
+                    content,
+                )
+            for number in range(1, 11):
+                self.assertEqual(
+                    sum(line.startswith(f"- O{number} ") for line in content.splitlines()),
+                    0,
+                )
             for feature in (
                 "Observability metadata",
                 "Sol/Luna Status",
@@ -216,6 +235,7 @@ class DocumentationTests(unittest.TestCase):
             candidate_start = content.index(candidate_heading)
             candidate_end = content.index("\n## ", candidate_start + len(candidate_heading))
             candidate_section = content[candidate_start:candidate_end]
+            self.assertNotIn("NOT RUN", candidate_section)
             for placeholder in ("<APPROVED_40_HEX_COMMIT>", "<TBD>", "pending"):
                 self.assertNotIn(placeholder, candidate_section)
             self.assertNotIn("releases/tag/v4.1.0-rc5", content)

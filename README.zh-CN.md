@@ -76,7 +76,7 @@ RC5 包含：
 | Windows、Ubuntu、macOS source CI | `PASS` |
 | Immutable setup contract | 已在 Commit `7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9` 提供 |
 | 发布状态 | `NOT PUBLISHED` |
-| Runtime acceptance O1–O10 | `NOT RUN` |
+| Runtime acceptance O1–O10 | `documented-environment recorded PASS` |
 
 愿意承担候选版本风险的高级用户可以测试这份实验性、非默认的 RC5 setup contract：
 
@@ -84,7 +84,7 @@ RC5 包含：
 https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9/CODEX_SOL_LUNA_SETUP.md
 ```
 
-请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。RC5 runtime acceptance 尚未运行；O1–O10 为 `NOT RUN`，因此 source 与 CI 验证不能代表真实用户 runtime 验证。
+请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。RC5 O1–O10 已在 documented environment 中留档为 `PASS`；证据只适用于该环境，不代表所有真实用户环境都完成 runtime 验证。
 
 ## 🚀 这是什么
 
