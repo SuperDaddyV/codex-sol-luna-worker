@@ -47,6 +47,18 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
         (real_home / "auth.json").write_bytes(b'{"fixture":"auth"}\n')
         return real_home
 
+    def _create_junction(self, link: Path, target: Path) -> None:
+        completed = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(link), str(target)],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            self.skipTest(f"junction creation is unavailable: {completed.stderr}")
+
     def test_codex_environment_is_isolated_and_drops_unrelated_secrets(self):
         fake_home = Path("isolated-home")
         environment = HARNESS._codex_environment(
@@ -1242,6 +1254,96 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
                 HARNESS._session_runtime_snapshot(real_home)
 
     @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_plugin_cache_internal_junction_allowed(self):
+        scenarios = (
+            (
+                "plugins/cache/example/plugin/version",
+                "plugins/cache/target",
+            ),
+            (
+                "plugins/cache/openai-bundled/chrome/latest",
+                "plugins/cache/openai-bundled/chrome/1.0.0",
+            ),
+        )
+        for relative, target_relative in scenarios:
+            with self.subTest(relative=relative):
+                with tempfile.TemporaryDirectory() as temporary:
+                    real_home = self._make_real_home_fixture(Path(temporary))
+                    target = real_home / target_relative
+                    target.mkdir(parents=True)
+                    (target / "runtime-state.json").write_bytes(
+                        b"internal target\n"
+                    )
+                    junction = real_home / relative
+                    junction.parent.mkdir(parents=True, exist_ok=True)
+                    self._create_junction(junction, target)
+                    try:
+                        snapshot = HARNESS._session_runtime_snapshot(real_home)
+                        entry = snapshot["entries"][relative]
+                        self.assertEqual(entry["type"], "reparse")
+                        self.assertEqual(
+                            HARNESS._runtime_path_category(relative),
+                            HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+                        )
+                        self.assertNotIn(
+                            relative,
+                            HARNESS._unexpected_write_snapshot(real_home)["entries"],
+                        )
+                    finally:
+                        if os.path.lexists(junction):
+                            os.rmdir(junction)
+
+    def test_plugin_cache_internal_reparse_allowed_if_safe(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            target = (
+                real_home
+                / "plugins"
+                / "cache"
+                / "openai-bundled"
+                / "chrome"
+                / "1.0.0"
+            )
+            target.mkdir(parents=True)
+            (target / "runtime-state.json").write_bytes(b"internal target\n")
+            reparse = target.parent / "latest"
+            try:
+                reparse.symlink_to(target, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"directory reparse creation is unavailable: {exc}")
+            try:
+                snapshot = HARNESS._session_runtime_snapshot(real_home)
+                entry = snapshot["entries"][
+                    "plugins/cache/openai-bundled/chrome/latest"
+                ]
+                self.assertEqual(entry["type"], "reparse")
+            finally:
+                if os.path.lexists(reparse):
+                    reparse.unlink()
+
+    def test_plugin_cache_external_symlink_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            external = root / "random-external-folder"
+            external.mkdir()
+            reparse = real_home / "plugins" / "cache" / "evil"
+            reparse.parent.mkdir(parents=True)
+            try:
+                reparse.symlink_to(external, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"directory reparse creation is unavailable: {exc}")
+            try:
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure, "unsafe object type or identity"
+                ):
+                    HARNESS._session_runtime_snapshot(real_home)
+            finally:
+                if os.path.lexists(reparse):
+                    reparse.unlink()
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
     def test_plugin_cache_junction_fails_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -1267,6 +1369,101 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             finally:
                 if os.path.lexists(cache):
                     os.rmdir(cache)
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_plugin_cache_junction_to_protected_file_fails_closed(self):
+        for protected_relative in ("AGENTS.md", "config.toml"):
+            with self.subTest(protected_relative=protected_relative):
+                with tempfile.TemporaryDirectory() as temporary:
+                    real_home = self._make_real_home_fixture(Path(temporary))
+                    protected_path = real_home / protected_relative
+                    junction = real_home / "plugins" / "cache" / "evil"
+                    junction.parent.mkdir(parents=True)
+                    self._create_junction(junction, protected_path)
+                    try:
+                        with self.assertRaisesRegex(
+                            HARNESS.HarnessFailure, "unsafe object type or identity"
+                        ):
+                            HARNESS._session_runtime_snapshot(real_home)
+                    finally:
+                        if os.path.lexists(junction):
+                            os.rmdir(junction)
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_plugin_cache_junction_inside_home_but_outside_cache_fails_closed(self):
+        scenarios = ("sessions", "sol-luna-v4/state")
+        for target_relative in scenarios:
+            with self.subTest(target_relative=target_relative):
+                with tempfile.TemporaryDirectory() as temporary:
+                    real_home = self._make_real_home_fixture(Path(temporary))
+                    target = real_home / target_relative
+                    target.mkdir(parents=True, exist_ok=True)
+                    junction = real_home / "plugins" / "cache" / "evil"
+                    junction.parent.mkdir(parents=True)
+                    self._create_junction(junction, target)
+                    try:
+                        with self.assertRaisesRegex(
+                            HARNESS.HarnessFailure, "unsafe object type or identity"
+                        ):
+                            HARNESS._session_runtime_snapshot(real_home)
+                    finally:
+                        if os.path.lexists(junction):
+                            os.rmdir(junction)
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_plugin_cache_junction_outside_codex_home_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            real_home = self._make_real_home_fixture(root)
+            external = root / "outside-codex-home"
+            external.mkdir()
+            junction = real_home / "plugins" / "cache" / "evil"
+            junction.parent.mkdir(parents=True)
+            self._create_junction(junction, external)
+            try:
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure, "unsafe object type or identity"
+                ):
+                    HARNESS._session_runtime_snapshot(real_home)
+            finally:
+                if os.path.lexists(junction):
+                    os.rmdir(junction)
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_plugin_cache_junction_loop_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            loop_a = real_home / "plugins" / "cache" / "evil"
+            loop_b = real_home / "plugins" / "cache" / "loop-b"
+            loop_a.parent.mkdir(parents=True)
+            try:
+                self._create_junction(loop_a, loop_b)
+                self._create_junction(loop_b, loop_a)
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure, "unsafe object type or identity"
+                ):
+                    HARNESS._session_runtime_snapshot(real_home)
+            finally:
+                for loop in (loop_a, loop_b):
+                    if os.path.lexists(loop):
+                        os.rmdir(loop)
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_plugin_cache_junction_to_ancestor_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home = self._make_real_home_fixture(Path(temporary))
+            cache = real_home / "plugins" / "cache"
+            cache.mkdir(parents=True)
+            loop = cache / "loop"
+            self._create_junction(loop, cache)
+            try:
+                with self.assertRaisesRegex(
+                    HARNESS.HarnessFailure, "unsafe object type or identity"
+                ):
+                    HARNESS._session_runtime_snapshot(real_home)
+            finally:
+                if os.path.lexists(loop):
+                    os.rmdir(loop)
 
     def test_plugin_cache_path_escape_fails(self):
         with tempfile.TemporaryDirectory() as temporary:

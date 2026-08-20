@@ -833,6 +833,78 @@ def _is_safe_runtime_directory(entry: Mapping[str, Any]) -> bool:
     )
 
 
+def _is_safe_plugin_cache_reparse(
+    real_home: Path,
+    relative: str,
+    entry: Mapping[str, Any],
+) -> bool:
+    """Allow only directory reparses that stay inside the plugin cache tree."""
+
+    if (
+        relative == CODEX_PLUGIN_CACHE_ROOT
+        or not _is_under_relative_path(relative, CODEX_PLUGIN_CACHE_ROOT)
+        or entry.get("type") != "reparse"
+    ):
+        return False
+    try:
+        home_absolute = _absolute(real_home)
+        if _is_reparse_point(home_absolute) or os.path.ismount(home_absolute):
+            return False
+        real_resolved = home_absolute.resolve(strict=True)
+        cache_root = home_absolute / "plugins" / "cache"
+        if (
+            not _lexists(cache_root)
+            or _is_reparse_point(cache_root)
+            or os.path.ismount(cache_root)
+            or not stat.S_ISDIR(cache_root.stat(follow_symlinks=False).st_mode)
+        ):
+            return False
+        cache_resolved = cache_root.resolve(strict=True)
+        if not cache_resolved.is_relative_to(real_resolved):
+            return False
+
+        candidate = home_absolute.joinpath(*relative.split("/"))
+        if not _lexists(candidate) or not _is_reparse_point(candidate):
+            return False
+
+        component = home_absolute
+        for part in Path(relative).parts:
+            if part in {"", ".", ".."}:
+                return False
+            component /= part
+            if not _lexists(component) or os.path.ismount(component):
+                return False
+            if not _is_reparse_point(component):
+                continue
+            resolved_component = component.resolve(strict=True)
+            if not resolved_component.is_dir():
+                return False
+            if not resolved_component.is_relative_to(real_resolved):
+                return False
+            resolved_relative = resolved_component.relative_to(
+                real_resolved
+            ).as_posix()
+            if _is_protected_runtime_path(resolved_relative):
+                return False
+            if not resolved_component.is_relative_to(cache_resolved):
+                return False
+
+        resolved_target = candidate.resolve(strict=True)
+        if not resolved_target.is_dir():
+            return False
+        candidate_resolved_base = real_resolved.joinpath(*relative.split("/"))
+        if _paths_overlap(candidate_resolved_base, resolved_target):
+            return False
+        if not resolved_target.is_relative_to(real_resolved):
+            return False
+        resolved_relative = resolved_target.relative_to(real_resolved).as_posix()
+        if _is_protected_runtime_path(resolved_relative):
+            return False
+        return resolved_target.is_relative_to(cache_resolved)
+    except (OSError, RuntimeError, ValueError):
+        return False
+
+
 def _is_codex_db_relative(relative: str) -> bool:
     family = _sqlite_family(relative)
     if family is None or family[1] != "base":
@@ -880,6 +952,7 @@ def _is_valid_sqlite_entry(
 def _is_valid_session_runtime_entry(
     relative: str,
     entry: Mapping[str, Any],
+    real_home: Path | None = None,
 ) -> bool:
     if relative in SESSION_RUNTIME_STRUCTURAL_DIRECTORY_PATHS:
         return _is_safe_runtime_directory(entry)
@@ -890,6 +963,10 @@ def _is_valid_session_runtime_entry(
     if any(_is_under_relative_path(relative, root) for root in SESSION_RUNTIME_TREE_PATHS):
         return _is_safe_runtime_entry(entry)
     if _is_under_relative_path(relative, CODEX_PLUGIN_CACHE_ROOT):
+        if entry.get("reparse") or entry.get("type") == "reparse":
+            return real_home is not None and _is_safe_plugin_cache_reparse(
+                real_home, relative, entry
+            )
         return _is_safe_runtime_entry(entry)
     return False
 
@@ -1036,10 +1113,21 @@ def _validate_runtime_entries(
     for relative, entry in entries.items():
         if entry["type"] == "missing":
             continue
-        if not _is_safe_runtime_entry(entry):
+        safe_plugin_cache_reparse = (
+            category == CODEX_PLATFORM_RUNTIME_STATE
+            and _is_safe_plugin_cache_reparse(real_home, relative, entry)
+        )
+        if not safe_plugin_cache_reparse and not _is_safe_runtime_entry(entry):
             raise HarnessFailure(
                 f"{category} runtime path has unsafe object type or identity: {relative}"
             )
+        if safe_plugin_cache_reparse:
+            valid = _is_valid_session_runtime_entry(relative, entry, real_home)
+            if not valid:
+                raise HarnessFailure(
+                    f"{category} runtime path is not an expected safe entry: {relative}"
+                )
+            continue
         target = real_home / relative
         if entry["type"] == "directory" and os.path.ismount(target):
             raise HarnessFailure(
@@ -1078,7 +1166,7 @@ def _validate_runtime_entries(
                 f"{category} runtime directory is not a safe replacement: {relative}"
             )
         if category == CODEX_PLATFORM_RUNTIME_STATE:
-            valid = _is_valid_session_runtime_entry(relative, entry)
+            valid = _is_valid_session_runtime_entry(relative, entry, real_home)
         elif category == CODEX_LOCAL_STORAGE_STATE:
             valid = _is_valid_local_storage_entry(
                 relative,
@@ -1195,7 +1283,7 @@ def _unexpected_write_snapshot(
     records: dict[str, dict[str, Any]] = {}
     for relative, entry in inventory["entries"].items():
         if _is_session_runtime_path(relative) and _is_valid_session_runtime_entry(
-            relative, entry
+            relative, entry, real_home
         ):
             continue
         if _is_local_storage_path(relative, approved_codex_db_paths) and _is_valid_local_storage_entry(
