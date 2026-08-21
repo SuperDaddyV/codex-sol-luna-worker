@@ -48,7 +48,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/e1967f8fc957904e3f90b0dd6140430f792d9956/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/ccd9d84da2f74df9ca2d919729b75eebf2dac27a/CODEX_SOL_LUNA_SETUP.md
 
 根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
 必须使用项目现有安装器，不要覆盖无关的用户配置。
@@ -57,11 +57,11 @@ https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/e1967f8fc957
 ```
 
 > [!WARNING]
-> 上面未改变的默认安装路径仍固定到 immutable RC4 post-release documentation Commit C。`v4.0.0` 仍是 Stable；当前已发布的 Preview／Public Beta 是 `v4.1.0-rc5`；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 默认安装路径现在使用当前 Preview／Public Beta 的 immutable RC5 Setup contract。RC5 不是 Stable；`v4.0.0` 仍是 Stable；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
 ## 当前 Preview
 
-`v4.1.0-rc5` 是当前已发布、面向高级用户使用的 GitHub Prerelease／Preview／Public Beta。Stable 仍是 `v4.0.0`；默认安装目标／路径仍是上方 immutable RC4 entry。RC5 不是 Stable，也不是默认安装目标。
+`v4.1.0-rc5` 是当前已发布、面向高级用户使用的 GitHub Prerelease／Preview／Public Beta，现在也通过上方 immutable RC5 entry 成为默认安装目标／路径。RC5 不是 Stable；Stable 仍是 `v4.0.0`。
 
 RC5 包含：
 

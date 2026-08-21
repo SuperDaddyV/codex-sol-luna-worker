@@ -48,7 +48,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/e1967f8fc957904e3f90b0dd6140430f792d9956/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/ccd9d84da2f74df9ca2d919729b75eebf2dac27a/CODEX_SOL_LUNA_SETUP.md
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
@@ -58,11 +58,11 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 ```
 
 > [!WARNING]
-> The unchanged default installation path above remains pinned to immutable RC4 post-release documentation Commit C. `v4.0.0` remains Stable; the current published Preview and Public Beta is `v4.1.0-rc5`; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> The default installation path is now the immutable RC5 Setup contract for the current Preview / Public Beta. RC5 is not Stable; `v4.0.0` remains Stable; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
 ## Current Preview
 
-`v4.1.0-rc5` is the current published GitHub Prerelease / Preview and Public Beta for advanced testing. Stable remains `v4.0.0`; the default installation target/path remains the immutable RC4 entry above. RC5 is not Stable and is not the default installation target.
+`v4.1.0-rc5` is the current published GitHub Prerelease / Preview and Public Beta, and is now also the default installation target/path through the immutable RC5 entry above. RC5 is not Stable; Stable remains `v4.0.0`.
 
 RC5 contains:
 

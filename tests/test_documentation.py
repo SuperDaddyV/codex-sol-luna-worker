@@ -28,7 +28,8 @@ ISSUE_FORMS = {
 }
 PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
-PINNED_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
+LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
+PINNED_SETUP_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
 RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 RC5_SETUP_CONTRACT_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
 RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
@@ -289,10 +290,11 @@ class DocumentationTests(unittest.TestCase):
                 "Upgrade-to-latest UX",
             ):
                 self.assertIn(feature, content)
-            self.assertEqual(content.count(default_setup_url), 1)
-            self.assertEqual(content.count(preview_setup_url), 1)
+            self.assertEqual(content.count(default_setup_url), 2)
+            self.assertEqual(content.count(preview_setup_url), 2)
+            self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
             self.assertLess(content.index(default_setup_url), content.index(preview_heading))
-            self.assertGreater(content.index(preview_setup_url), content.index(preview_heading))
+            self.assertGreater(content.rfind(preview_setup_url), content.index(preview_heading))
             preview_start = content.index(preview_heading)
             preview_end = content.index("\n## ", preview_start + len(preview_heading))
             preview_section = content[preview_start:preview_end]
@@ -313,8 +315,14 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("v4.1.0-rc4", text(path))
             self.assertIn("v4.1.0-rc5", text(path))
             self.assertIn("source candidate", text(path).lower())
-        self.assertIn("not the default installation target", text(README))
-        self.assertIn("不是默认安装目标", text(README_ZH))
+        self.assertIn(
+            "now also the default installation target/path through the immutable RC5 entry above",
+            text(README),
+        )
+        self.assertIn(
+            "现在也通过上方 immutable RC5 entry 成为默认安装目标／路径",
+            text(README_ZH),
+        )
         self.assertIn("v4.1.0-rc3", text(ROOT / "CHANGELOG.md"))
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
@@ -522,6 +530,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertEqual(len(english_shas), 2)
         self.assertEqual(len(chinese_shas), 2)
         self.assertEqual(english_shas, chinese_shas)
+        self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, combined)
         self.assertEqual(
             english_shas,
             [PINNED_SETUP_COMMIT, RC5_SETUP_CONTRACT_COMMIT],
