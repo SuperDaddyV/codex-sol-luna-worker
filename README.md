@@ -210,6 +210,18 @@ Use the matching native GitHub Issue Form for install, upgrade, selector, Luna d
 > [!WARNING]
 > Before submitting, remove or redact secrets and private information, including API keys, access tokens, cookies, passwords, private repository credentials, personal email addresses, unnecessary absolute home-directory information, and proprietary source/code unless intentionally shared. Include only the minimum relevant logs. Do not upload the entire CODEX_HOME (the whole `CODEX_HOME`) unless specifically requested during later troubleshooting. `CODEX_HOME` is a private user configuration root.
 
+### Codex Compatibility Smoke
+
+After a Codex Desktop or CLI update, start a fresh task and ask `检查 Sol/Luna 与当前 Codex 是否兼容`, or run the lightweight smoke directly:
+
+```text
+python scripts/compatibility_smoke.py --codex-home "<CODEX_HOME>"
+```
+
+The smoke is read-only for the repository and managed selector state. Its ephemeral capability checks and one-child delegation create normal Codex session/runtime records and can make up to six model calls; its before/after snapshots cannot attest fully transient activity.
+
+`PASS` means only that basic Sol/Luna use is compatible with the current observed Codex environment; no project change or further review is required. `REVIEW REQUIRED` means run only the recommended targeted compatibility review. `BLOCKED` means the CLI prerequisite could not run. Reported runtime paths are irreversible fingerprints rather than private relative paths. This smoke does not replace O1–O10 acceptance, cross-platform certification, Stable certification, or a future-version guarantee.
+
 ### Basic read-only self-test
 
 Run this in a fresh task after installation or upgrade. It naturally offers bounded inspection work but does not require a child:

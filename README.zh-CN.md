@@ -240,6 +240,18 @@ Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chat
 > [!WARNING]
 > 提交前必须删除或脱敏秘密与私有信息，包括 API Key、Token、Cookie、密码、私有仓库凭据、个人邮箱、不必要的绝对 home-directory 信息，以及除非你有意分享的专有源代码。日志只保留最小相关内容。除非后续故障排查明确要求，否则不要上传整个 CODEX_HOME（即整个 `CODEX_HOME`）。`CODEX_HOME` 是私有用户配置根目录。
 
+### Codex Compatibility Smoke
+
+Codex Desktop 或 CLI 更新后，优先在新任务中说「检查 Sol/Luna 与当前 Codex 是否兼容」，也可以直接运行轻量 smoke：
+
+```text
+python scripts/compatibility_smoke.py --codex-home "<CODEX_HOME>"
+```
+
+smoke 对仓库和托管 selector state 保持只读。它的 ephemeral capability checks 与单 child delegation 会生成正常的 Codex session／runtime 记录，最多可能发起 6 次模型调用；before／after 快照不能证明完全瞬态活动从未发生。
+
+`PASS` 只表示当前已观察的 Codex 环境下，基础 Sol/Luna 使用兼容；无需修改项目，也无需继续 review。`REVIEW REQUIRED` 才进入输出所建议的 targeted compatibility review。`BLOCKED` 表示 Codex CLI 前置条件无法执行。报告中的 runtime 路径会显示为不可逆指纹，不显示私有相对路径。此 smoke 不替代 O1–O10 full acceptance、跨平台认证、Stable certification 或未来版本兼容保证。
+
 ### Basic 只读自测
 
 安装或升级后在新任务中运行。它自然包含边界明确的检查工作，但不要求一定创建 child：
