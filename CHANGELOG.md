@@ -1,9 +1,19 @@
 # Changelog
 
-## v4.1.0-rc6 (published prerelease / current Preview)
+## v4.1.0 (Stable release target)
+
+- Added Stable Source Commit A `67a72f8accc5d53ef04ff8d64d8838e397ceecda`; local repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS.
+- Promoted the installer payload from `v4.1.0-rc6` to `v4.1.0` while retaining manifest schema `1` and the RC6 selector, policy, agent, and config payloads byte-for-byte.
+- Added RC6→Stable fake-home lifecycle coverage. The upgrade changes only `sol-luna-v4/install-manifest.json` and verifies dry-run zero writes, transaction backup, second-apply idempotency, exact rollback, downgrade refusal, and ownership conflict fail-closed behavior.
+- Recorded an independent pre-publication fresh-task compatibility smoke `PASS` for CLI, Luna capability, Selector, Delegation, Protected state, Runtime contract, and final Compatibility against the unchanged installed product runtime. No real Global Stable apply was performed.
+- Retained the RC6 real Global upgrade, O1–O10 runtime acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D as bounded historical evidence from one native Windows Codex environment. This does not imply three-platform real-runtime validation or universal compatibility.
+- Prepared the reviewed Stable setup contract around the immutable Stable Source Commit A. The public installation entry pins that contract through a separate exact immutable documentation commit, not a mutable branch or the runtime source itself.
+- Preserved the annotated `v4.1.0-rc6` tag and its GitHub Prerelease unchanged as historical Public Beta evidence. RC5 remains an older historical Preview.
+
+## v4.1.0-rc6 (published historical prerelease)
 
 - Added the RC6 runtime source at Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS.
-- Published annotated tag `v4.1.0-rc6`, peeled to release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b`, as the current GitHub Prerelease / Preview / Public Beta. RC6 is the default installation target but is not Stable; `v4.0.0` remains Stable and `v4.1.0-rc5` is historical.
+- Published annotated tag `v4.1.0-rc6`, peeled to release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b`, as a GitHub Prerelease / Preview / Public Beta. RC6 later became historical and `v4.1.0-rc5` is an older historical Preview.
 - The reviewed RC6 setup contract is `CODEX_SOL_LUNA_SETUP.md`. Public installation entries pin it by an exact immutable documentation commit that is distinct from runtime Source Commit A.
 - Bumped the source installer payload to `v4.1.0-rc6` while retaining manifest schema `1`. RC5→RC6 fake-home lifecycle coverage expects only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json` to change, with idempotency, backup, exact rollback, and ownership fail-closed checks.
 - Normalized malformed URL parsing, hostname, and port `ValueError` cases inside the selector to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order.

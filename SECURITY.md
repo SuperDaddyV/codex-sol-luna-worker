@@ -2,14 +2,14 @@
 
 ## Release boundary
 
-`v4.1.0-rc6` is the published GitHub prerelease / Preview / Public Beta and the
-current default installation target. It is not Stable; `v4.0.0` remains the
-Stable release. RC6 runtime Source Commit A is
-`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA source CI passed on
-Windows, Ubuntu, and macOS. The reviewed setup contract is
+`v4.1.0` is the Stable release target and current default installation target.
+Stable runtime Source Commit A is
+`67a72f8accc5d53ef04ff8d64d8838e397ceecda`; exact-SHA source CI passed on
+Windows, Ubuntu, and macOS. The reviewed Stable setup contract is
 `CODEX_SOL_LUNA_SETUP.md`; public installation entries pin it by an exact
 immutable documentation commit, which is distinct from the runtime source.
-`v4.1.0-rc5` is a historical Preview. The documented-environment RC5 O1-O10 record remains
+`v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public
+Beta, and `v4.1.0-rc5` is an older historical Preview. The documented-environment RC5 O1-O10 record remains
 bounded historical evidence; RC5 Final O4/O9 re-certification was not obtained
 due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime
 regression. RC6 independently passed its recorded real Global upgrade,
@@ -17,9 +17,14 @@ fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases
 A/B/C/D in one native Windows Codex environment. The real protected Sol/Luna
 state and root identity remained unchanged during acceptance, observed unknown
 paths were zero, and owned acceptance residuals were zero. These facts are
-environment- and scenario-bounded evidence, not a security guarantee, Stable
-claim, or universal compatibility claim. Publication is independently
-established by the immutable RC6 tag and GitHub Prerelease. RC4 remains
+environment- and scenario-bounded evidence, not a security guarantee or
+universal compatibility claim. Stable preserves the accepted RC6 product
+payload byte-for-byte and advances only installed manifest version/source
+metadata; an independent pre-publication compatibility smoke passed all six
+checks against that unchanged installed runtime. Stable publication is
+independently established only by the immutable `v4.1.0` tag and a non-draft,
+non-prerelease GitHub Release. The immutable RC6 tag and historical Prerelease
+remain unchanged. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
 ## Data and network behavior
@@ -36,16 +41,18 @@ historical release evidence for Receipt reason evidence-gating.
 
 ## Runtime acceptance harness safety
 
-RC6 changes product runtime behavior only in `src/selector.py` by normalizing
+Stable preserves the RC6 selector behavior, including normalization of
 malformed URL parsing, hostname, and port `ValueError` cases to
-`SnapshotInvalid`; the installer payload version moves to `v4.1.0-rc6`.
+`SnapshotInvalid`. The installer payload version moves to `v4.1.0`, but an
+RC6→Stable apply changes only the ownership manifest.
 The compatibility smoke and acceptance harness are tooling only and do not
 modify product runtime. The mutable acceptance contract is limited to
 `CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and this file.
-`PRODUCT_RUNTIME_CHANGED = YES`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+`RC6_TO_STABLE_INSTALLED_BEHAVIOR_CHANGED = NO`;
+`ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
 `scripts/accept_rc5_runtime_isolation.py` requires an explicit real
-`CODEX_HOME` audit root but installs the RC6 Source Commit A only into a fresh fake
+`CODEX_HOME` audit root but installs the historical RC6 Source Commit A only into a fresh fake
 home. Before the first installer write or authentication copy, it verifies that
 the temporary parent and planned acceptance root are plain, non-overlapping
 paths with no user-controlled symlink, junction, reparse point, mount, or
@@ -68,7 +75,7 @@ The real `CODEX_HOME` is audited only for immutable managed Sol/Luna state
 `sol-luna-v4/state/**` tree, including Daily Profile, LKG, `selector.lock`, and
 other state contents, is compared for hash, type, device/file identity, link
 count, and reparse status. Unrelated real-home runtime activity is not used for
-RC6 attribution. Runtime changes are classified only inside the isolated home.
+historical RC6 attribution. Runtime changes are classified only inside the isolated home.
 `CODEX_PLATFORM_RUNTIME_STATE` retains the existing
 explicit session, session-index, app-cache, and active-exec paths and adds only
 the exact root-level `.sandbox_migration` safe regular file; the exact
@@ -102,12 +109,12 @@ The compatibility-smoke baseline is read-only for the repository and managed
 selector state. It checks dual exact rollout roots and bounded writer-settle
 evidence, and classifies unknown or unsafe writes fail closed. By itself it does
 not run the real Global upgrade or certify O1-O10 or Final O4/O9, and it does
-not modify product runtime. RC6 runtime acceptance therefore retained separate
+not modify product runtime. Historical RC6 runtime acceptance therefore retained separate
 O1-O10, Final O4/O9, and Runtime Cases A/B/C/D gates.
 
 ## Installation safety
 
-`scripts/install.py --dry-run` now executes the same payload, ownership, and effective-operation preflight as apply but performs no writable probe, backup, managed-file mutation, or manifest mutation. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. RC6 accepts only an optional exact 40-hex `--source-commit`; malformed input fails before backup, write, or probe. A same-version idempotent run may preserve an existing valid SHA, while a version upgrade without the option never inherits an older source SHA.
+`scripts/install.py --dry-run` executes the same payload, ownership, and effective-operation preflight as apply but performs no writable probe, backup, managed-file mutation, or manifest mutation. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. Stable accepts only an optional exact 40-hex `--source-commit`; malformed input fails before backup, write, or probe. A same-version idempotent run may preserve an existing valid SHA, while a version upgrade without the option never inherits an older source SHA. RC6→Stable lifecycle tests require only the ownership manifest to change and verify zero-write dry-run, backup, idempotency, exact rollback, downgrade refusal, and ownership conflict fail-closed behavior.
 
 The natural-language latest-version workflow accepts only published non-draft strict SemVer releases, resolves and peels the selected tag to an immutable commit, detects tag movement, verifies detached `HEAD`, installer version, and setup/source alignment, and passes that exact SHA to the installer. Release discovery remains outside the installer; there is no auto-updater, background service, or mutable-branch apply. Legacy migration accepts only exact version `3.2`, does not convert state or access ModelDial, preserves unowned audit bundles, and writes the v4 manifest last with atomic replacement. Repository-local lifecycle validation uses fake homes. Any real global migration remains a separate, explicitly approved maintenance action.
 

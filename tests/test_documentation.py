@@ -36,6 +36,7 @@ RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
 RC6_RUNTIME_SOURCE_COMMIT = "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 RC6_SETUP_CONTRACT_COMMIT = "3e19e2f547c6fca2a888a176767e8dc69240acbc"
 RC6_STALE_SETUP_CONTRACT_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
+STABLE_RUNTIME_SOURCE_COMMIT = "67a72f8accc5d53ef04ff8d64d8838e397ceecda"
 RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -248,7 +249,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("欢迎提交 Bug 报告", chinese)
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
-    def test_rc4_rc5_history_and_rc6_current_status_are_explicit(self):
+    def test_stable_contract_and_historical_preview_status_are_explicit(self):
         source_docs = (
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
@@ -339,20 +340,19 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("NOT PUBLISHED", content)
             self.assertNotIn("尚未发布", content)
         setup = text(SETUP)
-        self.assertIn("Contract version: `v4.1.0-rc6`", setup)
+        self.assertIn("Contract version: `v4.1.0`", setup)
         self.assertIn(
-            "RC6 is the published GitHub Prerelease / Preview / Public Beta",
+            "`v4.1.0` is the Stable release target and current default installation target",
             setup,
         )
-        self.assertIn("RC6 is not Stable; Stable remains `v4.0.0`", setup)
-        self.assertIn("Stable remains `v4.0.0`", setup)
-        self.assertIn("`v4.1.0-rc5` is a historical Preview", setup)
+        self.assertIn("`v4.1.0-rc6` remains an immutable historical Prerelease", setup)
+        self.assertIn("`v4.1.0-rc5` is an older historical Preview", setup)
         for path in source_docs:
             content = text(path)
             self.assertIn("RC4", content)
             self.assertIn("v4.1.0-rc5", content)
-            self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, content)
-            self.assertIn("published", content.lower())
+            self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
+            self.assertIn("stable", content.lower())
             self.assertIn("prerelease", content.lower())
             for stale in (
                 "RC6 is not tagged",
@@ -374,7 +374,7 @@ class DocumentationTests(unittest.TestCase):
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
         self.assertIn(
-            "existing valid `v4.1.0-rc5` installation is an existing v4 upgrade for RC6",
+            "existing valid `v4.1.0-rc6` installation is an existing v4 upgrade to Stable",
             text(SETUP),
         )
         self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
@@ -408,8 +408,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("| RC3 delegated Receipt | `PASS` |", content)
         runtime = text(ROOT / "RUNTIME_TESTS.md")
         self.assertIn(
-            "v4.1.0-rc6 — PUBLISHED PRERELEASE / CURRENT PREVIEW / "
-            "DEFAULT INSTALLATION TARGET",
+            "v4.1.0 — STABLE RELEASE TARGET / DEFAULT INSTALLATION TARGET",
             runtime,
         )
         self.assertIn(
@@ -419,9 +418,10 @@ class DocumentationTests(unittest.TestCase):
         )
         self.assertNotIn("CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS", runtime)
         self.assertIn(
-            "v4.1.0-rc6 published Preview — recorded fresh-task runtime acceptance",
+            "v4.1.0-rc6 historical Preview — recorded fresh-task runtime acceptance",
             runtime,
         )
+        self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, runtime)
         self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, runtime)
         self.assertIn(
             "Compatibility smoke, O1-O10 acceptance, Final O4/O9 re-certification",
@@ -459,7 +459,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("For this public repository", security)
         self.assertNotIn("For a future public repository", security)
 
-    def test_rc6_setup_contract_pins_runtime_source_without_self_reference(self):
+    def test_stable_setup_contract_pins_runtime_source_without_self_reference(self):
         architecture = text(ROOT / "ARCHITECTURE.md")
         security = text(ROOT / "SECURITY.md")
         runtime = text(ROOT / "RUNTIME_TESTS.md")
@@ -483,25 +483,24 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, security)
         for number in range(1, 11):
             self.assertRegex(setup, rf"(?m)^- O{number} .* — `PASS`[;.]$")
-        self.assertIn("v4.1.0-rc6 (published prerelease / current Preview)", changelog)
-        self.assertIn("RC6 runtime source at Source Commit A", changelog)
-        self.assertIn("Contract version: `v4.1.0-rc6`", setup)
-        self.assertGreaterEqual(setup.count(RC6_RUNTIME_SOURCE_COMMIT), 7)
+        self.assertIn("v4.1.0 (Stable release target)", changelog)
+        self.assertIn("Stable Source Commit A", changelog)
+        self.assertIn("Contract version: `v4.1.0`", setup)
+        self.assertGreaterEqual(setup.count(STABLE_RUNTIME_SOURCE_COMMIT), 7)
         self.assertNotIn(RC6_SETUP_CONTRACT_COMMIT, setup)
-        self.assertIn("Stable remains `v4.0.0`", setup)
-        self.assertIn("`v4.1.0-rc5` is a historical Preview", setup)
+        self.assertIn("`v4.1.0-rc6` remains an immutable historical Prerelease", setup)
+        self.assertIn("`v4.1.0-rc5` is an older historical Preview", setup)
         self.assertIn(
-            "RC6 is the published GitHub Prerelease / Preview / Public Beta",
+            "`v4.1.0` is the Stable release target and current default installation target",
             setup,
         )
         self.assertNotIn("RC6 is not tagged", setup)
         self.assertNotIn("RC6 is not published", setup)
-        self.assertIn("RC6 O1–O10 runtime acceptance is recorded `PASS`", setup)
-        self.assertIn("RC6 Final O4/O9 re-certification is recorded `PASS`", setup)
+        self.assertIn("RC6 real Global upgrade, O1–O10 runtime acceptance", setup)
+        self.assertIn("Final O4/O9 re-certification", setup)
         self.assertIn(
-            "The only expected effective installed changes are:\n\n"
-            "1. `sol-luna-v4/selector.py`;\n"
-            "2. `sol-luna-v4/install-manifest.json`.",
+            "The only expected effective installed change is:\n\n"
+            "1. `sol-luna-v4/install-manifest.json`.",
             setup,
         )
         self.assertIn("v4.1.0-rc5", readmes)
@@ -513,9 +512,9 @@ class DocumentationTests(unittest.TestCase):
             "当前已发布、面向高级用户使用的 GitHub Prerelease／Preview／Public Beta",
             text(README_ZH),
         )
-        self.assertIn(f"checkout --detach {RC6_RUNTIME_SOURCE_COMMIT}", setup)
+        self.assertIn(f"checkout --detach {STABLE_RUNTIME_SOURCE_COMMIT}", setup)
         self.assertIn(
-            f"Require `git rev-parse HEAD` to equal `{RC6_RUNTIME_SOURCE_COMMIT}` exactly",
+            f"Require `git rev-parse HEAD` to equal `{STABLE_RUNTIME_SOURCE_COMMIT}` exactly",
             setup,
         )
         installer_commands = [
@@ -526,11 +525,12 @@ class DocumentationTests(unittest.TestCase):
         ]
         self.assertEqual(len(installer_commands), 4)
         for command in installer_commands:
-            self.assertIn(f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}", command)
+            self.assertIn(f"--source-commit {STABLE_RUNTIME_SOURCE_COMMIT}", command)
 
         for placeholder in (
             "<APPROVED_40_HEX_COMMIT>",
             "<RC6_SOURCE_SHA>",
+            "<STABLE_SOURCE_SHA>",
             "<TBD_SHA>",
             "PIN_PENDING",
             "<SETUP_COMMIT>",
@@ -675,11 +675,11 @@ class DocumentationTests(unittest.TestCase):
         content = text(SETUP)
         for command in (
             "scripts/install.py --dry-run --codex-home <CODEX_HOME> "
-            f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {STABLE_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --codex-home <CODEX_HOME> "
-            f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {STABLE_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> "
-            f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {STABLE_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --rollback <BACKUP_PATH> --codex-home <CODEX_HOME>",
             "scripts/install.py --uninstall --codex-home <CODEX_HOME>",
         ):

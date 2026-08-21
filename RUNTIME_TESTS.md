@@ -1,18 +1,50 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0-rc6 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`; `v4.0.0 — STABLE`; RC5 is a historical Preview.
+Status: `v4.1.0 — STABLE RELEASE TARGET / DEFAULT INSTALLATION TARGET`; RC6 and RC5 remain historical Prereleases.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.0-rc6 published Preview — recorded fresh-task runtime acceptance
+## v4.1.0 Stable release target — promotion evidence
+
+Stable Source Commit A is
+`67a72f8accc5d53ef04ff8d64d8838e397ceecda`; its exact-SHA CI passed on
+Windows, Ubuntu, and macOS. The installer payload is `v4.1.0` with manifest
+schema `1`.
+
+- RC6 -> Stable fake-home lifecycle coverage changes only
+  `sol-luna-v4/install-manifest.json` and byte-preserves the selector, Global
+  policy, five Luna agents, config, Daily Profile, and LKG.
+- Local coverage verifies dry-run zero writes, transaction backup,
+  second-apply idempotency, exact rollback, downgrade refusal, and ownership
+  conflict fail-closed behavior.
+- An independent pre-publication fresh-task compatibility smoke passed `CLI`,
+  `Luna capability`, `Selector`, `Delegation`, `Protected state`, `Runtime
+  contract`, and final `Compatibility` checks against the unchanged installed
+  product runtime.
+- No real Global Stable apply was performed. The Stable promotion reuses the
+  separately accepted RC6 product payload and changes only installed manifest
+  version/source metadata.
+- `RC6_TO_STABLE_INSTALLED_BEHAVIOR_CHANGED = NO`;
+  `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+
+This promotion evidence does not broaden RC6's recorded runtime scope or imply
+real-runtime validation on all three CI platforms, every Codex client, every
+account, or every user environment. Stable publication remains a separate
+immutable tag and non-draft, non-prerelease GitHub Release fact.
+
+`STABLE_SOURCE_COMMIT_CREATED = YES`;
+`STABLE_SOURCE_SHA = 67a72f8accc5d53ef04ff8d64d8838e397ceecda`;
+`STABLE_EXACT_SHA_CI = PASS`;
+`STABLE_FRESH_TASK_COMPATIBILITY = PASS`.
+
+## v4.1.0-rc6 historical Preview — recorded fresh-task runtime acceptance
 
 RC6 Source Commit A is
 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
 Ubuntu, and macOS. The installer payload is `v4.1.0-rc6` with manifest schema
-`1`. RC6 is the published GitHub Prerelease / Preview / Public Beta and current
-default installation target. It is not Stable; `v4.0.0` remains Stable. The
-reviewed setup contract is pinned by the public installation entry through an
-exact immutable documentation commit that is distinct from Source Commit A.
+`1`. RC6 remains an immutable historical GitHub Prerelease / Preview / Public
+Beta. Its reviewed setup contract remains pinned through an exact immutable
+documentation commit that is distinct from Source Commit A.
 
 - RC5 -> RC6 fake-home lifecycle coverage expects only
   `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json` to change;
@@ -33,7 +65,8 @@ exact immutable documentation commit that is distinct from Source Commit A.
 - Compatibility smoke, O1-O10 acceptance, Final O4/O9 re-certification, and
   Runtime Cases A/B/C/D are recorded `PASS` in the documented environment.
   This is not three-platform real-runtime validation, a universal compatibility
-  claim, or a Stable claim. Publication is a separate tag and Release fact.
+  claim, or standalone Stable evidence. RC6 publication is a separate immutable
+  tag and historical Prerelease fact.
 
 - O1 Natural-language healthy status — `PASS`
 - O2 No-profile healthy status — `PASS`
@@ -280,11 +313,11 @@ These records were obtained after the RC4 release source and tag were fixed. The
 - The Receipt role, direct-child count, and parallel marker all matched the runtime metadata.
 - This demonstrates that the recorded same-day persisted profile survived a completely new Codex session. It does not establish universal persistence across all Codex clients or user environments.
 
-### Known pre-stable hardening item
+### Historical RC4 pre-stable hardening record
 
 `SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE`
 
-Malformed port or malformed IPv6-style URL input may surface a `ValueError` without unified normalization. RC4 does not modify the selector for this finding. It is not an RC4 Public Beta blocker, but it remains a pre-stable hardening item that must be revisited before Stable promotion.
+Malformed port or malformed IPv6-style URL input could surface a `ValueError` without unified normalization in RC4. RC6 resolved this item by normalizing those URL parsing, hostname, and port cases to `SnapshotInvalid`; Stable preserves that fix unchanged.
 
 ## v4.1.0-rc3 real upgrade and Receipt acceptance — `PASS`
 
