@@ -4,7 +4,7 @@
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![Stable: v4.0.0](https://img.shields.io/badge/stable-v4.0.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
-[![Preview: v4.1.0-rc4](https://img.shields.io/badge/preview-v4.1.0--rc4-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc4)
+[![Preview: v4.1.0-rc5](https://img.shields.io/badge/preview-v4.1.0--rc5-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc5)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
 让 GPT-5.6 Sol 专注于理解、规划、编排、歧义处理与最终验收，让原生 GPT-5.6 Luna worker 承担边界清楚的执行任务。
@@ -13,9 +13,11 @@
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
 > [!NOTE]
-> `v4.1.0-rc4` 是当前已发布的 Preview prerelease／公开测试版本。RC4 通过 current-task evidence gating 修复 RC3 的 `Luna unavailable` Receipt 误分类。留档的真实 RC3→RC4 Global upgrade 和 Runtime Cases A/B/C/D 均已通过。`v4.0.0` 仍是稳定版本。
+> `v4.1.0-rc5` 是当前已发布的 GitHub Prerelease／Preview／Public Beta 版本。`v4.0.0` 仍是 Stable 稳定版本。
 >
-> RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 禁止在无证据时使用该原因，只有真实且 parent-visible 的 availability failure evidence 存在时才允许。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
+> 仓库验证和 exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。documented-environment 的 RC5 O1–O10 记录仍是有边界的证据，其中包括 O4 和 O9；由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`，未获得最终 O4/O9 再认证；没有已确认的 product-runtime regression。
+>
+> RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 的 evidence-gated Receipt 行为属于历史发布证据。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
 
 ```text
 GPT-5.6 Sol
@@ -55,11 +57,11 @@ https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/e1967f8fc957
 ```
 
 > [!WARNING]
-> 上面的 setup contract 已固定到 immutable RC4 post-release documentation Commit C。RC4 是当前已发布的 Preview prerelease／公开测试版本；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 上面未改变的默认安装路径仍固定到 immutable RC4 post-release documentation Commit C。`v4.0.0` 仍是 Stable；当前已发布的 Preview／Public Beta 是 `v4.1.0-rc5`；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
-## 下一候选版本
+## 当前 Preview
 
-`v4.1.0-rc5` 是面向高级用户实验性测试的下一个 source candidate。它尚未发布，不是 Stable，也不是默认安装目标。Stable 仍是 `v4.0.0`；已发布的 Preview／公开测试版本仍是 `v4.1.0-rc4`。
+`v4.1.0-rc5` 是当前已发布、面向高级用户使用的 GitHub Prerelease／Preview／Public Beta。Stable 仍是 `v4.0.0`；默认安装目标／路径仍是上方 immutable RC4 entry。RC5 不是 Stable，也不是默认安装目标。
 
 RC5 包含：
 
@@ -70,15 +72,16 @@ RC5 包含：
 - Luna ref-cost Receipt
 - Upgrade-to-latest UX
 
-| Candidate evidence | 状态 |
+| 发布依据 | 状态 |
 | --- | --- |
-| Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Source validation `PASS` |
-| Windows、Ubuntu、macOS source CI | `PASS` |
+| Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS |
 | Immutable setup contract | 已在 Commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a` 提供 |
-| 发布状态 | `NOT PUBLISHED` |
-| Runtime acceptance O1–O10 | `documented-environment recorded PASS` |
+| 发布状态 | `已发布 — GitHub Prerelease／Public Beta` |
+| RC5 O1–O10 记录（包括 O4/O9） | `documented-environment recorded PASS` 仍是有边界的证据 |
+| 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
+| Product-runtime regression | 没有已确认的 product-runtime regression |
 
-愿意承担候选版本风险的高级用户可以测试这份实验性、非默认的 RC5 setup contract。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
+愿意承担 Preview 风险的高级用户可以使用这份已发布、非默认的 RC5 setup contract。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
 
 ```text
 请读取并严格执行以下安装规范：
@@ -108,7 +111,7 @@ Codex CLI、Python、Git 或其他下载工具；不要自动修改 PATH、代�
 dry-run、backup、installation 和 validation。
 ```
 
-请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。RC5 O1–O10 已在 documented environment 中留档为 `PASS`；证据只适用于该环境，不代表所有真实用户环境都完成 runtime 验证。
+请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。documented-environment 的 RC5 O1–O10 记录（包括 O4 和 O9）仍是有边界的证据。由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`，未获得最终 O4/O9 再认证。没有已确认的 product-runtime regression。
 
 ## 🚀 这是什么
 
@@ -190,7 +193,7 @@ v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtim
 - 能以只读 HTTPS 访问公开 GitHub 仓库。不要求 `curl`。
 - Windows、Ubuntu/Linux、macOS。WSL 是独立 Linux 环境，不能把 native Windows 的路径和配置直接混用。
 
-RC4 完整仓库测试已通过 `114/114`，其 source 已通过 Windows、Ubuntu、macOS CI。已发布 RC4 prerelease 还通过了留档的真实 RC3→RC4 Global upgrade 和 Runtime Cases A/B/C/D。已发布 RC1、RC2、RC3 的 runtime 记录继续作为历史证据，其中包括 RC2 的 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。**三平台 CI PASS 不等于三个操作系统、所有客户端、所有账号或所有用户都做过真实 runtime 验收。**
+RC5 repository validation 和 exact-SHA CI 已在 Windows、Ubuntu、macOS 通过。documented-environment 的 RC5 O1–O10 记录仍是有边界的证据，其中包括 O4 和 O9；由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`，未获得最终 O4/O9 再认证。没有已确认的 product-runtime regression。已发布 RC1、RC2、RC3 和 RC4 的 runtime 记录继续作为历史证据，其中包括 RC2 的 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。**三平台 CI PASS 不等于三个操作系统、所有客户端、所有账号或所有用户都做过真实 runtime 验收。**
 
 Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、[Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference) 和 [Models](https://developers.openai.com/api/docs/models)。
 
@@ -226,7 +229,7 @@ Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chat
 
 ## Public Beta 反馈
 
-`v4.0.0` 仍是 Stable 稳定版本；`v4.1.0-rc4` 是当前 Preview prerelease／公开测试版本。
+`v4.0.0` 仍是 Stable 稳定版本；`v4.1.0-rc5` 是当前 Preview prerelease／公开测试版本。
 
 可反馈安装、升级、selector、Luna 委派、Delegation Receipt、rollback 和 uninstall 问题；欢迎提交 Bug 报告，也欢迎提交成功的兼容性报告。请选择对应的原生 GitHub Issue Form：
 
@@ -296,6 +299,10 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 | Sol Acceptance | `PASS` |
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
+| RC5 repository validation and exact-SHA CI | 已在 Windows、Ubuntu、macOS 通过 |
+| RC5 O1–O10 documented-environment 记录（包括 O4/O9） | 仅为有边界的证据 |
+| RC5 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
+| RC5 product-runtime regression | 没有已确认的 product-runtime regression |
 | RC4 source suite | `PASS` |
 | RC4 real Global upgrade | `PASS` |
 | RC4 Case A | `PASS` |

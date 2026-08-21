@@ -66,8 +66,8 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("actions/workflows/validate.yml/badge.svg", content)
             self.assertIn("releases/tag/v4.0.0", content)
             self.assertIn("img.shields.io/badge/stable-v4.0.0", content)
-            self.assertIn("releases/tag/v4.1.0-rc4", content)
-            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc4", content)
+            self.assertIn("releases/tag/v4.1.0-rc5", content)
+            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc5", content)
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
@@ -203,13 +203,13 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("CODEX_HOME", content)
             self.assertIn(whole_warning, content)
         self.assertIn("`v4.0.0` remains the Stable release", english)
-        self.assertIn("`v4.1.0-rc4` is the current Preview prerelease", english)
+        self.assertIn("`v4.1.0-rc5` is the current Preview prerelease", english)
         self.assertIn("`v4.0.0` 仍是 Stable 稳定版本", chinese)
-        self.assertIn("`v4.1.0-rc4` 是当前 Preview prerelease", chinese)
+        self.assertIn("`v4.1.0-rc5` 是当前 Preview prerelease", chinese)
         self.assertIn("欢迎提交 Bug 报告", chinese)
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
-    def test_rc4_public_flow_and_rc5_candidate_boundary_are_explicit(self):
+    def test_rc4_historical_flow_and_rc5_published_preview_are_explicit(self):
         source_docs = (
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
@@ -230,38 +230,51 @@ class DocumentationTests(unittest.TestCase):
             "https://raw.githubusercontent.com/SuperDaddyV/"
             f"codex-sol-luna-worker/{PINNED_SETUP_COMMIT}/CODEX_SOL_LUNA_SETUP.md"
         )
-        candidate_setup_url = (
+        preview_setup_url = (
             "https://raw.githubusercontent.com/SuperDaddyV/"
             f"codex-sol-luna-worker/{RC5_SETUP_CONTRACT_COMMIT}/"
             "CODEX_SOL_LUNA_SETUP.md"
         )
-        for path, candidate_heading, publication_row in (
-            (README, "## Next Candidate", "| Publication | `NOT PUBLISHED` |"),
-            (README_ZH, "## 下一候选版本", "| 发布状态 | `NOT PUBLISHED` |"),
+        for path, preview_heading, publication_row, runtime_row in (
+            (
+                README,
+                "## Current Preview",
+                "| Publication | `PUBLISHED — GitHub Prerelease / Public Beta` |",
+                "| RC5 O1–O10 record, including O4/O9 | "
+                "`documented-environment recorded PASS` remains bounded evidence |",
+            ),
+            (
+                README_ZH,
+                "## 当前 Preview",
+                "| 发布状态 | `已发布 — GitHub Prerelease／Public Beta` |",
+                "| RC5 O1–O10 记录（包括 O4/O9） | "
+                "`documented-environment recorded PASS` 仍是有边界的证据 |",
+            ),
         ):
             content = text(path)
-            self.assertIn("v4.1.0-rc4", content)
+            self.assertIn("RC4", content)
             self.assertIn("v4.1.0-rc5", content)
-            self.assertIn("source candidate", content.lower())
+            self.assertNotIn("source candidate", content.lower())
             self.assertIn(RC5_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(RC5_SETUP_CONTRACT_COMMIT, content)
-            self.assertIn(candidate_heading, content)
+            self.assertIn(preview_heading, content)
             self.assertIn(publication_row, content)
-            self.assertIn(
-                "| Runtime acceptance O1–O10 | "
-                "`documented-environment recorded PASS` |",
-                content,
-            )
+            self.assertIn(runtime_row, content)
             if path == README:
                 self.assertIn(
-                    "The documented-environment record for RC5 O1–O10 is `PASS`",
+                    "The documented-environment RC5 O1–O10 record remains bounded evidence",
                     content,
                 )
             else:
                 self.assertIn(
-                    "RC5 O1–O10 已在 documented environment 中留档为 `PASS`",
+                    "documented-environment 的 RC5 O1–O10 记录仍是有边界的证据",
                     content,
                 )
+            if path == README:
+                self.assertIn("Final O4/O9 re-certification", content)
+            else:
+                self.assertIn("最终 O4/O9 再认证", content)
+            self.assertIn("`CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`", content)
             for number in range(1, 11):
                 self.assertEqual(
                     sum(line.startswith(f"- O{number} ") for line in content.splitlines()),
@@ -277,23 +290,19 @@ class DocumentationTests(unittest.TestCase):
             ):
                 self.assertIn(feature, content)
             self.assertEqual(content.count(default_setup_url), 1)
-            self.assertEqual(content.count(candidate_setup_url), 1)
-            self.assertLess(content.index(default_setup_url), content.index(candidate_heading))
-            self.assertGreater(content.index(candidate_setup_url), content.index(candidate_heading))
-            candidate_start = content.index(candidate_heading)
-            candidate_end = content.index("\n## ", candidate_start + len(candidate_heading))
-            candidate_section = content[candidate_start:candidate_end]
-            self.assertNotIn("NOT RUN", candidate_section)
+            self.assertEqual(content.count(preview_setup_url), 1)
+            self.assertLess(content.index(default_setup_url), content.index(preview_heading))
+            self.assertGreater(content.index(preview_setup_url), content.index(preview_heading))
+            preview_start = content.index(preview_heading)
+            preview_end = content.index("\n## ", preview_start + len(preview_heading))
+            preview_section = content[preview_start:preview_end]
+            self.assertNotIn("NOT RUN", preview_section)
             for placeholder in ("<APPROVED_40_HEX_COMMIT>", "<TBD>", "pending"):
-                self.assertNotIn(placeholder, candidate_section)
-            self.assertNotIn("releases/tag/v4.1.0-rc5", content)
-            self.assertNotIn("img.shields.io/badge/preview-v4.1.0--rc5", content)
-            for forbidden in (
-                "v4.1.0-rc5 Preview",
-                "v4.1.0-rc5 Public Beta",
-                "v4.1.0 stable",
-            ):
-                self.assertNotIn(forbidden, content)
+                self.assertNotIn(placeholder, preview_section)
+            self.assertIn("releases/tag/v4.1.0-rc5", content)
+            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc5", content)
+            self.assertNotIn("NOT PUBLISHED", content)
+            self.assertNotIn("尚未发布", content)
         setup = text(SETUP)
         self.assertIn("Contract version: `v4.1.0-rc5`", setup)
         self.assertIn("RC5 is a source candidate", setup)
@@ -320,14 +329,14 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Radar HTML runtime fallback is removed", text(README))
         self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
         self.assertIn("Global Runtime G1-G7", combined)
-        self.assertIn("current published preview prerelease", text(README))
-        self.assertIn("当前已发布的 Preview prerelease", text(README_ZH))
+        self.assertIn("current published GitHub Prerelease / Preview", text(README))
+        self.assertIn("当前已发布的 GitHub Prerelease／Preview", text(README_ZH))
         self.assertIn("public beta", text(README))
         self.assertIn("公开测试版本", text(README_ZH))
         self.assertIn("no selector, no delegation, and no availability evidence", text(README))
         self.assertIn("没有 selector、没有 delegation、没有 availability evidence", text(README_ZH))
-        self.assertIn("v4.0.0` remains stable", text(README))
-        self.assertIn("v4.0.0` 仍是稳定版本", text(README_ZH))
+        self.assertIn("v4.0.0` remains Stable", text(README))
+        self.assertIn("v4.0.0` 仍是 Stable 稳定版本", text(README_ZH))
         self.assertNotRegex(combined, r"v4\.1\.0-rc3[^\n]*(?:—|is|是)\s*STABLE")
         self.assertNotIn(
             "RC2 repository-context delegation validation remains pending", combined
@@ -415,8 +424,14 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Published Preview remains `v4.1.0-rc4`", setup)
         self.assertIn("RC5 is not published and is not Stable", setup)
         self.assertIn("v4.1.0-rc5", readmes)
-        self.assertIn("not published, not Stable", text(README))
-        self.assertIn("尚未发布，不是 Stable", text(README_ZH))
+        self.assertIn(
+            "current published GitHub Prerelease / Preview and Public Beta",
+            text(README),
+        )
+        self.assertIn(
+            "当前已发布、面向高级用户使用的 GitHub Prerelease／Preview／Public Beta",
+            text(README_ZH),
+        )
         self.assertIn(f"checkout --detach {RC5_RUNTIME_SOURCE_COMMIT}", setup)
         self.assertIn(
             f"Require `git rev-parse HEAD` to equal `{RC5_RUNTIME_SOURCE_COMMIT}` exactly",

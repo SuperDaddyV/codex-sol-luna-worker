@@ -4,7 +4,7 @@
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![Stable: v4.0.0](https://img.shields.io/badge/stable-v4.0.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
-[![Preview: v4.1.0-rc4](https://img.shields.io/badge/preview-v4.1.0--rc4-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc4)
+[![Preview: v4.1.0-rc5](https://img.shields.io/badge/preview-v4.1.0--rc5-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc5)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
 Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and final acceptance while native GPT-5.6 Luna workers handle clear, bounded execution tasks.
@@ -13,9 +13,11 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 > [!NOTE]
-> `v4.1.0-rc4` is the current published preview prerelease for public beta. RC4 fixes the RC3 `Luna unavailable` Receipt misclassification through current-task evidence gating. Its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D passed. `v4.0.0` remains stable.
+> `v4.1.0-rc5` is the current published GitHub Prerelease / Preview and Public Beta release. `v4.0.0` remains Stable.
 >
-> RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4 forbids that reason without evidence and allows it only after genuine parent-visible availability failure evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
+> Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS. The documented-environment RC5 O1–O10 record remains bounded evidence, including O4 and O9; Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`. No confirmed product-runtime regression.
+>
+> RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4's evidence-gated Receipt behavior remains historical release evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
 
 ```text
 GPT-5.6 Sol
@@ -56,11 +58,11 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 ```
 
 > [!WARNING]
-> The setup contract above is pinned to immutable RC4 post-release documentation Commit C. RC4 is the current published preview prerelease for public beta; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> The unchanged default installation path above remains pinned to immutable RC4 post-release documentation Commit C. `v4.0.0` remains Stable; the current published Preview and Public Beta is `v4.1.0-rc5`; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
-## Next Candidate
+## Current Preview
 
-`v4.1.0-rc5` is the next source candidate for advanced, experimental testing. It is not published, not Stable, and not the default installation target. Stable remains `v4.0.0`; the published Preview and public beta remain `v4.1.0-rc4`.
+`v4.1.0-rc5` is the current published GitHub Prerelease / Preview and Public Beta for advanced testing. Stable remains `v4.0.0`; the default installation target/path remains the immutable RC4 entry above. RC5 is not Stable and is not the default installation target.
 
 RC5 contains:
 
@@ -71,15 +73,16 @@ RC5 contains:
 - Luna ref-cost Receipt
 - Upgrade-to-latest UX
 
-| Candidate evidence | Status |
+| Release evidence | Status |
 | --- | --- |
-| Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Source validation `PASS` |
-| Windows, Ubuntu, and macOS source CI | `PASS` |
+| Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS |
 | Immutable setup contract | Available at Commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a` |
-| Publication | `NOT PUBLISHED` |
-| Runtime acceptance O1–O10 | `documented-environment recorded PASS` |
+| Publication | `PUBLISHED — GitHub Prerelease / Public Beta` |
+| RC5 O1–O10 record, including O4/O9 | `documented-environment recorded PASS` remains bounded evidence |
+| Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
+| Product-runtime regression | No confirmed product-runtime regression |
 
-Advanced users who accept candidate risk may test the experimental, non-default RC5 setup contract. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
+Advanced users who accept Preview risk may use the published, non-default RC5 setup contract. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
 
 ```text
 Read and strictly execute the setup contract at:
@@ -111,7 +114,7 @@ Only after Ready: YES, continue with the immutable source, capability probe,
 dry-run, backup, installation, and validation defined by the contract.
 ```
 
-Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. The documented-environment record for RC5 O1–O10 is `PASS`; this evidence is bounded to that environment and does not imply universal real-user runtime validation.
+Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. The documented-environment RC5 O1–O10 record, including O4 and O9, remains bounded evidence. Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`. No confirmed product-runtime regression.
 
 ## What this does
 
@@ -160,7 +163,7 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 - Read-only HTTPS access to the public GitHub repository. `curl` is not required.
 - Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
 
-The RC4 repository suite passed `114/114`, and its source passed Windows, Ubuntu, and macOS CI. The published RC4 prerelease also passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D. Earlier published RC1, RC2, and RC3 runtime records remain historical evidence, including RC2's `FRESH_REPO_CONTEXT_DELEGATION_PASS`. CI PASS does not imply that real Codex runtime validation was performed on every operating system, account, client, or user.
+RC5 repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS. The documented-environment RC5 O1–O10 record remains bounded evidence, including O4 and O9; Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`. No confirmed product-runtime regression. Earlier published RC1, RC2, RC3, and RC4 runtime records remain historical evidence, including RC2's `FRESH_REPO_CONTEXT_DELEGATION_PASS`. CI PASS does not imply that real Codex runtime validation was performed on every operating system, account, client, or user.
 
 Official Codex behavior is documented in [AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents), and the [Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference). OpenAI lists the model IDs in its [model catalog](https://developers.openai.com/api/docs/models).
 
@@ -196,7 +199,7 @@ For a non-trivial task, the final line reports one observed outcome. A delegated
 
 ## Public Beta Feedback
 
-`v4.0.0` remains the Stable release. `v4.1.0-rc4` is the current Preview prerelease and public beta.
+`v4.0.0` remains the Stable release. `v4.1.0-rc5` is the current Preview prerelease and public beta.
 
 Use the matching native GitHub Issue Form for install, upgrade, selector, Luna delegation, Delegation Receipt, rollback, or uninstall issues. Successful compatibility reports are welcome too:
 
@@ -260,6 +263,10 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | Sol Acceptance | `PASS` |
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
+| RC5 repository validation and exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
+| RC5 O1–O10 documented-environment record, including O4/O9 | Bounded evidence only |
+| RC5 Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
+| RC5 product-runtime regression | No confirmed product-runtime regression |
 | RC4 source suite | `PASS` |
 | RC4 real Global upgrade | `PASS` |
 | RC4 Case A | `PASS` |
