@@ -79,10 +79,36 @@ RC5 contains:
 | Publication | `NOT PUBLISHED` |
 | Runtime acceptance O1–O10 | `documented-environment recorded PASS` |
 
-Advanced users who accept candidate risk may test the experimental, non-default RC5 setup contract:
+Advanced users who accept candidate risk may test the experimental, non-default RC5 setup contract. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
 
 ```text
+Read and strictly execute the setup contract at:
+
 https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9/CODEX_SOL_LUNA_SETUP.md
+
+Before cloning or downloading source, creating a temporary directory, writing
+probe state, or invoking the installer, run a read-only prerequisite preflight.
+Do not install system dependencies, modify PATH, or search internal Codex
+Desktop application directories for an executable.
+
+Display:
+
+Sol/Luna Installation Preflight
+Codex Desktop: CURRENT_SESSION / NOT_CONFIRMED
+Codex CLI: PASS <version> / MISSING_OR_UNUSABLE
+Python: PASS <version> / MISSING_OR_UNSUPPORTED
+Git: PASS <version> / MISSING
+GitHub HTTPS: PASS / BLOCKED
+Ready: YES / NO
+
+Ready: YES requires codex --version, Python 3.11+ with tomllib, git --version,
+and a read-only git ls-remote of the public repository to pass. If any hard
+prerequisite is missing, set Ready: NO, explain the one exact blocker, and stop
+before all filesystem writes. Do not install Codex CLI, Python, Git, or another
+download tool; do not change PATH, proxy, or system settings automatically.
+
+Only after Ready: YES, continue with the immutable source, capability probe,
+dry-run, backup, installation, and validation defined by the contract.
 ```
 
 Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. The documented-environment record for RC5 O1–O10 is `PASS`; this evidence is bounded to that environment and does not imply universal real-user runtime validation.
@@ -125,10 +151,13 @@ The v4 core does **not** install a Hook Router, `PreToolUse` enforcement, a mana
 
 ## Requirements and compatibility
 
+- Codex Desktop for the copy-and-paste installation workflow.
 - A current Codex client with custom agents and multi-agent/subagent support.
+- A `codex` command already resolvable in the task environment; Codex Desktop alone is not sufficient when `codex --version` cannot run.
 - Access to GPT-5.6 Sol for the primary task and GPT-5.6 Luna at all required efforts for workers.
 - Python 3.11 or newer with the standard-library `tomllib` module.
-- Git for the recommended immutable source checkout.
+- Git for the required immutable exact-commit checkout; the setup contract has no archive or downloader fallback.
+- Read-only HTTPS access to the public GitHub repository. `curl` is not required.
 - Windows, Ubuntu/Linux, or macOS. WSL is a separate Linux environment and must not share assumptions or paths with native Windows.
 
 The RC4 repository suite passed `114/114`, and its source passed Windows, Ubuntu, and macOS CI. The published RC4 prerelease also passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D. Earlier published RC1, RC2, and RC3 runtime records remain historical evidence, including RC2's `FRESH_REPO_CONTEXT_DELEGATION_PASS`. CI PASS does not imply that real Codex runtime validation was performed on every operating system, account, client, or user.

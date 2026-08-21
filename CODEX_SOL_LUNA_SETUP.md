@@ -54,6 +54,51 @@ You must:
 
 You must not guess paths, overwrite unknown configuration, install system dependencies, change authentication, update Codex, move Git tags, execute mutable `master` content, bypass ownership checks, or silently widen permissions. If a required condition is missing, stop with `BLOCKED` and the exact reason.
 
+## 0A. Installation Preflight
+
+Before cloning or downloading source, creating a temporary source directory, writing capability-probe state, or invoking any installer mode, run a read-only prerequisite preflight. Do not install system dependencies, modify `PATH`, or search internal Codex Desktop application directories for an executable.
+
+This copy-and-paste installation path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. It requires all of the following before source acquisition:
+
+- the current Codex Desktop task;
+- a `codex` command already resolvable by the task environment and able to complete `codex --version`;
+- Python 3.11 or newer with standard-library `tomllib`;
+- Git, because this contract has no archive or downloader fallback and requires an immutable exact-commit checkout;
+- HTTPS access to the public GitHub repository for a read-only `git ls-remote` check.
+
+On Windows, use `Get-Command` for command discovery. On macOS, Linux, or WSL, use `command -v`. Then run the equivalent of:
+
+```text
+codex --version
+<PYTHON> --version
+<PYTHON> -c "import sys, tomllib; assert sys.version_info >= (3, 11); print('PYTHON_CAPABILITY_PASS')"
+git --version
+git ls-remote https://github.com/SuperDaddyV/codex-sol-luna-worker.git HEAD
+```
+
+Do not treat a Codex Desktop internal application path, versioned cache directory, or content-hash directory as a supported CLI discovery mechanism. A Desktop-bundled executable satisfies this contract only when the current task environment already exposes it as a resolvable `codex` command and `codex --version` succeeds.
+
+Display the result before any filesystem write:
+
+```text
+Sol/Luna Installation Preflight
+Codex Desktop: CURRENT_SESSION / NOT_CONFIRMED
+Codex CLI: PASS <version> / MISSING_OR_UNUSABLE
+Python: PASS <version> / MISSING_OR_UNSUPPORTED
+Git: PASS <version> / MISSING
+GitHub HTTPS: PASS / BLOCKED
+Ready: YES / NO
+```
+
+`Ready: YES` requires every hard prerequisite above to pass. If any item fails, set `Ready: NO`, do not create or modify files, and stop with exactly one concise remediation:
+
+- `BLOCKED: CODEX_CLI_REQUIRED` — install or expose a supported Codex CLI yourself, reopen Codex Desktop, and retry only after `codex --version` succeeds;
+- `BLOCKED: PYTHON_3_11_WITH_TOMLLIB_REQUIRED` — install a supported Python yourself, reopen the task environment, and retry;
+- `BLOCKED: GIT_REQUIRED_FOR_IMMUTABLE_SOURCE` — install Git yourself, reopen the task environment, and retry;
+- `BLOCKED: GITHUB_HTTPS_REQUIRED` — restore read-only HTTPS access to the public repository and retry without changing proxy or system settings automatically.
+
+PowerShell is the native Windows shell used to run these checks, but it is not a separate cross-platform product dependency. `curl` and other download tools are not required by this contract.
+
 ## 1. Target State
 
 The global target contains five native custom agents:
@@ -113,11 +158,33 @@ Run the equivalent of:
 
 Do not install or upgrade Python. If either check fails, stop with `BLOCKED: PYTHON_3_11_WITH_TOMLLIB_REQUIRED`.
 
-## 5. Codex Capability
+## 5. Source Acquisition
 
-Confirm that a Codex client is available and record `codex --version`. The installation requires native custom agents, multi-agent/subagent support, a primary task using GPT-5.6 Sol, and account access to GPT-5.6 Luna at `low`, `medium`, `high`, `xhigh`, and `max`.
+The installer source must be exactly the approved RC5 Runtime Source Commit A:
 
-From the immutable checkout, first display the capability probe plan:
+```text
+5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+```
+
+Do not substitute `master`, `main`, `origin/master`, `latest`, a floating branch, mutable `target_commitish`, or any other commit. The commit containing this setup contract is a separate documentation anchor and is not an installer source.
+
+Git is required. After the Installation Preflight reports `Ready: YES`, create a temporary workspace outside `CODEX_HOME` and run the equivalent of:
+
+```text
+git clone --no-checkout https://github.com/SuperDaddyV/codex-sol-luna-worker.git <TEMP_SOURCE>
+git -C <TEMP_SOURCE> checkout --detach 5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+git -C <TEMP_SOURCE> rev-parse HEAD
+```
+
+Require `git rev-parse HEAD` to equal `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` exactly. Inspect `git status --short` and require a clean checkout before installation. Confirm `scripts/install.py` declares installer `VERSION = "v4.1.0-rc5"` before running it.
+
+Do not execute installer code from a mutable branch. This contract defines no archive fallback. If the exact commit cannot be verified after the Git preflight passed, stop with `BLOCKED: IMMUTABLE_SOURCE_UNVERIFIED` rather than adding a downloader.
+
+## 6. Codex Capability
+
+The Installation Preflight has already confirmed that the `codex` command resolves and `codex --version` succeeds. The installation also requires native custom agents, multi-agent/subagent support, a primary task using GPT-5.6 Sol, and account access to GPT-5.6 Luna at `low`, `medium`, `high`, `xhigh`, and `max`.
+
+From the verified immutable checkout, first display the capability probe plan:
 
 ```text
 <PYTHON> scripts/probe_capabilities.py
@@ -129,29 +196,7 @@ With the user's installation authorization, run the real probe into the temporar
 <PYTHON> scripts/probe_capabilities.py --execute --state <TEMP_SOURCE>/.var/setup-capabilities.json
 ```
 
-The probe uses ephemeral Codex calls, ignores global user configuration, and does not edit global Codex settings. Require all five client calls to be supported. Exact echo is diagnostic; the current probe treats successful client execution as model availability. If the Codex command is unavailable, required multi-agent behavior is absent, or a required Luna effort is unavailable, do not upgrade Codex or change authentication. Stop and report the exact capability blocker.
-
-## 6. Source Acquisition
-
-The installer source must be exactly the approved RC5 Runtime Source Commit A:
-
-```text
-5ae88ff9190b31174c55a6136c0c8c8611d0b34c
-```
-
-Do not substitute `master`, `main`, `origin/master`, `latest`, a floating branch, mutable `target_commitish`, or any other commit. The commit containing this setup contract is a separate documentation anchor and is not an installer source.
-
-When Git is available, create a temporary workspace outside `CODEX_HOME` and run the equivalent of:
-
-```text
-git clone --no-checkout https://github.com/SuperDaddyV/codex-sol-luna-worker.git <TEMP_SOURCE>
-git -C <TEMP_SOURCE> checkout --detach 5ae88ff9190b31174c55a6136c0c8c8611d0b34c
-git -C <TEMP_SOURCE> rev-parse HEAD
-```
-
-Require `git rev-parse HEAD` to equal `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` exactly. Inspect `git status --short` and require a clean checkout before installation. Confirm `scripts/install.py` declares installer `VERSION = "v4.1.0-rc5"` before running it.
-
-Do not execute installer code from a mutable branch. This contract defines no archive fallback; if Git or exact commit verification is unavailable, stop with `BLOCKED: IMMUTABLE_SOURCE_UNVERIFIED` rather than adding a downloader.
+The probe uses ephemeral Codex calls, ignores global user configuration, and does not edit global Codex settings. Require all five client calls to be supported. Exact echo is diagnostic; the current probe treats successful client execution as model availability. If required multi-agent behavior is absent or a required Luna effort is unavailable, stop before inspecting or writing `CODEX_HOME`; do not upgrade Codex or change authentication.
 
 ## 7. Existing State Inspection
 

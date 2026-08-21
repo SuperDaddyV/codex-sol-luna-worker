@@ -78,10 +78,34 @@ RC5 包含：
 | 发布状态 | `NOT PUBLISHED` |
 | Runtime acceptance O1–O10 | `documented-environment recorded PASS` |
 
-愿意承担候选版本风险的高级用户可以测试这份实验性、非默认的 RC5 setup contract：
+愿意承担候选版本风险的高级用户可以测试这份实验性、非默认的 RC5 setup contract。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
 
 ```text
+请读取并严格执行以下安装规范：
+
 https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9/CODEX_SOL_LUNA_SETUP.md
+
+在 clone 或下载 source、创建临时目录、写入 probe state、调用任何 installer
+模式之前，先完成只读依赖预检。不要安装系统依赖、修改 PATH，或搜索 Codex
+Desktop 内部应用目录来寻找可执行文件。
+
+先显示：
+
+Sol/Luna Installation Preflight
+Codex Desktop: CURRENT_SESSION / NOT_CONFIRMED
+Codex CLI: PASS <version> / MISSING_OR_UNUSABLE
+Python: PASS <version> / MISSING_OR_UNSUPPORTED
+Git: PASS <version> / MISSING
+GitHub HTTPS: PASS / BLOCKED
+Ready: YES / NO
+
+只有 codex --version、Python 3.11+ 与 tomllib、git --version，以及针对公开仓库的
+只读 git ls-remote 全部通过，Ready 才能为 YES。缺少任一硬依赖时，设置
+Ready: NO，说明唯一的准确阻塞，并在所有文件系统写入前停止。不要自动安装
+Codex CLI、Python、Git 或其他下载工具；不要自动修改 PATH、代理或系统设置。
+
+只有 Ready: YES 后，才继续执行合同规定的 immutable source、capability probe、
+dry-run、backup、installation 和 validation。
 ```
 
 请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。RC5 O1–O10 已在 documented environment 中留档为 `PASS`；证据只适用于该环境，不代表所有真实用户环境都完成 runtime 验证。
@@ -157,10 +181,13 @@ v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtim
 
 ## 💻 系统要求
 
+- 使用 Codex Desktop 完成复制提示词的安装流程。
 - 当前 Codex 客户端支持 custom agents 与 multi-agent/subagent。
+- 当前任务环境已经能解析 `codex` 命令；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
 - 主任务可使用 GPT-5.6 Sol，账号可访问 GPT-5.6 Luna 及所需五档 effort。
 - Python 3.11 或更高版本，并能导入标准库 `tomllib`。
-- 推荐使用 Git 获取与安装合同相同的不可变 commit。
+- 必须使用 Git 获取并校验不可变的精确 commit；setup contract 没有 archive 或 downloader fallback。
+- 能以只读 HTTPS 访问公开 GitHub 仓库。不要求 `curl`。
 - Windows、Ubuntu/Linux、macOS。WSL 是独立 Linux 环境，不能把 native Windows 的路径和配置直接混用。
 
 RC4 完整仓库测试已通过 `114/114`，其 source 已通过 Windows、Ubuntu、macOS CI。已发布 RC4 prerelease 还通过了留档的真实 RC3→RC4 Global upgrade 和 Runtime Cases A/B/C/D。已发布 RC1、RC2、RC3 的 runtime 记录继续作为历史证据，其中包括 RC2 的 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。**三平台 CI PASS 不等于三个操作系统、所有客户端、所有账号或所有用户都做过真实 runtime 验收。**

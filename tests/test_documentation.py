@@ -70,6 +70,53 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
+    def test_rc5_installation_entry_declares_hard_prerequisites(self):
+        english = text(README)
+        chinese = text(README_ZH)
+        for content in (english, chinese):
+            for phrase in (
+                "Sol/Luna Installation Preflight",
+                "Codex CLI: PASS <version> / MISSING_OR_UNUSABLE",
+                "Python: PASS <version> / MISSING_OR_UNSUPPORTED",
+                "Git: PASS <version> / MISSING",
+                "GitHub HTTPS: PASS / BLOCKED",
+                "Ready: YES / NO",
+                "codex --version",
+                "git --version",
+                "git ls-remote",
+            ):
+                self.assertIn(phrase, content)
+            self.assertIn(RC5_SETUP_CONTRACT_COMMIT, content)
+
+        self.assertIn("Codex Desktop alone is not sufficient", english)
+        self.assertIn("Git for the required immutable exact-commit checkout", english)
+        self.assertIn("仅安装 Codex Desktop 还不够", chinese)
+        self.assertIn("必须使用 Git 获取并校验不可变的精确 commit", chinese)
+
+    def test_setup_preflight_stops_missing_dependencies_before_writes(self):
+        content = text(SETUP)
+        preflight = content.index("## 0A. Installation Preflight")
+        source = content.index("## 5. Source Acquisition")
+        capability = content.index("## 6. Codex Capability")
+        dry_run = content.index("## 8. Dry Run")
+        self.assertLess(preflight, source)
+        self.assertLess(source, capability)
+        self.assertLess(capability, dry_run)
+        self.assertLess(preflight, dry_run)
+        for phrase in (
+            "Before cloning or downloading source",
+            "before any filesystem write",
+            "`Ready: YES` requires every hard prerequisite above to pass",
+            "do not create or modify files",
+            "BLOCKED: CODEX_CLI_REQUIRED",
+            "BLOCKED: PYTHON_3_11_WITH_TOMLLIB_REQUIRED",
+            "BLOCKED: GIT_REQUIRED_FOR_IMMUTABLE_SOURCE",
+            "BLOCKED: GITHUB_HTTPS_REQUIRED",
+            "Do not install system dependencies, modify `PATH`",
+            "`curl` and other download tools are not required",
+        ):
+            self.assertIn(phrase, content)
+
     def test_public_beta_feedback_forms_and_guidance(self):
         self.assertEqual(
             text(ISSUE_TEMPLATE_DIR / "config.yml").strip(),
