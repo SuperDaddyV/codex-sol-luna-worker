@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the RC5 O2/O4/O9 acceptance cases in an isolated fake CODEX_HOME."""
+"""Run the RC6 O2/O4/O9 acceptance cases in an isolated fake CODEX_HOME."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from typing import Any, Callable, Iterable, Iterator, Mapping
 import uuid
 
 
-RC5_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
+RC6_SOURCE_COMMIT = "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 
 # The real CODEX_HOME boundary is intentionally limited to managed Sol/Luna
 # state and root identity.  Runtime attribution happens only in the isolated
@@ -186,8 +186,11 @@ RUNTIME_ACTIVITY_CATEGORIES = {
     UNEXPECTED_WRITE,
 }
 ALLOWED_RECEIPT_TOOLS = {"spawn_agent", "wait_agent"}
-HARNESS_ROOT_PREFIX = "rc5-runtime-auth-isolated-"
-OWNERSHIP_MARKER = ".rc5-runtime-acceptance-owner.json"
+ROLLOUT_ROOTS: tuple[str, ...] = ("browser/sessions", "sessions")
+ROLLOUT_SETTLE_TIMEOUT_SECONDS = 5.0
+ROLLOUT_SETTLE_INTERVAL_SECONDS = 0.25
+HARNESS_ROOT_PREFIX = "rc6-runtime-auth-isolated-"
+OWNERSHIP_MARKER = ".rc6-runtime-acceptance-owner.json"
 OWNERSHIP_SCHEMA = 1
 INHERITED_CODEX_ENVIRONMENT_NAMES = {
     "COMSPEC",
@@ -2373,24 +2376,44 @@ def _run_with_real_home_audit(
 
 def _load_json_lines(path: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise HarnessFailure("rollout could not be read") from exc
+    for line_number, line in enumerate(lines, 1):
         if not line.strip():
             continue
-        records.append(json.loads(line))
+        try:
+            record = json.loads(line)
+        except (TypeError, ValueError) as exc:
+            raise HarnessFailure(
+                f"rollout contains malformed JSON at line {line_number}"
+            ) from exc
+        if not isinstance(record, dict):
+            raise HarnessFailure(
+                f"rollout record is not an object at line {line_number}"
+            )
+        records.append(record)
     return records
 
 
 def _session_metadata(records: list[dict[str, Any]]) -> dict[str, Any]:
     for record in records:
         if record.get("type") == "session_meta":
-            return record["payload"]
+            payload = record.get("payload")
+            if not isinstance(payload, dict):
+                raise HarnessFailure("rollout session metadata is malformed")
+            return payload
     raise HarnessFailure("rollout is missing session_meta")
 
 
 def _turn_context(records: list[dict[str, Any]]) -> dict[str, Any]:
     for record in records:
         if record.get("type") == "turn_context":
-            return record["payload"]
+            payload = record.get("payload")
+            if not isinstance(payload, dict):
+                raise HarnessFailure("rollout turn context is malformed")
+            return payload
     raise HarnessFailure("rollout is missing turn_context")
 
 
@@ -2399,14 +2422,19 @@ def _final_assistant_text(records: list[dict[str, Any]]) -> str:
     for record in records:
         if record.get("type") != "response_item":
             continue
-        payload = record.get("payload", {})
+        payload = record.get("payload")
+        if not isinstance(payload, dict):
+            raise HarnessFailure("rollout response item is malformed")
         if payload.get("type") != "message" or payload.get("role") != "assistant":
             continue
-        text = "".join(
-            block.get("text", "")
-            for block in payload.get("content", [])
-            if isinstance(block, dict)
-        )
+        content = payload.get("content")
+        if not isinstance(content, list) or any(
+            not isinstance(block, dict)
+            or not isinstance(block.get("text", ""), str)
+            for block in content
+        ):
+            raise HarnessFailure("rollout response content is malformed")
+        text = "".join(block.get("text", "") for block in content)
         if text:
             final = text
     return final.strip()
@@ -2417,14 +2445,20 @@ def _tool_calls(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for record in records:
         if record.get("type") != "response_item":
             continue
-        payload = record.get("payload", {})
+        payload = record.get("payload")
+        if not isinstance(payload, dict):
+            raise HarnessFailure("rollout response item is malformed")
         if payload.get("type") in {"function_call", "custom_tool_call"}:
             calls.append(payload)
     return calls
 
 
 def _rollout_files(fake_home: Path) -> set[Path]:
-    return set((fake_home / "browser/sessions").glob("**/*.jsonl"))
+    return {
+        path
+        for relative_root in ROLLOUT_ROOTS
+        for path in (fake_home / relative_root).glob("**/*.jsonl")
+    }
 
 
 def _validate_runtime_case(
@@ -2474,13 +2508,26 @@ def _validate_runtime_case(
     spawn_calls = [call for call in parent_calls if call.get("name") == "spawn_agent"]
     if len(spawn_calls) != 1:
         raise HarnessFailure(f"expected one spawn_agent call, found {len(spawn_calls)}")
-    spawn_arguments = json.loads(spawn_calls[0].get("arguments", "{}"))
+    try:
+        spawn_arguments = json.loads(spawn_calls[0].get("arguments", "{}"))
+    except (TypeError, ValueError) as exc:
+        raise HarnessFailure("spawn_agent arguments are malformed") from exc
+    if not isinstance(spawn_arguments, dict):
+        raise HarnessFailure("spawn_agent arguments are malformed")
     if spawn_arguments.get("agent_type") != expected_role:
         raise HarnessFailure("spawned child role does not match saved selection")
     if _tool_calls(rollouts[child_path]):
         raise HarnessFailure("bounded child unexpectedly used a tool")
 
-    source = child_meta.get("source", {}).get("subagent", {}).get("thread_spawn", {})
+    source_metadata = child_meta.get("source")
+    if not isinstance(source_metadata, dict):
+        raise HarnessFailure("child source metadata is malformed")
+    subagent_metadata = source_metadata.get("subagent")
+    if not isinstance(subagent_metadata, dict):
+        raise HarnessFailure("child source metadata is malformed")
+    source = subagent_metadata.get("thread_spawn")
+    if not isinstance(source, dict):
+        raise HarnessFailure("child source metadata is malformed")
     context = _turn_context(rollouts[child_path])
     if child_meta.get("agent_role") != expected_role:
         raise HarnessFailure("child session role mismatch")
@@ -2515,6 +2562,37 @@ def _validate_runtime_case(
         "extra_state": 0,
         "parent_tool_calls": parent_names,
     }
+
+
+def _wait_for_runtime_case(
+    *,
+    fake_home: Path,
+    before_rollouts: set[Path],
+    expected_role: str,
+    expected_effort: str,
+    expected_literal: str,
+    expected_receipt: str,
+    timeout: float = ROLLOUT_SETTLE_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
+    """Wait briefly for new parent/child rollouts to become parseable."""
+
+    deadline = time.monotonic() + timeout
+    last_error: BaseException | None = None
+    while True:
+        try:
+            new_rollouts = _rollout_files(fake_home) - before_rollouts
+            return _validate_runtime_case(
+                new_rollouts,
+                expected_role=expected_role,
+                expected_effort=expected_effort,
+                expected_literal=expected_literal,
+                expected_receipt=expected_receipt,
+            )
+        except (OSError, ValueError, HarnessFailure) as exc:
+            last_error = exc
+        if time.monotonic() >= deadline:
+            raise HarnessFailure("rollout evidence did not settle") from last_error
+        time.sleep(ROLLOUT_SETTLE_INTERVAL_SECONDS)
 
 
 def _run_codex_case(
@@ -2578,9 +2656,9 @@ def _run_codex_case(
     state_after = _fingerprint_tree(state_dir)
     if state_before != state_after:
         raise HarnessFailure(f"{case_name} Receipt work changed selector state")
-    new_rollouts = _rollout_files(fake_home) - before_rollouts
-    result = _validate_runtime_case(
-        new_rollouts,
+    result = _wait_for_runtime_case(
+        fake_home=fake_home,
+        before_rollouts=before_rollouts,
         expected_role=expected_role,
         expected_effort=expected_effort,
         expected_literal=expected_literal,
@@ -2592,7 +2670,7 @@ def _run_codex_case(
 
 
 def _load_selector(selector_path: Path) -> Any:
-    spec = importlib.util.spec_from_file_location("rc5_acceptance_selector", selector_path)
+    spec = importlib.util.spec_from_file_location("rc6_acceptance_selector", selector_path)
     if spec is None or spec.loader is None:
         raise HarnessFailure("could not load isolated selector")
     module = importlib.util.module_from_spec(spec)
@@ -2643,7 +2721,7 @@ def _selection_prompt(
     receipt: str,
 ) -> str:
     saved_selection = json.dumps(selection, sort_keys=True, separators=(",", ":"))
-    return f"""Controlled RC5 {case_name} runtime acceptance.
+    return f"""Controlled RC6 {case_name} runtime acceptance.
     The process CODEX_HOME, authentication, config, agents, manifest, and state are
     inside one independent fake CODEX_HOME. Workspace, evidence, temporary storage,
     and selector state are sibling artifacts under the owned acceptance root. Do not
@@ -2788,8 +2866,8 @@ def _read_installed_source_commit(fake_home: Path) -> str | None:
 def _source_attribution(installed: str | None) -> dict[str, Any]:
     return {
         "installed": installed,
-        "expected": RC5_SOURCE_COMMIT,
-        "match": "YES" if installed == RC5_SOURCE_COMMIT else "NO",
+        "expected": RC6_SOURCE_COMMIT,
+        "match": "YES" if installed == RC6_SOURCE_COMMIT else "NO",
     }
 
 
@@ -2803,8 +2881,8 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--source-commit",
-        default=RC5_SOURCE_COMMIT,
-        help="Immutable RC5 source commit; must equal the fixed RC5 source commit",
+        default=RC6_SOURCE_COMMIT,
+        help="Immutable RC6 source commit; must equal the fixed RC6 source commit",
     )
     parser.add_argument("--codex-command", default=shutil.which("codex") or "codex")
     parser.add_argument("--python-command", default=sys.executable)
@@ -2851,7 +2929,7 @@ def main() -> int:
     }
 
     result: dict[str, Any] = {
-        "decision": "RC5_ACCEPTANCE_BOUNDARY_IMPLEMENTATION_NEEDS_FIX",
+        "decision": "RC6_ACCEPTANCE_BOUNDARY_IMPLEMENTATION_NEEDS_FIX",
         "harness_root": str(acceptance_root),
         "real_codex_home": {
             "before_hash": baseline["protected"]["hash"],
@@ -2865,7 +2943,7 @@ def main() -> int:
             "real_home_identity_unchanged": None,
             "changed": None,
         },
-        "product_runtime": {"rc5_code_modified": "NO"},
+        "product_runtime": {"rc6_code_modified": "NO"},
         "boundary_classification": {
             "runtime_payload_frozen": "YES",
             "acceptance_contract_updated": "YES",
@@ -2880,10 +2958,10 @@ def main() -> int:
     try:
         if not (
             isinstance(args.source_commit, str)
-            and args.source_commit.lower() == RC5_SOURCE_COMMIT
+            and args.source_commit.lower() == RC6_SOURCE_COMMIT
         ):
             raise HarnessFailure(
-                "requested source commit does not match expected RC5 source commit"
+                "requested source commit does not match expected RC6 source commit"
             )
         with _owned_acceptance_directory(
             temp_parent=temp_parent,
@@ -2932,7 +3010,7 @@ def main() -> int:
             )
             install_result = json.loads(install.stdout)
             if install_result.get("status") not in {"INSTALLED", "UPGRADED"}:
-                raise HarnessFailure("isolated RC5 install did not complete")
+                raise HarnessFailure("isolated RC6 install did not complete")
             _track_artifact(artifacts, fake_home)
             _assert_no_redirection(fake_home, real_home)
             _assert_isolated_environment_root(
@@ -2948,7 +3026,7 @@ def main() -> int:
             )
             if result["source_attribution"]["match"] != "YES":
                 raise HarnessFailure(
-                    "installed source commit does not match expected RC5 source commit"
+                    "installed source commit does not match expected RC6 source commit"
                 )
 
             fake_auth = fake_home / "auth.json"
@@ -2985,7 +3063,7 @@ def main() -> int:
                 "Sol/Luna: delegated · luna_max ×1 · "
                 f"Luna ref-cost ↓{o2_reduction:.1f}%"
             )
-            o2_literal = "RC5-O2-LUNA-MAX-OK"
+            o2_literal = "RC6-O2-LUNA-MAX-OK"
             result["o2"] = _run_with_real_home_audit(
                 label="O2",
                 real_home=real_home,
@@ -3037,7 +3115,7 @@ def main() -> int:
                 "Sol/Luna: delegated · luna_high ×1 · "
                 f"Luna ref-cost ↓{o4_reduction:.1f}% · capability max→high"
             )
-            o4_literal = "RC5-O4-LUNA-HIGH-OK"
+            o4_literal = "RC6-O4-LUNA-HIGH-OK"
             result["o4"] = _run_with_real_home_audit(
                 label="O4",
                 real_home=real_home,
@@ -3088,7 +3166,7 @@ def main() -> int:
                     )
                 }
                 o9_receipt = "Sol/Luna: delegated · luna_max ×1"
-                o9_literal = "RC5-O9-FAIL-SOFT-OK"
+                o9_literal = "RC6-O9-FAIL-SOFT-OK"
                 o9_receipt_result = _run_codex_case(
                     codex_command=args.codex_command,
                     fake_home=fake_home,
@@ -3189,7 +3267,7 @@ def main() -> int:
     elif all(safety.values()) and all(
         result.get(case, {}).get("result") == "PASS" for case in ("o2", "o4", "o9")
     ):
-        result["decision"] = "RC5_ACCEPTANCE_BOUNDARY_IMPLEMENTED"
+        result["decision"] = "RC6_ACCEPTANCE_BOUNDARY_IMPLEMENTED"
 
     symbolic_values = _evidence_symbolic_values(
         fake_home=fake_home,
@@ -3206,7 +3284,7 @@ def main() -> int:
     print(json.dumps(sanitized_result, indent=2, sort_keys=True))
     return (
         0
-        if result["decision"] == "RC5_ACCEPTANCE_BOUNDARY_IMPLEMENTED"
+        if result["decision"] == "RC6_ACCEPTANCE_BOUNDARY_IMPLEMENTED"
         else 1
     )
 

@@ -470,6 +470,14 @@ def _delegation_failure_evidence(error: BaseException) -> str:
     while current is not None:
         message = str(current)
         if re.fullmatch(
+            r"(?:rollout .*|spawn_agent arguments|child source metadata) "
+            r"(?:is |are )?malformed(?: at line [0-9]+)?",
+            message,
+        ):
+            messages.append("rollout evidence is malformed")
+            current = current.__cause__
+            continue
+        if re.fullmatch(
             r"(?:delegation evidence did not settle|"
             r"expected one compatibility parent, found [0-9]+|"
             r"rollout evidence is malformed|"

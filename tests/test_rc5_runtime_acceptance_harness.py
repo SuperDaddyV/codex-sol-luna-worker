@@ -12,9 +12,9 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS_PATH = ROOT / "scripts" / "accept_rc5_runtime_isolation.py"
-SPEC = importlib.util.spec_from_file_location("rc5_runtime_harness", HARNESS_PATH)
+SPEC = importlib.util.spec_from_file_location("rc6_runtime_harness", HARNESS_PATH)
 if SPEC is None or SPEC.loader is None:
-    raise RuntimeError("could not load RC5 runtime acceptance harness")
+    raise RuntimeError("could not load RC6 runtime acceptance harness")
 HARNESS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(HARNESS)
 SYNTHETIC_VISUALIZATION_RUN_ID = "-".join(
@@ -75,6 +75,252 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
         )
         if completed.returncode != 0:
             self.skipTest(f"junction creation is unavailable: {completed.stderr}")
+
+    def _write_rollout(
+        self,
+        codex_home: Path,
+        relative: str,
+        *,
+        session_id: str,
+        final_text: str,
+        parent_thread_id: str | None = None,
+        agent_role: str | None = None,
+        child: bool = False,
+        spawn_agent: bool = False,
+    ) -> Path:
+        metadata: dict[str, object] = {"id": session_id}
+        if parent_thread_id is not None:
+            metadata["parent_thread_id"] = parent_thread_id
+        if agent_role is not None:
+            metadata["agent_role"] = agent_role
+        if child:
+            metadata["source"] = {
+                "subagent": {"thread_spawn": {"depth": 1}}
+            }
+            metadata["multi_agent_version"] = "disabled"
+
+        records: list[dict[str, object]] = [
+            {"type": "session_meta", "payload": metadata},
+            {
+                "type": "turn_context",
+                "payload": {"model": "gpt-5.6-luna", "effort": "max"},
+            },
+        ]
+        if spawn_agent:
+            records.append(
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "function_call",
+                        "name": "spawn_agent",
+                        "arguments": json.dumps(
+                            {"agent_type": "luna_max"},
+                            sort_keys=True,
+                        ),
+                    },
+                }
+            )
+        records.append(
+            {
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": final_text}],
+                },
+            }
+        )
+        path = codex_home / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            "\n".join(json.dumps(record, sort_keys=True) for record in records)
+            + "\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def _write_rollout_pair(
+        self,
+        codex_home: Path,
+        relative_root: str,
+        *,
+        receipt: str,
+    ) -> tuple[Path, Path, str, str]:
+        parent_id = "parent-thread"
+        child_id = "child-thread"
+        parent = self._write_rollout(
+            codex_home,
+            f"{relative_root}/parent.jsonl",
+            session_id=parent_id,
+            final_text=receipt,
+            spawn_agent=True,
+        )
+        child = self._write_rollout(
+            codex_home,
+            f"{relative_root}/child.jsonl",
+            session_id=child_id,
+            final_text="LUNA-CHILD-OK",
+            parent_thread_id=parent_id,
+            agent_role="luna_max",
+            child=True,
+        )
+        return parent, child, parent_id, child_id
+
+    def test_rollout_roots_have_parseable_parent_child_cases(self):
+        receipt = "Sol/Luna: delegated · luna_max ×1"
+        for index, relative_root in enumerate(
+            ("sessions/2026/08/21", "browser/sessions/2026/08/21")
+        ):
+            with self.subTest(relative_root=relative_root):
+                with tempfile.TemporaryDirectory() as temporary:
+                    codex_home = Path(temporary) / f"home-{index}"
+                    parent, child, _, _ = self._write_rollout_pair(
+                        codex_home,
+                        relative_root,
+                        receipt=receipt,
+                    )
+
+                    rollout_paths = HARNESS._rollout_files(codex_home)
+                    self.assertEqual(rollout_paths, {parent, child})
+                    result = HARNESS._validate_runtime_case(
+                        rollout_paths,
+                        expected_role="luna_max",
+                        expected_effort="max",
+                        expected_literal="LUNA-CHILD-OK",
+                        expected_receipt=receipt,
+                    )
+
+                    self.assertEqual(result["result"], "PASS")
+                    self.assertEqual(result["child"]["direct_child_count"], 1)
+                    self.assertNotIn("parent-thread", json.dumps(result))
+
+    def test_partial_rollout_retries_until_parseable(self):
+        receipt = "Sol/Luna: delegated · luna_max ×1"
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary)
+            relative_root = "sessions/2026/08/21"
+            parent_path = codex_home / relative_root / "parent.jsonl"
+            child_path = codex_home / relative_root / "child.jsonl"
+            calls = 0
+
+            def scan_rollouts(_fake_home: Path) -> set[Path]:
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    parent_path.parent.mkdir(parents=True, exist_ok=True)
+                    parent_path.write_text(
+                        '{"type":"session_meta"\n', encoding="utf-8"
+                    )
+                    return {parent_path}
+                self._write_rollout_pair(
+                    codex_home,
+                    relative_root,
+                    receipt=receipt,
+                )
+                return {parent_path, child_path}
+
+            with (
+                mock.patch.object(HARNESS, "_rollout_files", side_effect=scan_rollouts),
+                mock.patch.object(HARNESS.time, "sleep"),
+            ):
+                result = HARNESS._wait_for_runtime_case(
+                    fake_home=codex_home,
+                    before_rollouts=set(),
+                    expected_role="luna_max",
+                    expected_effort="max",
+                    expected_literal="LUNA-CHILD-OK",
+                    expected_receipt=receipt,
+                )
+
+            self.assertEqual(calls, 2)
+            self.assertEqual(result["result"], "PASS")
+
+    def test_malformed_rollout_fails_closed_without_path_or_content(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            malformed = Path(temporary) / "sessions" / "malformed.jsonl"
+            malformed.parent.mkdir(parents=True)
+            malformed.write_text("not-json\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                HARNESS.HarnessFailure, "rollout contains malformed JSON at line 1"
+            ) as raised:
+                HARNESS._load_json_lines(malformed)
+
+            self.assertNotIn(str(malformed), str(raised.exception))
+            self.assertNotIn("not-json", str(raised.exception))
+
+    def test_malformed_response_content_fails_closed(self):
+        records = [
+            {
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": None,
+                },
+            }
+        ]
+
+        with self.assertRaisesRegex(
+            HARNESS.HarnessFailure, "rollout response content is malformed"
+        ):
+            HARNESS._final_assistant_text(records)
+
+    def test_extra_parent_grandchild_and_receipt_mismatch_fail_closed(self):
+        receipt = "Sol/Luna: delegated · luna_max ×1"
+        scenarios = ("extra_parent", "grandchild", "receipt_mismatch")
+        expected_errors = {
+            "extra_parent": "expected one parent rollout",
+            "grandchild": "child spawned a descendant",
+            "receipt_mismatch": "parent Receipt does not match",
+        }
+        for scenario in scenarios:
+            with self.subTest(scenario=scenario):
+                with tempfile.TemporaryDirectory() as temporary:
+                    codex_home = Path(temporary)
+                    relative_root = "browser/sessions/2026/08/21"
+                    parent, child, _, child_id = self._write_rollout_pair(
+                        codex_home,
+                        relative_root,
+                        receipt=receipt,
+                    )
+                    if scenario == "extra_parent":
+                        self._write_rollout(
+                            codex_home,
+                            f"{relative_root}/extra-parent.jsonl",
+                            session_id="extra-parent-thread",
+                            final_text=receipt,
+                            spawn_agent=True,
+                        )
+                    elif scenario == "grandchild":
+                        self._write_rollout(
+                            codex_home,
+                            f"{relative_root}/grandchild.jsonl",
+                            session_id="grandchild-thread",
+                            final_text="GRANDCHILD",
+                            parent_thread_id=child_id,
+                            agent_role="luna_max",
+                            child=True,
+                        )
+                    else:
+                        self._write_rollout(
+                            codex_home,
+                            parent.relative_to(codex_home).as_posix(),
+                            session_id="parent-thread",
+                            final_text="wrong receipt",
+                            spawn_agent=True,
+                        )
+
+                    with self.assertRaisesRegex(
+                        HARNESS.HarnessFailure, expected_errors[scenario]
+                    ):
+                        HARNESS._validate_runtime_case(
+                            HARNESS._rollout_files(codex_home),
+                            expected_role="luna_max",
+                            expected_effort="max",
+                            expected_literal="LUNA-CHILD-OK",
+                            expected_receipt=receipt,
+                        )
 
     def test_codex_environment_is_isolated_and_drops_unrelated_secrets(self):
         fake_home = Path("isolated-home")
@@ -253,7 +499,7 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
         self.assertEqual(values[str(python_command)], "<PYTHON_COMMAND>")
 
     def test_source_attribution_requires_fixed_installed_commit(self):
-        expected = HARNESS.RC5_SOURCE_COMMIT
+        expected = HARNESS.RC6_SOURCE_COMMIT
         self.assertEqual(
             HARNESS._source_attribution(expected),
             {"installed": expected, "expected": expected, "match": "YES"},
