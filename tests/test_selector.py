@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stdout
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from scripts.install import install
 
@@ -19,6 +19,7 @@ from src.selector import (
     MODELDIAL_API_URL,
     MODELDIAL_SNAPSHOT_URL,
     NO_PROFILE_STATUS,
+    _validated_modeldial_url,
     SelectionUnavailable,
     SnapshotInvalid,
     adapt_modeldial_api,
@@ -373,6 +374,80 @@ class ModelDialFullSnapshotCostTests(unittest.TestCase):
 
 
 class SelectorTests(unittest.TestCase):
+    def test_malformed_modeldial_urls_are_snapshot_invalid(self):
+        malformed_urls = (
+            "https://modeldial.com:abc/api.json",
+            "https://modeldial.com:99999/api.json",
+            "https://[modeldial.com]/api.json",
+            "https://[2001:db8::1/api.json",
+        )
+        for url in malformed_urls:
+            with self.subTest(url=url):
+                with self.assertRaisesRegex(
+                    SnapshotInvalid, r"^ModelDial URL is malformed$"
+                ):
+                    _validated_modeldial_url(url)
+
+    def test_malformed_redirect_url_falls_back_to_snapshot(self):
+        valid_response = MagicMock()
+        valid_response.__enter__.return_value = valid_response
+        valid_response.__exit__.return_value = None
+        valid_response.geturl.return_value = MODELDIAL_SNAPSHOT_URL
+        valid_response.headers.get_content_type.return_value = "application/json"
+        valid_response.read.return_value = encoded_fixture("first-party-complete.json")
+
+        opener = MagicMock()
+        handlers = []
+        open_count = 0
+
+        def build_opener(*args):
+            handlers.append(args[0])
+            return opener
+
+        def open_response(request, timeout):
+            nonlocal open_count
+            open_count += 1
+            if open_count == 1:
+                handlers[-1].redirect_request(
+                    None,
+                    None,
+                    302,
+                    "Found",
+                    {},
+                    "https://modeldial.com:abc/api.json",
+                )
+            return valid_response
+
+        opener.open.side_effect = open_response
+        with patch(
+            "src.selector.urllib.request.build_opener", side_effect=build_opener
+        ):
+            adapted = fetch_modeldial_snapshot()
+
+        self.assertEqual(adapted["source_url"], MODELDIAL_SNAPSHOT_URL)
+        self.assertEqual(open_count, 2)
+
+    def test_malformed_final_url_falls_back_to_snapshot(self):
+        malformed_response = MagicMock()
+        malformed_response.__enter__.return_value = malformed_response
+        malformed_response.__exit__.return_value = None
+        malformed_response.geturl.return_value = "https://[modeldial.com]/api.json"
+
+        valid_response = MagicMock()
+        valid_response.__enter__.return_value = valid_response
+        valid_response.__exit__.return_value = None
+        valid_response.geturl.return_value = MODELDIAL_SNAPSHOT_URL
+        valid_response.headers.get_content_type.return_value = "application/json"
+        valid_response.read.return_value = encoded_fixture("first-party-complete.json")
+
+        opener = MagicMock()
+        opener.open.side_effect = [malformed_response, valid_response]
+        with patch("src.selector.urllib.request.build_opener", return_value=opener):
+            adapted = fetch_modeldial_snapshot()
+
+        self.assertEqual(adapted["source_url"], MODELDIAL_SNAPSHOT_URL)
+        self.assertEqual(opener.open.call_count, 2)
+
     def test_complete_five_efforts(self):
         snapshot = validate_snapshot(load_fixture("complete.json"))
         self.assertEqual(set(snapshot["scores"]), set(EFFORTS))
@@ -661,6 +736,42 @@ class SelectorTests(unittest.TestCase):
 
     @patch("src.selector._fetch_bytes", side_effect=OSError("offline"))
     def test_both_json_sources_fail_without_lkg_is_closed(self, _fetch):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(SelectionUnavailable, NO_PROFILE_STATUS):
+                ensure_daily_profile(
+                    None,
+                    state_dir=directory,
+                    live_fetcher=fetch_modeldial_snapshot,
+                )
+
+    @patch("src.selector._fetch_bytes")
+    def test_malformed_modeldial_url_then_old_lkg_is_used(self, fetch):
+        def malformed_fetch(*args, **kwargs):
+            _validated_modeldial_url("https://modeldial.com:abc/api.json")
+
+        fetch.side_effect = malformed_fetch
+        with tempfile.TemporaryDirectory() as directory:
+            lkg_path = Path(directory) / "last-good-profile.json"
+            lkg_path.write_text(
+                json.dumps({"snapshot": load_fixture("complete.json")}),
+                encoding="utf-8",
+            )
+            profile = ensure_daily_profile(
+                None,
+                state_dir=directory,
+                now=datetime(2026, 8, 13, 9, tzinfo=BJT),
+                live_fetcher=fetch_modeldial_snapshot,
+            )
+            self.assertTrue(profile["fallback"])
+            self.assertEqual(profile["selected_role"], "luna_high")
+            self.assertEqual(fetch.call_count, 2)
+
+    @patch("src.selector._fetch_bytes")
+    def test_malformed_modeldial_url_without_lkg_is_closed(self, fetch):
+        def malformed_fetch(*args, **kwargs):
+            _validated_modeldial_url("https://modeldial.com:abc/api.json")
+
+        fetch.side_effect = malformed_fetch
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaisesRegex(SelectionUnavailable, NO_PROFILE_STATUS):
                 ensure_daily_profile(

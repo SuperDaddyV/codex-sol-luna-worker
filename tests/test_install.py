@@ -331,8 +331,9 @@ class InstallPlanTests(unittest.TestCase):
 
     def test_latest_stable_and_prerelease_semver_contract(self):
         self.assertGreater(_compare_project_semver("v4.1.0", VERSION), 0)
+        self.assertGreater(_compare_project_semver("v4.1.0-rc6", "v4.1.0-rc5"), 0)
         self.assertGreater(_compare_project_semver("v4.1.0-rc5", "v4.1.0-rc4"), 0)
-        self.assertLess(_compare_project_semver("v4.1.0-rc5.1", "v4.1.0-rc5.beta"), 0)
+        self.assertLess(_compare_project_semver("v4.1.0-rc6.1", "v4.1.0-rc6.beta"), 0)
         for invalid in ("v4.01.0", "v4.1.0+build", "4.1.0", "v4.1"):
             with self.subTest(invalid=invalid):
                 with self.assertRaises(InstallerError):

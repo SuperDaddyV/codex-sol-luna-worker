@@ -424,10 +424,21 @@ def adapt_modeldial_api(
 
 
 def _validated_modeldial_url(url: str) -> urllib.parse.ParseResult:
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme.lower() != "https" or parsed.hostname not in MODELDIAL_ALLOWED_HOSTS:
+    try:
+        parsed = urllib.parse.urlparse(url)
+        scheme = parsed.scheme.lower()
+        hostname = parsed.hostname
+    except ValueError as exc:
+        raise SnapshotInvalid("ModelDial URL is malformed") from exc
+    if scheme != "https" or hostname not in MODELDIAL_ALLOWED_HOSTS:
         raise SnapshotInvalid("ModelDial URL is outside the HTTPS allowlist")
-    if parsed.username or parsed.password or parsed.port not in (None, 443):
+    try:
+        username = parsed.username
+        password = parsed.password
+        port = parsed.port
+    except ValueError as exc:
+        raise SnapshotInvalid("ModelDial URL is malformed") from exc
+    if username or password or port not in (None, 443):
         raise SnapshotInvalid("credentials and non-standard ports are forbidden")
     return parsed
 
@@ -444,7 +455,7 @@ def _fetch_bytes(url: str, *, expected_type: str, timeout: float) -> tuple[bytes
         url,
         headers={
             "Accept": expected_type,
-            "User-Agent": "codex-sol-luna-worker/4.1.0-rc5",
+            "User-Agent": "codex-sol-luna-worker/4.1.0-rc6",
         },
         method="GET",
     )
