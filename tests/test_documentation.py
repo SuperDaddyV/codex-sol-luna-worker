@@ -345,7 +345,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("尚未发布", content)
         setup = text(SETUP)
         self.assertIn("Contract version: `v4.1.0-rc6`", setup)
-        self.assertIn("RC6 is a master-tree source candidate", setup)
+        self.assertIn("RC6 is a master-tree prerelease candidate", setup)
         self.assertIn("RC6 is not tagged, not published, not Stable", setup)
         self.assertIn("Stable remains `v4.0.0`", setup)
         self.assertIn("Published/default Preview remains `v4.1.0-rc5`", setup)
@@ -353,7 +353,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("RC4", text(path))
             self.assertIn("v4.1.0-rc5", text(path))
             self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, text(path))
-            self.assertIn("source candidate", text(path).lower())
+            self.assertIn("prerelease candidate", text(path).lower())
         self.assertIn(
             "now also the default installation target/path through the immutable RC5 entry above",
             text(README),
@@ -410,13 +410,18 @@ class DocumentationTests(unittest.TestCase):
             runtime,
         )
         self.assertNotIn("CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS", runtime)
-        self.assertIn("v4.1.0-rc6 source candidate — source and lifecycle evidence only", runtime)
-        self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, runtime)
         self.assertIn(
-            "RC6 real Global upgrade, O1-O10 acceptance, and Final O4/O9 re-certification",
+            "v4.1.0-rc6 prerelease candidate — recorded fresh-task runtime acceptance",
             runtime,
         )
-        self.assertIn("are `NOT RUN`", runtime)
+        self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, runtime)
+        self.assertIn(
+            "Compatibility smoke, O1-O10 acceptance, Final O4/O9 re-certification",
+            runtime,
+        )
+        self.assertIn("are recorded `PASS`", runtime)
+        self.assertIn("`RC6_RUNTIME_ACCEPTANCE_COMPLETED = YES`", runtime)
+        self.assertIn("`RC6_FINAL_O4_O9_RECERTIFICATION = PASS`", runtime)
         self.assertIn("Real RC3 → RC4 Global upgrade — `PASS`", runtime)
         self.assertIn("Result: `UPGRADED`; effective changes: `2`", runtime)
         for case in ("Runtime Case A", "Runtime Case B", "Runtime Case C", "Runtime Case D"):
@@ -469,8 +474,8 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(required, security)
         for number in range(1, 11):
-            self.assertRegex(setup, rf"(?m)^- O{number} .* — `NOT RUN`[;.]$")
-        self.assertIn("v4.1.0-rc6 (source candidate; not released)", changelog)
+            self.assertRegex(setup, rf"(?m)^- O{number} .* — `PASS`[;.]$")
+        self.assertIn("v4.1.0-rc6 (prerelease candidate; release pending)", changelog)
         self.assertIn("RC6 source candidate at Source Commit A", changelog)
         self.assertIn("Contract version: `v4.1.0-rc6`", setup)
         self.assertGreaterEqual(setup.count(RC6_RUNTIME_SOURCE_COMMIT), 7)
@@ -478,6 +483,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Stable remains `v4.0.0`", setup)
         self.assertIn("Published/default Preview remains `v4.1.0-rc5`", setup)
         self.assertIn("RC6 is not tagged, not published, not Stable", setup)
+        self.assertIn("RC6 O1–O10 runtime acceptance is recorded `PASS`", setup)
+        self.assertIn("RC6 Final O4/O9 re-certification is recorded `PASS`", setup)
         self.assertIn(
             "The only expected effective installed changes are:\n\n"
             "1. `sol-luna-v4/selector.py`;\n"

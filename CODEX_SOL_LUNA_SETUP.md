@@ -4,18 +4,18 @@ Contract version: `v4.1.0-rc6`.
 
 Release status:
 
-- RC6 is a master-tree source candidate with exact-SHA CI `PASS` on Windows, Ubuntu, and macOS;
-- RC6 real Global upgrade is `NOT RUN`;
-- RC6 O1–O10 runtime acceptance is `NOT RUN`;
+- RC6 is a master-tree prerelease candidate with exact-SHA CI `PASS` on Windows, Ubuntu, and macOS;
+- RC6 real Global upgrade is recorded `PASS` in one native Windows Codex environment;
+- RC6 O1–O10 runtime acceptance is recorded `PASS` in the documented environment;
 - RC6 is not tagged, not published, not Stable, and not the default installation target;
 - Published/default Preview remains `v4.1.0-rc5` through the immutable RC5 setup entry;
 - Stable remains `v4.0.0`;
-- RC6 Final O4/O9 re-certification is `NOT RUN`; the source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is implemented but is not final runtime evidence.
+- RC6 Final O4/O9 re-certification is recorded `PASS` through the isolated acceptance harness with the real Global target limited to protected-state integrity checks.
 
-The RC6 Source Commit A local documentation, repository, and compatibility-smoke tests pass. Exact-SHA CI passed on Windows, Ubuntu, and macOS. These are source / repository validation only; they do not establish a real Global upgrade, fresh runtime acceptance, final O4/O9 PASS, or RC6 publication.
+The RC6 Source Commit A local documentation and repository tests pass, and exact-SHA CI passed on Windows, Ubuntu, and macOS. Separately, the fresh-task compatibility smoke, O1–O10, Final O4/O9 re-certification, and Runtime Cases A/B/C/D passed in one recorded native Windows Codex environment. The runtime evidence is environment- and scenario-bounded; it does not establish three-platform real-runtime validation, universal compatibility, Stable status, or RC6 publication.
 
 > [!IMPORTANT]
-> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. RC6 remains an unpublished master-tree source candidate; the public README installation entry continues to point to the published/default RC5 Preview. Never silently expand permissions, installation scope, or network access.
+> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. RC6 remains an unpublished prerelease candidate at this checkpoint; the public README installation entry continues to point to the published/default RC5 Preview. Never silently expand permissions, installation scope, or network access.
 
 This document is an execution contract for Codex, not a replacement installer. Orchestrate `scripts/install.py`; do not reproduce its merge, ownership, backup, migration, rollback, or uninstall logic with ad hoc shell commands.
 
@@ -368,24 +368,32 @@ After apply, perform read-only inspection and require all of the following:
 
 Historical directories, trusted metadata, backups, or audit evidence may remain without being runtime dependencies. Do not delete them during validation. Do not expose unrelated configuration values in the report.
 
-The RC6 Source Commit A local documentation, repository, and compatibility-smoke tests and its Windows / Ubuntu / macOS exact-SHA CI `PASS` are repository validation only. They cannot replace the real Global upgrade or the following fresh-runtime acceptance scope, which remains unexecuted for RC6:
+The RC6 Source Commit A local documentation and repository tests and its Windows / Ubuntu / macOS exact-SHA CI `PASS` are repository validation only. They did not replace the separately executed real Global upgrade or fresh-task runtime acceptance. In one recorded native Windows Codex environment, compatibility smoke and the following scope passed:
 
-- O1 Natural-language healthy status — `NOT RUN`;
-- O2 No-profile healthy status — `NOT RUN`;
-- O3 Degraded LKG Receipt and status — `NOT RUN`;
-- O4 Capability-degraded selected-effort Receipt and status — `NOT RUN`;
-- O5 Unavailable evidence status — `NOT RUN`;
-- O6 Misconfigured precedence — `NOT RUN`;
-- O7 Safe diagnostic report — `NOT RUN`;
-- O8 Latest prerelease immutable discovery and notice — `NOT RUN`;
-- O9 Fail-soft observability selection, status, and Receipt omission — `NOT RUN`;
-- O10 Fresh-session delegation and Receipt suffixes — `NOT RUN`.
+- O1 Natural-language healthy status — `PASS`;
+- O2 No-profile healthy status — `PASS`;
+- O3 Degraded LKG Receipt and status — `PASS`;
+- O4 Capability-degraded selected-effort Receipt and status — `PASS`;
+- O5 Unavailable evidence status — `PASS`;
+- O6 Misconfigured precedence — `PASS`;
+- O7 Safe diagnostic report — `PASS`;
+- O8 Latest prerelease immutable discovery and notice — `PASS`;
+- O9 Fail-soft observability selection, status, and Receipt omission — `PASS`;
+- O10 Fresh-session delegation and Receipt suffixes — `PASS`.
 
 RC6 real Global upgrade, idempotency, and rollback readiness are a separate
-acceptance operation, not O9, and remain `NOT RUN`. Final O4/O9 re-certification
-is also `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is
-implemented but is not final runtime evidence; no confirmed product-runtime
-regression is reported.
+acceptance operation, not O9. The recorded upgrade returned `UPGRADED`, changed
+only the installed selector and ownership manifest, and was followed by
+`IDEMPOTENT_PASS`; the installer-owned rollback snapshot exists under the owned
+backup root and its snapshot hashes verify. Final O4/O9 re-certification passed
+through the isolated acceptance harness. The harness attributed runtime writes
+only to its isolated home, observed no unknown runtime path, left the real
+protected Sol/Luna state and root identity unchanged, and removed every owned
+acceptance artifact.
+
+This is environment- and scenario-bounded evidence from one native Windows
+Codex Desktop/CLI environment. It is not three-platform real-runtime evidence,
+a universal compatibility claim, a Stable claim, or a publication claim.
 
 ## 17. Fresh Session Requirement
 
@@ -411,9 +419,9 @@ In the fresh task, use a concise user-facing smoke test rather than reproducing 
 5. confirm the Luna child has no multi-agent/delegation tools because it is a native leaf;
 6. require Sol to review the child evidence and own the final conclusion.
 
-The recorded RC4 release acceptance used four fresh-task cases after a separately authorized real upgrade. It does not establish RC6 runtime acceptance. Apply the same evidence requirements when later validating an authorized RC6 installation: Runtime Case A is a non-trivial architecture or reasoning task; require zero direct children and `Sol/Luna: Sol-only · reasoning/architecture task`. Runtime Case B contains two or three independent bounded read-only checks; require actual Luna direct children, an actual role and count matching `Sol/Luna: delegated · <role> ×<direct_child_count>`, and `parallel` only when parent-visible evidence proves execution overlap. Runtime Case C is non-trivial, non-architecture, sequential or tightly coupled work with no clean independent bounded child task; require no availability failure evidence, zero children, selector invocation only if normal execution required it, and `Sol/Luna: Sol-only · no independent bounded work`; `Luna unavailable` is forbidden. Runtime Case D exercises a real-unavailable classification only in a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where the normal path already exposes the failure. Do not damage or reconfigure the real selector, state, account, or Global environment to manufacture evidence.
+The recorded RC4 release acceptance used four fresh-task cases after a separately authorized real upgrade; those historical results did not establish RC6 runtime acceptance. RC6 independently passed the same matrix in the documented environment: Case A had zero direct children and the reasoning/architecture Receipt; Case B used two actual direct Luna children with parent-visible parallel overlap and zero grandchildren; Case C had zero children, no availability evidence, and the no-independent-work Receipt; controlled Case D produced `NO_LUNA_PROFILE_AVAILABLE` from isolated state and verified both the positive evidence gate and the negative no-evidence prohibition. Apply the same evidence requirements when validating every future installation: Runtime Case A is a non-trivial architecture or reasoning task; require zero direct children and `Sol/Luna: Sol-only · reasoning/architecture task`. Runtime Case B contains two or three independent bounded read-only checks; require actual Luna direct children, an actual role and count matching `Sol/Luna: delegated · <role> ×<direct_child_count>`, and `parallel` only when parent-visible evidence proves execution overlap. Runtime Case C is non-trivial, non-architecture, sequential or tightly coupled work with no clean independent bounded child task; require no availability failure evidence, zero children, selector invocation only if normal execution required it, and `Sol/Luna: Sol-only · no independent bounded work`; `Luna unavailable` is forbidden. Runtime Case D exercises a real-unavailable classification only in a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where the normal path already exposes the failure. Do not damage or reconfigure the real selector, state, account, or Global environment to manufacture evidence.
 
-In all four cases, the Receipt is only a user-facing summary; verify child absence, presence, and availability facts with parent-visible runtime metadata. Receipt generation itself must not invoke a selector, capability probe, tool, child, network, state write, telemetry, or repository write. Do not accept Receipt text by itself as proof. The recorded RC4 release acceptance passed all four cases; each new installation or upgrade must still complete its own fresh-task smoke test before returning `INSTALL_RUNTIME_PASS`.
+In all four cases, the Receipt is only a user-facing summary; verify child absence, presence, and availability facts with parent-visible runtime metadata. Receipt generation itself must not invoke a selector, capability probe, tool, child, network, state write, telemetry, or repository write. Do not accept Receipt text by itself as proof. The recorded RC4 and RC6 acceptance runs each passed all four cases in their own environments; every new installation or upgrade must still complete its own fresh-task smoke test before returning `INSTALL_RUNTIME_PASS`.
 
 Return `INSTALL_RUNTIME_PASS` only when all applicable checks pass. Otherwise return the exact failed step and evidence boundary. A sentinel string by itself is not proof of model, role, or leaf behavior. Static CI and repository tests are not substitutes for this fresh-task runtime check.
 

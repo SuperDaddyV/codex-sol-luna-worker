@@ -2,7 +2,7 @@
 
 ## Release boundary
 
-`v4.1.0-rc6` is a master-tree source candidate, not tagged, published, Stable,
+`v4.1.0-rc6` is a master-tree prerelease candidate, not tagged, published, Stable,
 or the default installation target. RC6 Source Commit A is
 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
 Ubuntu, and macOS. Its immutable candidate setup contract is documentation
@@ -10,11 +10,16 @@ Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; it is not the default entry o
 runtime source. The published/default Preview remains `v4.1.0-rc5` through
 immutable setup anchor `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`, and
 `v4.0.0` remains Stable. The documented-environment RC5 O1-O10 record remains
-bounded evidence; Final O4/O9 re-certification was not obtained due to
-`CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime
-regression is reported. RC6 real Global upgrade and O1-O10 acceptance were not
-run. These facts are not a security guarantee, final PASS, or release claim.
-RC4 remains historical release evidence for Receipt reason evidence-gating.
+bounded historical evidence; RC5 Final O4/O9 re-certification was not obtained
+due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime
+regression. RC6 independently passed its recorded real Global upgrade,
+fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases
+A/B/C/D in one native Windows Codex environment. The real protected Sol/Luna
+state and root identity remained unchanged during acceptance, observed unknown
+paths were zero, and owned acceptance residuals were zero. These facts are
+environment- and scenario-bounded evidence, not a security guarantee, Stable
+claim, universal compatibility claim, or publication claim. RC4 remains
+historical release evidence for Receipt reason evidence-gating.
 
 ## Data and network behavior
 
@@ -94,9 +99,10 @@ Windows junction, mount-point, and hardlink cases.
 
 The compatibility-smoke baseline is read-only for the repository and managed
 selector state. It checks dual exact rollout roots and bounded writer-settle
-evidence, and classifies unknown or unsafe writes fail closed. It does not run
-the real Global upgrade, does not certify O1-O10 or Final O4/O9, and does not
-modify product runtime.
+evidence, and classifies unknown or unsafe writes fail closed. By itself it does
+not run the real Global upgrade or certify O1-O10 or Final O4/O9, and it does
+not modify product runtime. RC6 runtime acceptance therefore retained separate
+O1-O10, Final O4/O9, and Runtime Cases A/B/C/D gates.
 
 ## Installation safety
 

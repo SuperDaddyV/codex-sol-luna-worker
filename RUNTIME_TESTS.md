@@ -1,10 +1,10 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`; `v4.0.0 — STABLE`; RC6 remains an unpublished source candidate.
+Status: `v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`; `v4.0.0 — STABLE`; RC6 is an unpublished prerelease candidate with recorded environment-bounded runtime acceptance.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.0-rc6 source candidate — source and lifecycle evidence only
+## v4.1.0-rc6 prerelease candidate — recorded fresh-task runtime acceptance
 
 RC6 Source Commit A is
 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
@@ -24,11 +24,69 @@ the published/default Preview remains RC5 through immutable setup anchor
   bounded writer-settle/fail-closed evidence. The harness does not modify
   product runtime.
 - `PRODUCT_RUNTIME_CHANGED = YES`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
-- RC6 real Global upgrade, O1-O10 acceptance, and Final O4/O9 re-certification
-  are `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is
-  implemented but is not final runtime evidence; no confirmed product-runtime
-  regression is reported. These facts do not constitute a final PASS or a
-  release claim.
+- The separately authorized real RC5 -> RC6 Global upgrade is recorded `PASS`
+  in one native Windows Codex environment. It returned `UPGRADED`, changed only
+  the installed selector and ownership manifest, and was followed by a
+  zero-write `IDEMPOTENT_PASS`. The installer-owned rollback snapshot exists
+  under the owned backup root and its recorded hashes verify.
+- Compatibility smoke, O1-O10 acceptance, Final O4/O9 re-certification, and
+  Runtime Cases A/B/C/D are recorded `PASS` in the documented environment.
+  This is not three-platform real-runtime validation, a universal compatibility
+  claim, a Stable claim, or a release claim.
+
+- O1 Natural-language healthy status — `PASS`
+- O2 No-profile healthy status — `PASS`
+- O3 Degraded LKG Receipt and status — `PASS`
+- O4 Capability-degraded selected-effort Receipt and status — `PASS`
+- O5 Unavailable evidence status — `PASS`
+- O6 Misconfigured precedence — `PASS`
+- O7 Safe diagnostic report — `PASS`
+- O8 Latest prerelease immutable discovery and notice — `PASS`
+- O9 Fail-soft observability selection, status, and Receipt omission — `PASS`
+- O10 Fresh-session delegation and Receipt suffixes — `PASS`
+
+### RC6 evidence boundary
+
+- The installed manifest reported `v4.1.0-rc6`, schema `1`, and Source Commit A.
+  The installed selector was byte-identical to Source Commit A; five Luna agent
+  payloads, native-leaf settings, Global policy, and managed config validated.
+- The compatibility smoke passed CLI, Luna capability, selector, delegation,
+  protected-state, and runtime-contract checks. It remained a separate baseline
+  and was not used as a substitute for O1-O10.
+- The formal O2/O4/O9 harness installed Source Commit A into an independent fake
+  `CODEX_HOME`, copied authentication to a distinct file identity, redirected
+  home/application-data/temp/XDG paths, and verified actual parent and direct
+  child rollout metadata. O2 used one native Luna child; O4 selected the bounded
+  capability-degraded effort; O9 preserved selection while omitting invalid or
+  missing ref-cost metadata and classified profile read failure as
+  `Misconfigured / DAILY_PROFILE_READ_FAILED`.
+- Final O4/O9 re-certification passed. Across O2/O4/O9, the real protected
+  Sol/Luna inventory and root identity were unchanged, observed unknown paths
+  were zero, isolated runtime paths were fully classified within the documented
+  snapshot boundary, and owned acceptance artifacts had zero residuals.
+- O3 ran a separate isolated LKG case with one completed native Luna child,
+  depth `1`, zero grandchildren, matching role/model/effort metadata, a
+  `Degraded / LKG_FALLBACK_ACTIVE` status, and an `LKG` Receipt suffix derived
+  from the saved selection. Receipt generation added no selector, network, or
+  state work.
+- O5 and controlled Case D used isolated state. Case D produced
+  `NO_LUNA_PROFILE_AVAILABLE` with parent-visible evidence; removing that
+  evidence forbade `Luna unavailable`. The real selector, state, account, and
+  Global configuration were not damaged or reconfigured.
+- O8 enumerated all published Releases, accepted only non-draft strict SemVer
+  entries with matching prerelease flags, selected the then-current RC5
+  prerelease, and read its tag twice to the same peeled commit. Because the
+  installed RC6 was newer, the workflow performed no downgrade, write, or
+  backup.
+- Runtime Case A completed with zero children and the reasoning/architecture
+  Receipt. Runtime Case B used two actual direct Luna children with verified
+  overlap and zero grandchildren. Runtime Case C used read-only sequential work,
+  zero children, no selector, and no availability evidence. Controlled Case D
+  verified both positive and negative availability-evidence gates.
+- Parent-visible rollout metadata, not Receipt text alone, established child
+  presence or absence, role/model/effort/depth, direct-child count, leaf behavior,
+  overlap where claimed, completion, and descendant count. Sol performed final
+  acceptance.
 
 ## v4.1.0-rc5 published Preview — bounded documented-environment O1-O10 record
 
@@ -66,8 +124,9 @@ regression is reported.
 `RC6_SOURCE_COMMIT_CREATED = YES`;
 `RC6_SOURCE_SHA = 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`;
 `RC6_SETUP_CONTRACT_COMMIT = 86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`;
-`RC6_RUNTIME_ACCEPTANCE_COMPLETED = NO`;
-`RC6_REAL_GLOBAL_UPGRADE = NOT RUN`.
+`RC6_RUNTIME_ACCEPTANCE_COMPLETED = YES`;
+`RC6_FINAL_O4_O9_RECERTIFICATION = PASS`;
+`RC6_REAL_GLOBAL_UPGRADE = PASS`.
 
 For the historical RC5 acceptance-boundary record, the product runtime payload
 was frozen at

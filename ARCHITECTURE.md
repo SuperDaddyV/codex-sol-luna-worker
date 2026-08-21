@@ -1,6 +1,6 @@
-# v4.1.0-rc6 Source Candidate Architecture Note
+# v4.1.0-rc6 Prerelease Candidate Architecture Note
 
-`v4.1.0-rc6` is a master-tree source candidate, not tagged, published, Stable,
+`v4.1.0-rc6` is a master-tree prerelease candidate, not tagged, published, Stable,
 or the default installation target. RC6 Source Commit A is
 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
 Ubuntu, and macOS. Its immutable candidate setup contract is documentation
@@ -11,7 +11,7 @@ immutable setup anchor `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`, and
 
 Status: `v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`
 
-`v4.0.0` remains the Stable release, and `v4.1.0-rc5` is the current published Preview / Public Beta and default installation target. The documented-environment RC5 O1-O10 record remains bounded evidence; Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime regression is reported. RC6 real Global upgrade and O1-O10 acceptance were not run and do not constitute a final PASS or release claim. RC4 remains historical release evidence for Receipt reason evidence-gating.
+`v4.0.0` remains the Stable release, and `v4.1.0-rc5` is the current published Preview / Public Beta and default installation target. The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment. That evidence is environment- and scenario-bounded and does not itself publish RC6 or promote it to Stable. RC4 remains historical release evidence for Receipt reason evidence-gating.
 
 ## Flow
 
@@ -104,7 +104,11 @@ write or credential copy, the harness validates the temporary parent
 and planned isolated home. Symlinks, junctions, reparse points, mount points,
 path overlap, shared identity, and hardlinks across the isolated/real boundary
 fail closed; the fixed macOS `/var` system alias is the only platform-root
-exception. RC6 real Global upgrade and O1-O10 acceptance remain unexecuted.
+exception. RC6 real Global upgrade, O1-O10 acceptance, and Final O4/O9
+re-certification are recorded `PASS` in the documented environment. The real
+Global target was used only for installed-state and protected-state integrity
+checks during acceptance; isolated or controlled state was used where a case
+required missing, degraded, capability-limited, invalid, or unavailable input.
 
 The real `CODEX_HOME` is not a runtime-attribution source. Its role is limited
 to pre/post `PROTECTED_SOL_LUNA_STATE` integrity and root-identity verification.
@@ -155,13 +159,16 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
 The documented-environment RC5 O1-O10 record, including O4 and O9, remains
-bounded evidence. Final O4/O9 re-certification was not obtained due to
-`CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime
-regression is reported. The repeatable harness adds isolated O2, O4, and O9
-coverage plus the pre-write, cleanup, redirection, hardlink, and
-runtime-category regressions described above. RC6 real Global upgrade and
-O1-O10 acceptance were not run. None of this is a final PASS or a claim of
-real-runtime validation across all CI platforms, clients, accounts, or users.
+bounded historical evidence. RC5 Final O4/O9 re-certification was not obtained
+due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime
+regression is reported. RC6 independently passed the repeatable isolated
+O2/O4/O9 harness, including the pre-write, cleanup, redirection, hardlink, and
+runtime-category boundaries described above. RC6 also passed its separately
+recorded real Global upgrade, O1-O10 matrix, Final O4/O9 re-certification, and
+fresh-session Runtime Cases A/B/C/D. The real protected Sol/Luna state and root
+identity were unchanged, observed unknown paths were zero, and acceptance
+residuals were zero. This is not a claim of real-runtime validation across all
+CI platforms, clients, accounts, or users.
 
 The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The published RC4 prerelease passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D: reasoning-only, three-child delegated parallel execution, the no-independent-work regression, and the controlled genuine-unavailability evidence gate. RC4 changed only Receipt reason evidence-gating; the architecture flow and authority boundaries above remain unchanged.
 

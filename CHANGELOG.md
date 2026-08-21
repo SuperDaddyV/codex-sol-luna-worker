@@ -1,13 +1,16 @@
 # Changelog
 
-## v4.1.0-rc6 (source candidate; not released)
+## v4.1.0-rc6 (prerelease candidate; release pending)
 
 - Added the RC6 source candidate at Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS. RC6 is not tagged, published, Stable, or the default installation target; the published/default Preview remains RC5.
 - Recorded the immutable RC6 candidate setup contract at documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`. It is not the default entry or runtime source and remains pinned to Source Commit A.
 - Bumped the source installer payload to `v4.1.0-rc6` while retaining manifest schema `1`. RC5→RC6 fake-home lifecycle coverage expects only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json` to change, with idempotency, backup, exact rollback, and ownership fail-closed checks.
 - Normalized malformed URL parsing, hostname, and port `ValueError` cases inside the selector to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order.
 - Added the compatibility-smoke baseline with dual exact rollout roots and bounded writer-settle/fail-closed evidence. The harness does not modify product runtime.
-- RC6 real Global upgrade, O1-O10 runtime acceptance, and Final O4/O9 re-certification are `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is implemented but is not final runtime evidence; no confirmed product-runtime regression is reported. These are not final PASS or release claims.
+- Recorded the separately authorized real RC5→RC6 Global upgrade as `PASS` in one native Windows Codex environment: result `UPGRADED`, effective changes limited to `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`, second apply `IDEMPOTENT_PASS`, and the installer-owned rollback snapshot verified by hash. Global policy, config, five Luna agents, Daily Profile, and LKG remained unchanged.
+- Recorded fresh-task compatibility smoke, O1-O10 runtime acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D as `PASS`. Parent-visible rollout metadata, not Receipt text alone, established child role/model/effort/depth, direct-child counts, native leaf behavior, parallel overlap where claimed, and zero grandchildren.
+- The runtime record is environment- and scenario-bounded. The real Global target was read-only during acceptance; O2/O3/O4/O5/O6/O7/O9 and controlled Case D used isolated or controlled state where required, while the formal O2/O4/O9 harness verified unchanged protected Global state, zero unexpected observed paths, and zero residual acceptance artifacts. Windows, Ubuntu, and macOS CI remain source validation only.
+- RC6 is still not tagged, published, Stable, or the default installation target at this release-preparation checkpoint. The published/default Preview remains RC5 and Stable remains `v4.0.0` until the release and post-release README gates complete.
 
 ## v4.1.0-rc5 (published prerelease)
 
