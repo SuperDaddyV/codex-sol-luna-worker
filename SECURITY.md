@@ -2,7 +2,17 @@
 
 ## Release boundary
 
-`v4.1.0-rc5 — Observability & UX` is a source candidate, not a published release. `v4.1.0-rc4` remains the published prerelease and current preview, with recorded real-upgrade and Runtime Cases A/B/C/D acceptance `PASS`; `v4.0.0` remains stable. RC5 Source Commit A and its separately authorized O1-O10 runtime acceptance are now recorded, but neither source validation nor the bounded acceptance is a security guarantee or a claim that every environment passed. Three-platform CI remains source validation and does not establish real Codex runtime validation on every platform, client, account, or user. No tag, release, or Stable promotion is implied.
+`v4.1.0-rc6` is a master-tree source candidate, not tagged, published, Stable,
+or the default installation target. RC6 Source Commit A is
+`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
+Ubuntu, and macOS. The published/default Preview remains `v4.1.0-rc5` through
+immutable setup anchor `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`, and
+`v4.0.0` remains Stable. The documented-environment RC5 O1-O10 record remains
+bounded evidence; Final O4/O9 re-certification was not obtained due to
+`CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime
+regression is reported. RC6 real Global upgrade and O1-O10 acceptance were not
+run. These facts are not a security guarantee, final PASS, or release claim.
+RC4 remains historical release evidence for Receipt reason evidence-gating.
 
 ## Data and network behavior
 
@@ -18,14 +28,16 @@
 
 ## Runtime acceptance harness safety
 
-The acceptance-boundary redesign leaves the product runtime payload frozen at
-`src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`, and
-`.codex/agents/*`. The mutable acceptance contract is limited to
+RC6 changes product runtime behavior only in `src/selector.py` by normalizing
+malformed URL parsing, hostname, and port `ValueError` cases to
+`SnapshotInvalid`; the installer payload version moves to `v4.1.0-rc6`.
+The compatibility smoke and acceptance harness are tooling only and do not
+modify product runtime. The mutable acceptance contract is limited to
 `CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and this file.
-`PRODUCT_RUNTIME_CHANGED = NO`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+`PRODUCT_RUNTIME_CHANGED = YES`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
 `scripts/accept_rc5_runtime_isolation.py` requires an explicit real
-`CODEX_HOME` audit root but installs Source Commit A only into a fresh fake
+`CODEX_HOME` audit root but installs the RC6 Source Commit A only into a fresh fake
 home. Before the first installer write or authentication copy, it verifies that
 the temporary parent and planned acceptance root are plain, non-overlapping
 paths with no user-controlled symlink, junction, reparse point, mount, or
@@ -48,7 +60,7 @@ The real `CODEX_HOME` is audited only for immutable managed Sol/Luna state
 `sol-luna-v4/state/**` tree, including Daily Profile, LKG, `selector.lock`, and
 other state contents, is compared for hash, type, device/file identity, link
 count, and reparse status. Unrelated real-home runtime activity is not used for
-RC5 attribution. Runtime changes are classified only inside the isolated home.
+RC6 attribution. Runtime changes are classified only inside the isolated home.
 `CODEX_PLATFORM_RUNTIME_STATE` retains the existing
 explicit session, session-index, app-cache, and active-exec paths and adds only
 the exact root-level `.sandbox_migration` safe regular file; the exact
@@ -78,9 +90,15 @@ does not follow reparse entries and fails closed on an ownership or identity
 mismatch. Regression coverage includes success and failure cleanup, symlink,
 Windows junction, mount-point, and hardlink cases.
 
+The compatibility-smoke baseline is read-only for the repository and managed
+selector state. It checks dual exact rollout roots and bounded writer-settle
+evidence, and classifies unknown or unsafe writes fail closed. It does not run
+the real Global upgrade, does not certify O1-O10 or Final O4/O9, and does not
+modify product runtime.
+
 ## Installation safety
 
-`scripts/install.py --dry-run` now executes the same payload, ownership, and effective-operation preflight as apply but performs no writable probe, backup, managed-file mutation, or manifest mutation. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. RC5 accepts only an optional exact 40-hex `--source-commit`; malformed input fails before backup, write, or probe. A same-version idempotent run may preserve an existing valid SHA, while a version upgrade without the option never inherits an older source SHA.
+`scripts/install.py --dry-run` now executes the same payload, ownership, and effective-operation preflight as apply but performs no writable probe, backup, managed-file mutation, or manifest mutation. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. RC6 accepts only an optional exact 40-hex `--source-commit`; malformed input fails before backup, write, or probe. A same-version idempotent run may preserve an existing valid SHA, while a version upgrade without the option never inherits an older source SHA.
 
 The natural-language latest-version workflow accepts only published non-draft strict SemVer releases, resolves and peels the selected tag to an immutable commit, detects tag movement, verifies detached `HEAD`, installer version, and setup/source alignment, and passes that exact SHA to the installer. Release discovery remains outside the installer; there is no auto-updater, background service, or mutable-branch apply. Legacy migration accepts only exact version `3.2`, does not convert state or access ModelDial, preserves unowned audit bundles, and writes the v4 manifest last with atomic replacement. Repository-local lifecycle validation uses fake homes. Any real global migration remains a separate, explicitly approved maintenance action.
 

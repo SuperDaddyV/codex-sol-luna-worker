@@ -17,6 +17,8 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 >
 > Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS. The documented-environment RC5 O1–O10 record remains bounded evidence, including O4 and O9; Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`. No confirmed product-runtime regression.
 >
+> The master tree also contains the `v4.1.0-rc6` source candidate at Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. Exact-SHA CI passed on Windows, Ubuntu, and macOS; RC6 is not tagged, published, or the default installation target. RC6 real Global upgrade and O1–O10 acceptance were not run, and it does not claim final O4/O9 PASS.
+>
 > RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4's evidence-gated Receipt behavior remains historical release evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
 
 ```text
@@ -82,7 +84,7 @@ RC5 contains:
 | Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
 | Product-runtime regression | No confirmed product-runtime regression |
 
-Advanced users who accept Preview risk may use the published, non-default RC5 setup contract. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
+The published RC5 setup contract is the default entry above. Advanced users who accept Preview risk may use that same immutable contract. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
 
 ```text
 Read and strictly execute the setup contract at:
@@ -115,6 +117,14 @@ dry-run, backup, installation, and validation defined by the contract.
 ```
 
 Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. The documented-environment RC5 O1–O10 record, including O4 and O9, remains bounded evidence. Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`. No confirmed product-runtime regression.
+
+## RC6 Source Candidate
+
+`v4.1.0-rc6` is the current master-tree source candidate, not a tag, GitHub Release, Preview, Stable release, or default installation target. Its Source Commit A is `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS. The published/default Preview remains RC5 through the immutable setup entry above, and Stable remains `v4.0.0`.
+
+RC6 candidate evidence is bounded to repository validation and fake-home lifecycle coverage. The RC5→RC6 installer transition changes only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`; idempotency, backup, exact rollback, and ownership fail-closed behavior are covered by local tests. The selector change normalizes malformed URL parsing, hostname, and port `ValueError` cases to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order. The compatibility smoke adds a read-only baseline with dual exact rollout roots and bounded writer-settle/fail-closed evidence; the harness does not modify product runtime.
+
+RC6 real Global upgrade, O1–O10 acceptance, and Final O4/O9 re-certification are `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is implemented, but that implementation is not final runtime evidence. No confirmed product-runtime regression is reported. These statements do not constitute a final PASS or a release claim.
 
 ## What this does
 
@@ -279,6 +289,11 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | RC5 O1–O10 documented-environment record, including O4/O9 | Bounded evidence only |
 | RC5 Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
 | RC5 product-runtime regression | No confirmed product-runtime regression |
+| RC6 Source Commit A exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
+| RC6 RC5→RC6 fake-home lifecycle | Local installer/lifecycle tests PASS; selector and manifest only |
+| RC6 real Global upgrade and O1–O10 | `NOT RUN` |
+| RC6 Final O4/O9 re-certification | `NOT RUN`; source-side rollout compatibility implementation is not final runtime evidence |
+| RC6 product-runtime regression | No confirmed product-runtime regression |
 | RC4 source suite | `PASS` |
 | RC4 real Global upgrade | `PASS` |
 | RC4 Case A | `PASS` |

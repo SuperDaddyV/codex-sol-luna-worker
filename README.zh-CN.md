@@ -17,6 +17,8 @@
 >
 > 仓库验证和 exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。documented-environment 的 RC5 O1–O10 记录仍是有边界的证据，其中包括 O4 和 O9；由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`，未获得最终 O4/O9 再认证；没有已确认的 product-runtime regression。
 >
+> master 树还包含 `v4.1.0-rc6` source candidate，Source Commit A 为 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`。exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过；RC6 尚未打 tag、发布，也不是默认安装目标。RC6 real Global upgrade 和 O1–O10 acceptance 尚未运行，不得据此写成最终 O4/O9 PASS。
+>
 > RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 的 evidence-gated Receipt 行为属于历史发布证据。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
 
 ```text
@@ -81,7 +83,7 @@ RC5 包含：
 | 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
 | Product-runtime regression | 没有已确认的 product-runtime regression |
 
-愿意承担 Preview 风险的高级用户可以使用这份已发布、非默认的 RC5 setup contract。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
+已发布的 RC5 setup contract 就是上方默认入口。愿意承担 Preview 风险的高级用户也应使用这份 immutable contract。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
 
 ```text
 请读取并严格执行以下安装规范：
@@ -112,6 +114,14 @@ dry-run、backup、installation 和 validation。
 ```
 
 请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。documented-environment 的 RC5 O1–O10 记录（包括 O4 和 O9）仍是有边界的证据。由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`，未获得最终 O4/O9 再认证。没有已确认的 product-runtime regression。
+
+## RC6 Source Candidate
+
+`v4.1.0-rc6` 是当前 master 树中的 source candidate，不是 tag、GitHub Release、Preview、Stable 版本，也不是默认安装目标。其 Source Commit A 为 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`；exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。当前已发布且默认的 Preview 仍是通过上方 immutable setup entry 安装的 RC5，Stable 仍是 `v4.0.0`。
+
+RC6 candidate 目前只有有边界的仓库验证和 fake-home 生命周期证据。RC5→RC6 安装器迁移只改变 `sol-luna-v4/selector.py` 和 `sol-luna-v4/install-manifest.json`；幂等、backup、精确 rollback 和 ownership fail-closed 已由本地测试覆盖。selector 将 malformed URL parsing、hostname 和 port 的 `ValueError` 统一规范为 `SnapshotInvalid`，保留 API → snapshot → LKG → fail-closed 的来源顺序。compatibility smoke 增加只读基线、两个精确 rollout 根目录，以及有界 writer settle／fail-closed evidence；harness 不修改 product runtime。
+
+RC6 real Global upgrade、O1–O10 acceptance 和最终 O4/O9 再认证均为 `NOT RUN`。源侧 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 修复已经实现，但实现本身不是最终 runtime evidence。没有已确认的 product-runtime regression。这些内容不构成最终 PASS，也不构成发布声明。
 
 ## 🚀 这是什么
 
@@ -315,6 +325,11 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 | RC5 O1–O10 documented-environment 记录（包括 O4/O9） | 仅为有边界的证据 |
 | RC5 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
 | RC5 product-runtime regression | 没有已确认的 product-runtime regression |
+| RC6 Source Commit A exact-SHA CI | Windows、Ubuntu、macOS 均已通过 |
+| RC6 RC5→RC6 fake-home lifecycle | 本地 installer/lifecycle tests PASS；仅 selector 和 manifest 变化 |
+| RC6 real Global upgrade 和 O1–O10 | `NOT RUN` |
+| RC6 最终 O4/O9 再认证 | `NOT RUN`；源侧 rollout compatibility 实现不等于最终 runtime evidence |
+| RC6 product-runtime regression | 没有已确认的 product-runtime regression |
 | RC4 source suite | `PASS` |
 | RC4 real Global upgrade | `PASS` |
 | RC4 Case A | `PASS` |

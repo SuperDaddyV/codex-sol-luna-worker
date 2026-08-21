@@ -1,15 +1,15 @@
-# v4.1.0-rc5 Source Candidate Architecture Note
+# v4.1.0-rc6 Source Candidate Architecture Note
 
-`v4.1.0-rc5 — Observability & UX` is a source candidate, not a published
-release. `v4.1.0-rc4` remains the published Preview prerelease and `v4.0.0`
-remains Stable. RC5 Source Commit A is
-`5ae88ff9190b31174c55a6136c0c8c8611d0b34c`; the immutable setup contract is
-available at documentation commit
-`7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9`.
+`v4.1.0-rc6` is a master-tree source candidate, not tagged, published, Stable,
+or the default installation target. RC6 Source Commit A is
+`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
+Ubuntu, and macOS. The published/default Preview remains `v4.1.0-rc5` through
+immutable setup anchor `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`, and
+`v4.0.0` remains Stable.
 
-Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS`
+Status: `v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`
 
-`v4.0.0` remains the stable release, and `v4.1.0-rc4` is the current published preview prerelease. RC4 fixes only Receipt reason evidence-gating: without current-task parent-visible availability failure evidence, a Sol-only Receipt cannot report `Luna unavailable`. RC4 changes only the installer-managed Global `AGENTS.md` policy payload, manifest version and ownership metadata, tests, and documentation. Selector, agents, configuration, state, ModelDial, delegation threshold, concurrency, native leaf behavior, Task Contract, Context Firewall, Daily authority, Sol Acceptance, installer, and migration semantics are unchanged.
+`v4.0.0` remains the Stable release, and `v4.1.0-rc5` is the current published Preview / Public Beta and default installation target. The documented-environment RC5 O1-O10 record remains bounded evidence; Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime regression is reported. RC6 real Global upgrade and O1-O10 acceptance were not run and do not constitute a final PASS or release claim. RC4 remains historical release evidence for Receipt reason evidence-gating.
 
 ## Flow
 
@@ -60,6 +60,20 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - The diagnostic report is constructed from an exact whitelist and then sanitized. It exposes symbolic locations rather than real private paths and contains no environment dump, configuration or policy content, arbitrary URL, log, credential, exception message, or child reasoning.
 - The installed state directory remains the single state authority. RC5 adds no dashboard, daemon, telemetry, background service, router, sidecar state, or database.
 
+## RC6 candidate delta
+
+- The selector normalizes malformed URL parsing, hostname, and port `ValueError`
+  cases to `SnapshotInvalid`, preserving the API -> snapshot -> LKG ->
+  fail-closed source order.
+- The installer payload moves to `v4.1.0-rc6` with manifest schema `1`. An
+  RC5 -> RC6 fake-home upgrade is expected to change only
+  `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`; idempotency,
+  backup, exact rollback, and ownership fail-closed behavior are covered by
+  local tests.
+- The compatibility-smoke baseline adds dual exact rollout roots and bounded
+  writer-settle/fail-closed evidence. The harness is tooling only and does not
+  modify product runtime.
+
 ## Explicit non-goals
 
 - No Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine.
@@ -67,16 +81,18 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - No Receipt-driven delegation, lower threshold, forced spawn or parallelism, extra selector call, capability probe, child inspection, tool, file or network read, network access, state, telemetry, repository write, or private reasoning exposure. Receipt text is not runtime attestation.
 - CI and static checks are supporting evidence; Native Runtime Tests 1-5 are the runtime gate.
 
-## RC5 runtime acceptance isolation boundary
+## RC6 candidate runtime acceptance isolation boundary
 
-This acceptance-boundary redesign does not modify the frozen product runtime
-payload: `src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`,
-and `.codex/agents/*`. `CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, this
-architecture note, and `SECURITY.md` form the acceptance contract and may be
-updated as that boundary evolves. `PRODUCT_RUNTIME_CHANGED = NO`;
+RC6 changes product runtime behavior only in `src/selector.py` for malformed
+URL parsing, hostname, and port `ValueError` normalization. The installer
+payload version also moves to `v4.1.0-rc6`. The compatibility smoke and
+acceptance harness are tooling only and do not modify product runtime.
+`CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, this architecture note, and
+`SECURITY.md` form the acceptance contract and may be updated as that boundary
+evolves. `PRODUCT_RUNTIME_CHANGED = YES`;
 `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
-The RC5 acceptance harness builds Source Commit A under a unique owned
+The RC6 acceptance harness builds Source Commit A under a unique owned
 acceptance root. O4 and O9 run with an isolated `CODEX_HOME`, home/profile,
 application-data, temporary-storage, and XDG environment. One
 `isolated_runtime_env` is explicitly propagated to every harness subprocess;
@@ -86,7 +102,7 @@ write or credential copy, the harness validates the temporary parent
 and planned isolated home. Symlinks, junctions, reparse points, mount points,
 path overlap, shared identity, and hardlinks across the isolated/real boundary
 fail closed; the fixed macOS `/var` system alias is the only platform-root
-exception.
+exception. RC6 real Global upgrade and O1-O10 acceptance remain unexecuted.
 
 The real `CODEX_HOME` is not a runtime-attribution source. Its role is limited
 to pre/post `PROTECTED_SOL_LUNA_STATE` integrity and root-identity verification.
@@ -94,7 +110,7 @@ Managed Sol/Luna policy, configuration, agents, selector, manifest, Daily
 Profile, LKG, `selector.lock`, and every other entry in
 `sol-luna-v4/state/**` must remain unchanged. The tree comparison includes
 hash, type, device/file identity, link count, and reparse status; unrelated
-real-home runtime activity is ignored by the RC5 case decision.
+real-home runtime activity is ignored by the RC6 case decision.
 
 Runtime attribution is performed inside the isolated home. The
 `CODEX_PLATFORM_RUNTIME_STATE` namespace retains the previously enumerated
@@ -136,13 +152,14 @@ Native Runtime Tests 1-5 are recorded as generic `PASS` for the stable v4.0.0 re
 
 The generic record intentionally contains no session IDs, usernames, absolute paths, rollout IDs, or installation IDs.
 
-The separately authorized RC5 source-candidate runtime acceptance recorded
-O1-O10 as `PASS` and status `RC5_RUNTIME_CATEGORY_MODEL_FIXED` in one observed
-Codex environment. The repeatable harness adds isolated O2, O4, and O9 coverage
-plus the pre-write, cleanup, redirection, hardlink, and runtime-category
-regressions described above. This bounded evidence does not publish RC5, change
-the Stable architecture, or claim real-runtime validation across all CI
-platforms, clients, accounts, or users.
+The documented-environment RC5 O1-O10 record, including O4 and O9, remains
+bounded evidence. Final O4/O9 re-certification was not obtained due to
+`CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime
+regression is reported. The repeatable harness adds isolated O2, O4, and O9
+coverage plus the pre-write, cleanup, redirection, hardlink, and
+runtime-category regressions described above. RC6 real Global upgrade and
+O1-O10 acceptance were not run. None of this is a final PASS or a claim of
+real-runtime validation across all CI platforms, clients, accounts, or users.
 
 The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The published RC4 prerelease passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D: reasoning-only, three-child delegated parallel execution, the no-independent-work regression, and the controlled genuine-unavailability evidence gate. RC4 changed only Receipt reason evidence-gating; the architecture flow and authority boundaries above remain unchanged.
 

@@ -33,6 +33,7 @@ PINNED_SETUP_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
 RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 RC5_SETUP_CONTRACT_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
 RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
+RC6_RUNTIME_SOURCE_COMMIT = "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -94,6 +95,40 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Git for the required immutable exact-commit checkout", english)
         self.assertIn("仅安装 Codex Desktop 还不够", chinese)
         self.assertIn("必须使用 Git 获取并校验不可变的精确 commit", chinese)
+
+    def test_rc6_candidate_does_not_replace_rc5_default_installation_entry(self):
+        english = text(README)
+        chinese = text(README_ZH)
+        for content in (english, chinese):
+            setup_url = (
+                "https://raw.githubusercontent.com/SuperDaddyV/"
+                f"codex-sol-luna-worker/{RC5_SETUP_CONTRACT_COMMIT}/"
+                "CODEX_SOL_LUNA_SETUP.md"
+            )
+            self.assertEqual(content.count(setup_url), 2)
+            self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
+            self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, content)
+        self.assertIn(
+            "The default installation path is now the immutable RC5 Setup contract",
+            english,
+        )
+        self.assertIn(
+            "RC6 is not tagged, published, or the default installation target",
+            english,
+        )
+        self.assertIn(
+            "RC6 Final O4/O9 re-certification | `NOT RUN`",
+            english,
+        )
+        self.assertIn(
+            "默认安装路径现在使用当前 Preview／Public Beta 的 immutable RC5 Setup contract",
+            chinese,
+        )
+        self.assertIn(
+            "RC6 尚未打 tag、发布，也不是默认安装目标",
+            chinese,
+        )
+        self.assertIn("RC6 最终 O4/O9 再认证 | `NOT RUN`", chinese)
 
     def test_setup_preflight_stops_missing_dependencies_before_writes(self):
         content = text(SETUP)
@@ -210,7 +245,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("欢迎提交 Bug 报告", chinese)
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
-    def test_rc4_historical_flow_and_rc5_published_preview_are_explicit(self):
+    def test_rc4_historical_flow_and_rc5_rc6_status_are_explicit(self):
         source_docs = (
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
@@ -255,7 +290,8 @@ class DocumentationTests(unittest.TestCase):
             content = text(path)
             self.assertIn("RC4", content)
             self.assertIn("v4.1.0-rc5", content)
-            self.assertNotIn("source candidate", content.lower())
+            self.assertIn("RC6", content)
+            self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(RC5_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(RC5_SETUP_CONTRACT_COMMIT, content)
             self.assertIn(preview_heading, content)
@@ -306,14 +342,15 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("NOT PUBLISHED", content)
             self.assertNotIn("尚未发布", content)
         setup = text(SETUP)
-        self.assertIn("Contract version: `v4.1.0-rc5`", setup)
-        self.assertIn("RC5 is a source candidate", setup)
-        self.assertIn("RC5 is not published and is not Stable", setup)
+        self.assertIn("Contract version: `v4.1.0-rc6`", setup)
+        self.assertIn("RC6 is a master-tree source candidate", setup)
+        self.assertIn("RC6 is not tagged, not published, not Stable", setup)
         self.assertIn("Stable remains `v4.0.0`", setup)
-        self.assertIn("Published Preview remains `v4.1.0-rc4`", setup)
+        self.assertIn("Published/default Preview remains `v4.1.0-rc5`", setup)
         for path in source_docs:
-            self.assertIn("v4.1.0-rc4", text(path))
+            self.assertIn("RC4", text(path))
             self.assertIn("v4.1.0-rc5", text(path))
+            self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, text(path))
             self.assertIn("source candidate", text(path).lower())
         self.assertIn(
             "now also the default installation target/path through the immutable RC5 entry above",
@@ -327,7 +364,7 @@ class DocumentationTests(unittest.TestCase):
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
         self.assertIn(
-            "existing valid `v4.1.0-rc4` installation is an existing v4 upgrade for RC5",
+            "existing valid `v4.1.0-rc5` installation is an existing v4 upgrade for RC6",
             text(SETUP),
         )
         self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
@@ -361,8 +398,8 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("| RC3 delegated Receipt | `PASS` |", content)
         runtime = text(ROOT / "RUNTIME_TESTS.md")
         self.assertIn(
-            "v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / "
-            "RECORDED RUNTIME ACCEPTANCE — PASS",
+            "v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / "
+            "DEFAULT INSTALLATION TARGET",
             runtime,
         )
         self.assertIn(
@@ -371,6 +408,13 @@ class DocumentationTests(unittest.TestCase):
             runtime,
         )
         self.assertNotIn("CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS", runtime)
+        self.assertIn("v4.1.0-rc6 source candidate — source and lifecycle evidence only", runtime)
+        self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, runtime)
+        self.assertIn(
+            "RC6 real Global upgrade, O1-O10 acceptance, and Final O4/O9 re-certification",
+            runtime,
+        )
+        self.assertIn("are `NOT RUN`", runtime)
         self.assertIn("Real RC3 → RC4 Global upgrade — `PASS`", runtime)
         self.assertIn("Result: `UPGRADED`; effective changes: `2`", runtime)
         for case in ("Runtime Case A", "Runtime Case B", "Runtime Case C", "Runtime Case D"):
@@ -400,7 +444,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("For this public repository", security)
         self.assertNotIn("For a future public repository", security)
 
-    def test_rc5_setup_contract_pins_runtime_source_without_self_reference(self):
+    def test_rc6_setup_contract_pins_runtime_source_without_self_reference(self):
         architecture = text(ROOT / "ARCHITECTURE.md")
         security = text(ROOT / "SECURITY.md")
         runtime = text(ROOT / "RUNTIME_TESTS.md")
@@ -424,13 +468,19 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, security)
         for number in range(1, 11):
             self.assertRegex(setup, rf"(?m)^- O{number} .* — `NOT RUN`[;.]$")
-        self.assertIn("source candidate; not released", changelog)
-        self.assertIn("No Source Commit A", changelog)
-        self.assertIn("Contract version: `v4.1.0-rc5`", setup)
-        self.assertGreaterEqual(setup.count(RC5_RUNTIME_SOURCE_COMMIT), 7)
+        self.assertIn("v4.1.0-rc6 (source candidate; not released)", changelog)
+        self.assertIn("RC6 source candidate at Source Commit A", changelog)
+        self.assertIn("Contract version: `v4.1.0-rc6`", setup)
+        self.assertGreaterEqual(setup.count(RC6_RUNTIME_SOURCE_COMMIT), 7)
         self.assertIn("Stable remains `v4.0.0`", setup)
-        self.assertIn("Published Preview remains `v4.1.0-rc4`", setup)
-        self.assertIn("RC5 is not published and is not Stable", setup)
+        self.assertIn("Published/default Preview remains `v4.1.0-rc5`", setup)
+        self.assertIn("RC6 is not tagged, not published, not Stable", setup)
+        self.assertIn(
+            "The only expected effective installed changes are:\n\n"
+            "1. `sol-luna-v4/selector.py`;\n"
+            "2. `sol-luna-v4/install-manifest.json`.",
+            setup,
+        )
         self.assertIn("v4.1.0-rc5", readmes)
         self.assertIn(
             "current published GitHub Prerelease / Preview and Public Beta",
@@ -440,9 +490,9 @@ class DocumentationTests(unittest.TestCase):
             "当前已发布、面向高级用户使用的 GitHub Prerelease／Preview／Public Beta",
             text(README_ZH),
         )
-        self.assertIn(f"checkout --detach {RC5_RUNTIME_SOURCE_COMMIT}", setup)
+        self.assertIn(f"checkout --detach {RC6_RUNTIME_SOURCE_COMMIT}", setup)
         self.assertIn(
-            f"Require `git rev-parse HEAD` to equal `{RC5_RUNTIME_SOURCE_COMMIT}` exactly",
+            f"Require `git rev-parse HEAD` to equal `{RC6_RUNTIME_SOURCE_COMMIT}` exactly",
             setup,
         )
         installer_commands = [
@@ -453,11 +503,11 @@ class DocumentationTests(unittest.TestCase):
         ]
         self.assertEqual(len(installer_commands), 4)
         for command in installer_commands:
-            self.assertIn(f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}", command)
+            self.assertIn(f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}", command)
 
         for placeholder in (
             "<APPROVED_40_HEX_COMMIT>",
-            "<RC5_SOURCE_SHA>",
+            "<RC6_SOURCE_SHA>",
             "<TBD_SHA>",
             "PIN_PENDING",
             "<SETUP_COMMIT>",
@@ -601,11 +651,11 @@ class DocumentationTests(unittest.TestCase):
         content = text(SETUP)
         for command in (
             "scripts/install.py --dry-run --codex-home <CODEX_HOME> "
-            f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --codex-home <CODEX_HOME> "
-            f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> "
-            f"--source-commit {RC5_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {RC6_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --rollback <BACKUP_PATH> --codex-home <CODEX_HOME>",
             "scripts/install.py --uninstall --codex-home <CODEX_HOME>",
         ):

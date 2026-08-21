@@ -1,17 +1,43 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0-rc4 — PUBLISHED PRERELEASE / CURRENT PREVIEW / RECORDED RUNTIME ACCEPTANCE — PASS`; `v4.0.0 — STABLE`
+Status: `v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`; `v4.0.0 — STABLE`; RC6 remains an unpublished source candidate.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.0-rc5 source candidate — recorded O1-O10 acceptance `PASS`
+## v4.1.0-rc6 source candidate — source and lifecycle evidence only
+
+RC6 Source Commit A is
+`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
+Ubuntu, and macOS. The installer payload is `v4.1.0-rc6` with manifest schema
+`1`. RC6 is not tagged, published, Stable, or the default installation target;
+the published/default Preview remains RC5 through immutable setup anchor
+`ccd9d84da2f74df9ca2d919729b75eebf2dac27a`.
+
+- RC5 -> RC6 fake-home lifecycle coverage expects only
+  `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json` to change;
+  local tests cover idempotency, backup, exact rollback, and ownership
+  fail-closed behavior.
+- The selector normalizes malformed URL parsing, hostname, and port `ValueError`
+  cases to `SnapshotInvalid`, preserving the API -> snapshot -> LKG ->
+  fail-closed source order.
+- Compatibility-smoke baseline coverage uses dual exact rollout roots and
+  bounded writer-settle/fail-closed evidence. The harness does not modify
+  product runtime.
+- `PRODUCT_RUNTIME_CHANGED = YES`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+- RC6 real Global upgrade, O1-O10 acceptance, and Final O4/O9 re-certification
+  are `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is
+  implemented but is not final runtime evidence; no confirmed product-runtime
+  regression is reported. These facts do not constitute a final PASS or a
+  release claim.
+
+## v4.1.0-rc5 published Preview — bounded documented-environment O1-O10 record
 
 RC5 `Observability & UX` Source Commit A is
-`5ae88ff9190b31174c55a6136c0c8c8611d0b34c`. Its immutable setup contract is
-available at documentation commit
-`7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9`. The separately authorized runtime
-acceptance completed in one recorded Codex environment and supersedes the
-earlier `NOT RUN` state in this source-candidate protocol.
+`5ae88ff9190b31174c55a6136c0c8c8611d0b34c`. Its published/default immutable
+setup contract is available at documentation commit
+`ccd9d84da2f74df9ca2d919729b75eebf2dac27a`. The documented-environment RC5
+O1-O10 record below is bounded evidence from one recorded Codex environment;
+it is not a final O4/O9 re-certification or a universal runtime claim.
 
 - O1 Natural-language healthy status — `PASS`
 - O2 No-profile healthy status — `PASS`
@@ -26,15 +52,25 @@ earlier `NOT RUN` state in this source-candidate protocol.
 
 RC4→RC5 fake-home installer lifecycle validation is a separate recorded
 `PASS` and has no O-number. RC5 real Global upgrade, idempotency, and rollback
-readiness remain a separately authorized operation and are `NOT RUN`.
+readiness remain a separately authorized operation and are `NOT RUN`. Final
+O4/O9 re-certification was not obtained due to
+`CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime
+regression is reported.
 
 `RC5_SOURCE_COMMIT_CREATED = YES`;
 `RC5_SOURCE_SHA = 5ae88ff9190b31174c55a6136c0c8c8611d0b34c`;
-`RC5_SETUP_CONTRACT_COMMIT = 7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9`;
+`RC5_SETUP_CONTRACT_COMMIT = ccd9d84da2f74df9ca2d919729b75eebf2dac27a`;
 `RC5_RUNTIME_ACCEPTANCE_COMPLETED = YES`;
 `RC5_RUNTIME_CATEGORY_MODEL_FIXED = YES`.
 
-The acceptance-boundary redesign leaves the product runtime payload frozen at
+`RC6_SOURCE_COMMIT_CREATED = YES`;
+`RC6_SOURCE_SHA = 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`;
+`RC6_SETUP_CONTRACT_COMMIT = NOT YET RECORDED`;
+`RC6_RUNTIME_ACCEPTANCE_COMPLETED = NO`;
+`RC6_REAL_GLOBAL_UPGRADE = NOT RUN`.
+
+For the historical RC5 acceptance-boundary record, the product runtime payload
+was frozen at
 `src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`, and
 `.codex/agents/*`. This file, `CODEX_SOL_LUNA_SETUP.md`, `ARCHITECTURE.md`, and
 `SECURITY.md` are the acceptance contract and may track acceptance redesigns.
@@ -97,12 +133,13 @@ temporary, repository, and executable paths are symbolized before the JSON
 evidence is printed; remaining user-home path shapes and credential-shaped
 values are redacted.
 
-This is environment- and scenario-bounded runtime evidence for an unreleased
-RC5 source candidate. It is not three-platform real-runtime validation, a tag,
-a release, a Stable claim, or a Stable promotion. Windows, Ubuntu, and macOS CI
-remain source validation only.
+This is environment- and scenario-bounded evidence for the published RC5
+Preview. It is not three-platform real-runtime validation, a tag, a Stable
+claim, or a Stable promotion. Windows, Ubuntu, and macOS CI remain source
+validation only.
 
-`SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE` remains unchanged.
+`SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE` describes the RC5
+record; RC6 is the source candidate that implements this normalization.
 
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 

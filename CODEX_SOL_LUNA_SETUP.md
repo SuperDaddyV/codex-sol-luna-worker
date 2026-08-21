@@ -1,39 +1,42 @@
 # Codex Sol + Luna Worker — Execution Setup Contract
 
-Contract version: `v4.1.0-rc5`.
+Contract version: `v4.1.0-rc6`.
 
 Release status:
 
-- RC5 is a source candidate with Source CI `PASS` on Windows, Ubuntu, and macOS;
-- RC5 real Global upgrade is `NOT RUN`;
-- RC5 O1–O10 runtime acceptance is `NOT RUN`;
-- RC5 is not published and is not Stable;
+- RC6 is a master-tree source candidate with exact-SHA CI `PASS` on Windows, Ubuntu, and macOS;
+- RC6 real Global upgrade is `NOT RUN`;
+- RC6 O1–O10 runtime acceptance is `NOT RUN`;
+- RC6 is not tagged, not published, not Stable, and not the default installation target;
+- Published/default Preview remains `v4.1.0-rc5` through the immutable RC5 setup entry;
 - Stable remains `v4.0.0`;
-- Published Preview remains `v4.1.0-rc4`.
+- RC6 Final O4/O9 re-certification is `NOT RUN`; the source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is implemented but is not final runtime evidence.
 
-The RC5 Source Commit A repository suite recorded `152/152` tests passing. These tests and Source CI are source / repository validation only. They do not establish a real Global upgrade, fresh runtime acceptance, or RC5 publication.
+The RC6 Source Commit A local documentation, repository, and compatibility-smoke tests pass. Exact-SHA CI passed on Windows, Ubuntu, and macOS. These are source / repository validation only; they do not establish a real Global upgrade, fresh runtime acceptance, final O4/O9 PASS, or RC6 publication.
 
 > [!IMPORTANT]
-> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. RC5 remains an unpublished source candidate; the public README installation entry continues to point to the published RC4 Preview. Never silently expand permissions, installation scope, or network access.
+> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. RC6 remains an unpublished master-tree source candidate; the public README installation entry continues to point to the published/default RC5 Preview. Never silently expand permissions, installation scope, or network access.
 
 This document is an execution contract for Codex, not a replacement installer. Orchestrate `scripts/install.py`; do not reproduce its merge, ownership, backup, migration, rollback, or uninstall logic with ad hoc shell commands.
 
-Approved RC5 runtime source commit:
+Approved RC6 candidate runtime source commit:
 
 ```text
-5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 ```
 
-This setup contract installs the immutable RC5 runtime payload from Source Commit A shown above. The repository README may later pin this contract document from a documentation commit. That documentation commit is not the runtime payload source and is never passed to the installer.
+This setup contract installs the immutable RC6 candidate runtime payload from Source Commit A shown above. The repository README currently pins the published/default RC5 setup contract from a separate immutable documentation anchor. That documentation commit is not the runtime payload source and is never passed to the installer.
 
-The RC5 acceptance-boundary redesign keeps the product runtime payload frozen:
-`src/selector.py`, `scripts/install.py`, `templates/AGENTS.global.md`, and
-`.codex/agents/*` do not change. The acceptance contract consists of this
-setup contract, `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and `SECURITY.md`; those
-documents may change when the acceptance design changes. Such contract-only
-updates are not a product-runtime change.
+RC6 changes product runtime behavior only in the selector's malformed URL
+parsing, hostname, and port error normalization: those `ValueError` cases are
+converted to `SnapshotInvalid`, preserving the API → snapshot → LKG →
+fail-closed source order. The installer payload version moves to `v4.1.0-rc6`;
+manifest schema remains `1`. The compatibility smoke and acceptance harness are
+tooling and do not modify product runtime. The acceptance contract consists of
+this setup contract, `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and `SECURITY.md`;
+those documents may change when the acceptance design changes.
 
-`PRODUCT_RUNTIME_CHANGED = NO`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+`PRODUCT_RUNTIME_CHANGED = YES`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
 `SETUP_CONTRACT_SELF_REFERENCE_REQUIRED = NO`.
 
@@ -43,7 +46,7 @@ You are the installation agent. Your job is to inspect, plan, back up through th
 
 You must:
 
-1. obtain the exact approved RC5 runtime source commit shown above;
+1. obtain the exact approved RC6 candidate runtime source commit shown above;
 2. discover the current OS, Python, Codex, and target `CODEX_HOME` without guessing;
 3. inspect existing state without exposing unrelated private content;
 4. run the existing installer dry-run before any mutation;
@@ -127,7 +130,7 @@ Do not install or introduce any of the following:
 - plugin framework;
 - custom orchestration engine.
 
-Do not lower the delegation threshold, force Luna use, add a Receipt-specific state or configuration flag, treat no delegation as Luna unavailability, use `Luna unavailable` as a default fallback, or treat Receipt text as runtime attestation. RC5 adds observability metadata and policy UX without adding a second selection or state authority.
+Do not lower the delegation threshold, force Luna use, add a Receipt-specific state or configuration flag, treat no delegation as Luna unavailability, use `Luna unavailable` as a default fallback, or treat Receipt text as runtime attestation. RC6 retains the RC5 observability metadata and policy UX, adds only the selector URL exception normalization described above, and adds no second selection or state authority.
 
 Do not modify the selector algorithm, agent payloads, concurrency limit, ModelDial policy, manifest schema, migration contract, Git tag, or GitHub Release as part of setup.
 
@@ -160,10 +163,10 @@ Do not install or upgrade Python. If either check fails, stop with `BLOCKED: PYT
 
 ## 5. Source Acquisition
 
-The installer source must be exactly the approved RC5 Runtime Source Commit A:
+The installer source must be exactly the approved RC6 candidate Runtime Source Commit A:
 
 ```text
-5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 ```
 
 Do not substitute `master`, `main`, `origin/master`, `latest`, a floating branch, mutable `target_commitish`, or any other commit. The commit containing this setup contract is a separate documentation anchor and is not an installer source.
@@ -172,11 +175,11 @@ Git is required. After the Installation Preflight reports `Ready: YES`, create a
 
 ```text
 git clone --no-checkout https://github.com/SuperDaddyV/codex-sol-luna-worker.git <TEMP_SOURCE>
-git -C <TEMP_SOURCE> checkout --detach 5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+git -C <TEMP_SOURCE> checkout --detach 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 git -C <TEMP_SOURCE> rev-parse HEAD
 ```
 
-Require `git rev-parse HEAD` to equal `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` exactly. Inspect `git status --short` and require a clean checkout before installation. Confirm `scripts/install.py` declares installer `VERSION = "v4.1.0-rc5"` before running it.
+Require `git rev-parse HEAD` to equal `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49` exactly. Inspect `git status --short` and require a clean checkout before installation. Confirm `scripts/install.py` declares installer `VERSION = "v4.1.0-rc6"` before running it.
 
 Do not execute installer code from a mutable branch. This contract defines no archive fallback. If the exact commit cannot be verified after the Git preflight passed, stop with `BLOCKED: IMMUTABLE_SOURCE_UNVERIFIED` rather than adding a downloader.
 
@@ -229,7 +232,7 @@ From `<TEMP_SOURCE>`, display the current help and then run the real dry-run aga
 
 ```text
 <PYTHON> scripts/install.py --help
-<PYTHON> scripts/install.py --dry-run --codex-home <CODEX_HOME> --source-commit 5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+<PYTHON> scripts/install.py --dry-run --codex-home <CODEX_HOME> --source-commit 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 ```
 
 Dry-run is non-mutating. Report each stable agent action (`create`, `identical`, or `conflict`), the future artifact inventory, target platform, and conflicts. Supplement it with the read-only inspection from Section 7 to summarize expected shared-file modifications, legacy removals, preserved unowned content, and the chosen mode. Do not claim that the current dry-run output is a byte-for-byte preview of every transactional merge; the apply path performs the definitive ownership validation.
@@ -247,7 +250,7 @@ Capture the `backup` value returned by the installer. Treat it as the only rollb
 For a classified clean install, run from the immutable checkout:
 
 ```text
-<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 ```
 
 The explicit target is mandatory. Do not pass `--validation-sandbox` for a real user global installation; that option only permits repository-local test targets below `.tmp/installer-validation/`.
@@ -259,7 +262,7 @@ Accept `INSTALLED` as the expected clean-install result. Record created and modi
 Use migration only when the read-only inspection proves that `sol-luna-router/install-manifest.json` has the exact supported schema version `3.2` and no conflicting v4 state. Run:
 
 ```text
-<PYTHON> scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> --source-commit 5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+<PYTHON> scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> --source-commit 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 ```
 
 Do not accept similar, malformed, missing, or guessed versions. The migration does not contact ModelDial, convert a legacy Daily Profile or LKG, or delete unowned audit bundles. It uses the same transaction backup, validates v4 payloads and shared merges, writes the v4 manifest last as the commit marker, and then attempts independently retryable cleanup of the old manifest.
@@ -271,7 +274,7 @@ Accept `INSTALLED` with completed cleanup as the normal result. `LEGACY_MANIFEST
 For a valid installer-owned v4 installation, run the same apply command without `--migrate-v3`:
 
 ```text
-<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 5ae88ff9190b31174c55a6136c0c8c8611d0b34c
+<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 ```
 
 Interpret the real result:
@@ -284,15 +287,14 @@ Interpret the real result:
 
 Do not use `--migrate-v3` merely because historical files remain beside a valid v4 installation.
 
-An existing valid `v4.1.0-rc4` installation is an existing v4 upgrade for RC5. The only expected effective installed changes are:
+An existing valid `v4.1.0-rc5` installation is an existing v4 upgrade for RC6. The only expected effective installed changes are:
 
-1. the installer-managed Global `AGENTS.md` block;
-2. `sol-luna-v4/selector.py`;
-3. `sol-luna-v4/install-manifest.json`.
+1. `sol-luna-v4/selector.py`;
+2. `sol-luna-v4/install-manifest.json`.
 
-The five Luna agents, `config.toml`, Daily Profile, LKG, and unrelated user configuration must remain byte-preserved. If the real dry-run reports any other effective change, stop before apply. The installer must create and verify its normal transaction backup before applying the three expected changes.
+The installer-managed Global `AGENTS.md` block, five Luna agents, `config.toml`, Daily Profile, LKG, and unrelated user configuration must remain byte-preserved. If the real dry-run reports any other effective change, stop before apply. The installer must create and verify its normal transaction backup before applying the two expected changes.
 
-If a valid same-day RC4 Profile already exists, RC5 must reuse it without refresh, backfill, rewrite, state migration, or ref-cost network access. Optional RC5 metadata may first appear through normal selection on the next natural Beijing calendar day. `OLD_SAME_DAY_PROFILE_FORCE_REFRESH = NO`; `STATE_MIGRATION_REQUIRED = NO`.
+If a valid same-day RC5 Profile already exists, RC6 must reuse it without refresh, backfill, rewrite, state migration, or ref-cost network access. RC6 adds no state-schema change or metadata backfill; normal next-day selection uses the unchanged schema. `OLD_SAME_DAY_PROFILE_FORCE_REFRESH = NO`; `STATE_MIGRATION_REQUIRED = NO`.
 
 ## 13. ModelDial / Daily Selector
 
@@ -304,9 +306,9 @@ The installer copies the selector but does not need live ModelDial access and do
 
 The selector requires the canonical five efforts, chooses the highest score, and breaks a tie toward the lower effort. If invoked with a restricted `--supported` set, it can choose the best locally supported alternative and record capability degradation. The normal installation capability gate requires all five efforts, so the installed policy uses the complete default set.
 
-Selection occurs once per Beijing calendar day. A valid same-day Profile, including an older RC4 Profile without RC5 optional metadata, is reused byte-for-byte without a new live fetch. On a new day, the selector tries the anonymous official ModelDial API v1 endpoint, then the official full snapshot JSON, then a valid last-known-good record. A valid API response stops acquisition; sources are never merged, and v4.1 has no Radar HTML runtime fallback. First use with neither valid live data nor valid fallback fails closed with `NO_LUNA_PROFILE_AVAILABLE`. `ultra` is never allowed. Do not write a particular day's score into configuration or documentation as a permanent fact.
+Selection occurs once per Beijing calendar day. A valid same-day Profile, including an RC5-created Profile using the same schema, is reused byte-for-byte without a new live fetch. On a new day, the selector tries the anonymous official ModelDial API v1 endpoint, then the official full snapshot JSON, then a valid last-known-good record. A valid API response stops acquisition; sources are never merged, and v4.1 has no Radar HTML runtime fallback. First use with neither valid live data nor valid fallback fails closed with `NO_LUNA_PROFILE_AVAILABLE`. `ultra` is never allowed. Do not write a particular day's score into configuration or documentation as a permanent fact.
 
-RC5 preserves the existing `--print-role` contract and adds structured selection metadata:
+RC6 preserves the existing `--print-role` contract and the RC5 structured selection metadata:
 
 ```text
 <PYTHON> <CODEX_HOME>/sol-luna-v4/selector.py --state-dir <CODEX_HOME>/sol-luna-v4/state --ensure-daily --print-selection
@@ -343,7 +345,7 @@ The natural-language request `升级 Sol/Luna 到最新版本` means the latest 
 
 Before any prerelease apply, show a clear prerelease / Public Beta risk notice. Resolve the immutable Release tag to an exact commit SHA, detect tag movement, check out that commit detached, and verify the installer version and setup/source alignment. Pass the verified immutable SHA to the transactional installer through `--source-commit`; never execute from a branch or mutable `target_commitish`. Preserve ownership validation, transaction backup, apply verification, rollback, uninstall, no-downgrade behavior, and zero-write idempotency.
 
-This installed-policy feature does not authorize the current setup run to replace RC5 Runtime Source Commit A. Every RC5 command in this contract remains pinned to `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`.
+This installed-policy feature does not authorize the current setup run to replace RC6 candidate Runtime Source Commit A. Every RC6 command in this contract remains pinned to `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`.
 
 ## 16. Validation
 
@@ -360,13 +362,13 @@ After apply, perform read-only inspection and require all of the following:
 3. `config.toml` parses and the managed v4 block enables agents with maximum direct concurrency 3;
 4. the managed v4 block exists exactly once in `AGENTS.md`, contains the installed absolute selector and state command, and includes the non-trivial-task Delegation Receipt policy without forcing delegation or extra Receipt work;
 5. the selector file compiles and its `--help` command succeeds;
-6. `sol-luna-v4/install-manifest.json` parses, reports `v4.1.0-rc5`, records source commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`, and records the expected owned files and blocks;
+6. `sol-luna-v4/install-manifest.json` parses, reports `v4.1.0-rc6`, records source commit `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`, and records the expected owned files and blocks;
 7. installer-reported created, modified, removed, and preserved content matches the selected mode;
 8. no active configuration or Hook definition still invokes the legacy Sol/Luna Router.
 
 Historical directories, trusted metadata, backups, or audit evidence may remain without being runtime dependencies. Do not delete them during validation. Do not expose unrelated configuration values in the report.
 
-The Source Commit A result of `152/152` tests and its Windows / Ubuntu / macOS CI `PASS` are repository validation only. They cannot replace the real Global upgrade or the following fresh-runtime acceptance scope, which remains unexecuted for RC5:
+The RC6 Source Commit A local documentation, repository, and compatibility-smoke tests and its Windows / Ubuntu / macOS exact-SHA CI `PASS` are repository validation only. They cannot replace the real Global upgrade or the following fresh-runtime acceptance scope, which remains unexecuted for RC6:
 
 - O1 Natural-language healthy status — `NOT RUN`;
 - O2 No-profile healthy status — `NOT RUN`;
@@ -379,8 +381,11 @@ The Source Commit A result of `152/152` tests and its Windows / Ubuntu / macOS C
 - O9 Fail-soft observability selection, status, and Receipt omission — `NOT RUN`;
 - O10 Fresh-session delegation and Receipt suffixes — `NOT RUN`.
 
-RC5 real Global upgrade, idempotency, and rollback readiness are a separate
-acceptance operation, not O9, and remain `NOT RUN`.
+RC6 real Global upgrade, idempotency, and rollback readiness are a separate
+acceptance operation, not O9, and remain `NOT RUN`. Final O4/O9 re-certification
+is also `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is
+implemented but is not final runtime evidence; no confirmed product-runtime
+regression is reported.
 
 ## 17. Fresh Session Requirement
 
@@ -406,7 +411,7 @@ In the fresh task, use a concise user-facing smoke test rather than reproducing 
 5. confirm the Luna child has no multi-agent/delegation tools because it is a native leaf;
 6. require Sol to review the child evidence and own the final conclusion.
 
-The recorded RC4 release acceptance used four fresh-task cases after a separately authorized real upgrade. It does not establish RC5 runtime acceptance. Apply the same evidence requirements when later validating an authorized RC5 installation: Runtime Case A is a non-trivial architecture or reasoning task; require zero direct children and `Sol/Luna: Sol-only · reasoning/architecture task`. Runtime Case B contains two or three independent bounded read-only checks; require actual Luna direct children, an actual role and count matching `Sol/Luna: delegated · <role> ×<direct_child_count>`, and `parallel` only when parent-visible evidence proves execution overlap. Runtime Case C is non-trivial, non-architecture, sequential or tightly coupled work with no clean independent bounded child task; require no availability failure evidence, zero children, selector invocation only if normal execution required it, and `Sol/Luna: Sol-only · no independent bounded work`; `Luna unavailable` is forbidden. Runtime Case D exercises a real-unavailable classification only in a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where the normal path already exposes the failure. Do not damage or reconfigure the real selector, state, account, or Global environment to manufacture evidence.
+The recorded RC4 release acceptance used four fresh-task cases after a separately authorized real upgrade. It does not establish RC6 runtime acceptance. Apply the same evidence requirements when later validating an authorized RC6 installation: Runtime Case A is a non-trivial architecture or reasoning task; require zero direct children and `Sol/Luna: Sol-only · reasoning/architecture task`. Runtime Case B contains two or three independent bounded read-only checks; require actual Luna direct children, an actual role and count matching `Sol/Luna: delegated · <role> ×<direct_child_count>`, and `parallel` only when parent-visible evidence proves execution overlap. Runtime Case C is non-trivial, non-architecture, sequential or tightly coupled work with no clean independent bounded child task; require no availability failure evidence, zero children, selector invocation only if normal execution required it, and `Sol/Luna: Sol-only · no independent bounded work`; `Luna unavailable` is forbidden. Runtime Case D exercises a real-unavailable classification only in a controlled fixture, fake `CODEX_HOME`, test harness, or non-production simulation where the normal path already exposes the failure. Do not damage or reconfigure the real selector, state, account, or Global environment to manufacture evidence.
 
 In all four cases, the Receipt is only a user-facing summary; verify child absence, presence, and availability facts with parent-visible runtime metadata. Receipt generation itself must not invoke a selector, capability probe, tool, child, network, state write, telemetry, or repository write. Do not accept Receipt text by itself as proof. The recorded RC4 release acceptance passed all four cases; each new installation or upgrade must still complete its own fresh-task smoke test before returning `INSTALL_RUNTIME_PASS`.
 
