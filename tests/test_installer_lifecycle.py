@@ -7,6 +7,7 @@ import tomllib
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.install import (
     AGENTS_BEGIN,
@@ -272,7 +273,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
             )
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.1.0-rc6")
+            self.assertEqual(manifest["version"], "v4.1.0")
             self.assertEqual(len(manifest["owned_files"]), 6)
             self.assertEqual(set(manifest["owned_blocks"]), {"AGENTS.md", "config.toml"})
             self.assertNotIn("installation_id", manifest)
@@ -425,7 +426,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
 
-    def test_v40_manifest_owned_selector_upgrades_to_rc6_and_rolls_back(self):
+    def test_v40_manifest_owned_selector_upgrades_to_stable_and_rolls_back(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -472,7 +473,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(
                 json.loads(manifest_path.read_text(encoding="utf-8"))["version"],
-                "v4.1.0-rc6",
+                "v4.1.0",
             )
             self.assertEqual(
                 {
@@ -505,7 +506,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
 
-    def test_rc4_to_rc6_upgrade_changes_exactly_three_paths(self):
+    def test_rc4_to_stable_upgrade_changes_exactly_three_paths(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -559,7 +560,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             manifest = json.loads(
                 (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
             )
-            self.assertEqual(manifest["version"], "v4.1.0-rc6")
+            self.assertEqual(manifest["version"], "v4.1.0")
             self.assertEqual(manifest["schema_version"], 1)
             self.assertEqual(manifest["source_commit"], "b" * 40)
             self.assertEqual(
@@ -602,6 +603,9 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(tree_hash(target), before)
 
     def test_rc5_to_rc6_upgrade_is_idempotent_and_rolls_back_exactly(self):
+        version_patch = patch("scripts.install.VERSION", "v4.1.0-rc6")
+        version_patch.start()
+        self.addCleanup(version_patch.stop)
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -691,7 +695,104 @@ class InstallerLifecycleTests(unittest.TestCase):
                 "v4.1.0-rc5",
             )
 
+    def test_rc6_to_stable_upgrade_changes_only_manifest(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            with patch("scripts.install.VERSION", "v4.1.0-rc6"):
+                call_install(target)
+
+            manifest_path = target / MANIFEST_RELATIVE
+            rc6_manifest_before = manifest_path.read_bytes()
+            before = tree_hash(target)
+
+            dry = dry_run_install(
+                target,
+                project_root=ROOT,
+                generated_at=FIXED_TIME + timedelta(days=1),
+                allow_validation_sandbox=True,
+            )
+            self.assertEqual(dry["status"], "DRY_RUN_PASS")
+            self.assertEqual(dry["effective_changes"], 1)
+            self.assertEqual(dry["created"], [])
+            self.assertEqual(dry["modified"], [MANIFEST_RELATIVE.as_posix()])
+            self.assertEqual(dry["removed"], [])
+            self.assertIsNone(dry["backup"])
+            self.assertEqual(tree_hash(target), before)
+
+            upgraded = call_install(
+                target, generated_at=FIXED_TIME + timedelta(days=1)
+            )
+            self.assertEqual(upgraded["status"], "UPGRADED")
+            self.assertEqual(upgraded["effective_changes"], 1)
+            self.assertEqual(upgraded["created"], [])
+            self.assertEqual(upgraded["modified"], [MANIFEST_RELATIVE.as_posix()])
+            self.assertEqual(upgraded["removed"], [])
+            backup = Path(upgraded["backup"])
+            self.assertTrue(backup.is_dir())
+            self.assertEqual(
+                {
+                    entry["path"]
+                    for entry in json.loads(
+                        (backup / "snapshot.json").read_text(encoding="utf-8")
+                    )["entries"]
+                },
+                {MANIFEST_RELATIVE.as_posix()},
+            )
+            self.assertEqual(
+                json.loads(manifest_path.read_text(encoding="utf-8"))["version"],
+                "v4.1.0",
+            )
+
+            upgraded_tree = tree_hash(target)
+            second = call_install(
+                target, generated_at=FIXED_TIME + timedelta(days=2)
+            )
+            self.assertEqual(second["status"], "IDEMPOTENT_PASS")
+            self.assertEqual(second["effective_changes"], 0)
+            self.assertIsNone(second["backup"])
+            self.assertEqual(tree_hash(target), upgraded_tree)
+
+            rolled_back = rollback(
+                target,
+                backup,
+                project_root=ROOT,
+                allow_validation_sandbox=True,
+            )
+            self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
+            self.assertEqual(tree_hash(target), before)
+            self.assertEqual(manifest_path.read_bytes(), rc6_manifest_before)
+
+    def test_rc6_modified_owned_file_blocks_stable_upgrade_without_changes(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            with patch("scripts.install.VERSION", "v4.1.0-rc6"):
+                call_install(target)
+
+            selector_path = target / "sol-luna-v4" / "selector.py"
+            selector_path.write_bytes(selector_path.read_bytes() + b"\n# user change\n")
+            before = tree_hash(target)
+
+            with self.assertRaises(InstallerError) as raised:
+                dry_run_install(
+                    target,
+                    project_root=ROOT,
+                    generated_at=FIXED_TIME + timedelta(days=1),
+                    allow_validation_sandbox=True,
+                )
+            self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
+            self.assertEqual(tree_hash(target), before)
+
+            with self.assertRaises(InstallerError) as raised:
+                call_install(target, generated_at=FIXED_TIME + timedelta(days=1))
+            self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
+            self.assertEqual(tree_hash(target), before)
+
     def test_rc5_modified_owned_file_blocks_rc6_upgrade_without_changes(self):
+        version_patch = patch("scripts.install.VERSION", "v4.1.0-rc6")
+        version_patch.start()
+        self.addCleanup(version_patch.stop)
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -735,7 +836,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
             self.assertEqual(tree_hash(target), before)
 
-    def test_rc1_global_policy_upgrades_to_rc6_receipt_and_rolls_back(self):
+    def test_rc1_global_policy_upgrades_to_stable_receipt_and_rolls_back(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -785,7 +886,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 json.loads(
                     (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
                 )["version"],
-                "v4.1.0-rc6",
+                "v4.1.0",
             )
             self.assertEqual(
                 (target / "sol-luna-v4" / "selector.py").read_bytes(),
@@ -827,7 +928,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_bytes(), rc1_manifest_before
             )
 
-    def test_rc1_modified_owned_policy_blocks_rc6_upgrade(self):
+    def test_rc1_modified_owned_policy_blocks_stable_upgrade(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -849,7 +950,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
             self.assertEqual(tree_hash(target), before)
 
-    def test_rc3_global_policy_upgrades_to_rc6_evidence_gate_and_rolls_back(self):
+    def test_rc3_global_policy_upgrades_to_stable_evidence_gate_and_rolls_back(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             write_text(target / "config.toml", 'user_setting = "preserve"\n')
@@ -902,7 +1003,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
             )
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.1.0-rc6")
+            self.assertEqual(manifest["version"], "v4.1.0")
             self.assertEqual(
                 (target / "sol-luna-v4" / "selector.py").read_bytes(),
                 selector_before,
@@ -943,7 +1044,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_bytes(), rc3_manifest_before
             )
 
-    def test_rc3_modified_owned_policy_blocks_rc6_upgrade(self):
+    def test_rc3_modified_owned_policy_blocks_stable_upgrade(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
