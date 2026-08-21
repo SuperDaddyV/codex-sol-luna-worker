@@ -4,7 +4,7 @@
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![Stable: v4.0.0](https://img.shields.io/badge/stable-v4.0.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
-[![Preview: v4.1.0-rc5](https://img.shields.io/badge/preview-v4.1.0--rc5-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc5)
+[![Preview: v4.1.0-rc6](https://img.shields.io/badge/preview-v4.1.0--rc6-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc6)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
 Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and final acceptance while native GPT-5.6 Luna workers handle clear, bounded execution tasks.
@@ -13,11 +13,11 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 > [!NOTE]
-> `v4.1.0-rc5` is the current published GitHub Prerelease / Preview and Public Beta release. `v4.0.0` remains Stable.
+> `v4.1.0-rc6` is the current published GitHub Prerelease / Preview and Public Beta release. `v4.0.0` remains Stable.
 >
-> Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS. The documented-environment RC5 O1–O10 record remains bounded evidence, including O4 and O9; Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`. No confirmed product-runtime regression.
+> RC6 repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS. Its recorded real Global upgrade, fresh-task O1–O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D passed in one native Windows Codex environment. This evidence is environment- and scenario-bounded, not universal runtime or Stable certification.
 >
-> The master tree also contains the `v4.1.0-rc6` source candidate at Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. Exact-SHA CI passed on Windows, Ubuntu, and macOS; RC6 is not tagged, published, or the default installation target. RC6 real Global upgrade and O1–O10 acceptance were not run, and it does not claim final O4/O9 PASS.
+> The immutable RC6 Setup document is anchored at `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; the installer runtime source remains separately fixed at `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. RC5 is now a historical Preview.
 >
 > RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4's evidence-gated Receipt behavior remains historical release evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
 
@@ -50,7 +50,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/ccd9d84da2f74df9ca2d919729b75eebf2dac27a/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/86424ea4d6f6630a34b6e4daa22d2d93a5576ddf/CODEX_SOL_LUNA_SETUP.md
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
@@ -60,13 +60,13 @@ After installation, tell me whether Codex must be reloaded and validate the resu
 ```
 
 > [!WARNING]
-> The default installation path is now the immutable RC5 Setup contract for the current Preview / Public Beta. RC5 is not Stable; `v4.0.0` remains Stable; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> The default installation path is the immutable RC6 Setup contract for the current Preview / Public Beta. RC6 is not Stable; `v4.0.0` remains Stable; never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
 
 ## Current Preview
 
-`v4.1.0-rc5` is the current published GitHub Prerelease / Preview and Public Beta, and is now also the default installation target/path through the immutable RC5 entry above. RC5 is not Stable; Stable remains `v4.0.0`.
+`v4.1.0-rc6` is the current published GitHub Prerelease / Preview and Public Beta, and is the default installation target/path through the immutable RC6 entry above. RC6 is not Stable; Stable remains `v4.0.0`.
 
-RC5 contains:
+RC6 contains:
 
 - Observability metadata
 - Sol/Luna Status
@@ -77,19 +77,21 @@ RC5 contains:
 
 | Release evidence | Status |
 | --- | --- |
-| Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS |
-| Immutable setup contract | Available at Commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a` |
+| Installer runtime Source Commit `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49` | Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS |
+| Release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b` | Exact-SHA CI passed on Windows, Ubuntu, and macOS |
+| Immutable setup document | Available at documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; this anchor is not the runtime source |
 | Publication | `PUBLISHED — GitHub Prerelease / Public Beta` |
-| RC5 O1–O10 record, including O4/O9 | `documented-environment recorded PASS` remains bounded evidence |
-| Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
+| Real RC5→RC6 Global upgrade | `PASS` in one recorded native Windows Codex environment |
+| RC6 O1–O10 and Runtime Cases A/B/C/D | `PASS` in the documented environment; bounded evidence |
+| RC6 Final O4/O9 re-certification | `PASS` through the isolated acceptance harness |
 | Product-runtime regression | No confirmed product-runtime regression |
 
-The published RC5 setup contract is the default entry above. Advanced users who accept Preview risk may use that same immutable contract. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
+The published RC6 setup contract is the default entry above. Advanced users who accept Preview risk may use that same immutable contract. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
 
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/ccd9d84da2f74df9ca2d919729b75eebf2dac27a/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/86424ea4d6f6630a34b6e4daa22d2d93a5576ddf/CODEX_SOL_LUNA_SETUP.md
 
 Before cloning or downloading source, creating a temporary directory, writing
 probe state, or invoking the installer, run a read-only prerequisite preflight.
@@ -116,17 +118,15 @@ Only after Ready: YES, continue with the immutable source, capability probe,
 dry-run, backup, installation, and validation defined by the contract.
 ```
 
-Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. The documented-environment RC5 O1–O10 record, including O4 and O9, remains bounded evidence. Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`. No confirmed product-runtime regression.
+Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. RC6 O1–O10 and Final O4/O9 passed in the documented environment, but remain environment- and scenario-bounded evidence. No confirmed product-runtime regression.
 
-## RC6 Source Candidate
+## RC5 Historical Preview
 
-`v4.1.0-rc6` is the current master-tree source candidate, not a tag, GitHub Release, Preview, Stable release, or default installation target. Its Source Commit A is `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS. The published/default Preview remains RC5 through the immutable setup entry above, and Stable remains `v4.0.0`.
+`v4.1.0-rc5` was the previous published Preview / Public Beta and is now historical. Its runtime Source Commit was `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`, and its immutable setup document remains available at documentation Commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`. Do not use that historical entry as the current default.
 
-The immutable RC6 candidate setup contract is recorded at documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`. It is not the default installation entry and is never the installer runtime source; the contract remains pinned to Source Commit A.
+The documented-environment RC5 O1–O10 record remains bounded historical evidence. Its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime regression was reported. RC6 independently completed its own runtime acceptance before publication.
 
-RC6 candidate evidence is bounded to repository validation and fake-home lifecycle coverage. The RC5→RC6 installer transition changes only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`; idempotency, backup, exact rollback, and ownership fail-closed behavior are covered by local tests. The selector change normalizes malformed URL parsing, hostname, and port `ValueError` cases to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order. The compatibility smoke adds a read-only baseline with dual exact rollout roots and bounded writer-settle/fail-closed evidence; the harness does not modify product runtime.
-
-RC6 real Global upgrade, O1–O10 acceptance, and Final O4/O9 re-certification are `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is implemented, but that implementation is not final runtime evidence. No confirmed product-runtime regression is reported. These statements do not constitute a final PASS or a release claim.
+The RC6 installer transition changes only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`. The selector normalizes malformed URL parsing, hostname, and port `ValueError` cases to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order. The compatibility smoke adds a read-only baseline with dual exact rollout roots and bounded writer-settle/fail-closed evidence; it does not replace runtime acceptance.
 
 ## What this does
 
@@ -211,7 +211,7 @@ For a non-trivial task, the final line reports one observed outcome. A delegated
 
 ## Public Beta Feedback
 
-`v4.0.0` remains the Stable release. `v4.1.0-rc5` is the current Preview prerelease and public beta.
+`v4.0.0` remains the Stable release. `v4.1.0-rc6` is the current Preview prerelease and public beta.
 
 Use the matching native GitHub Issue Form for install, upgrade, selector, Luna delegation, Delegation Receipt, rollback, or uninstall issues. Successful compatibility reports are welcome too:
 
@@ -291,11 +291,11 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | RC5 O1–O10 documented-environment record, including O4/O9 | Bounded evidence only |
 | RC5 Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
 | RC5 product-runtime regression | No confirmed product-runtime regression |
-| RC6 Source Commit A exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
-| RC6 immutable candidate setup contract | Documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; not the default entry |
+| RC6 runtime Source Commit exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
+| RC6 immutable setup document | Documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; current default entry, not runtime source |
 | RC6 RC5→RC6 fake-home lifecycle | Local installer/lifecycle tests PASS; selector and manifest only |
-| RC6 real Global upgrade and O1–O10 | `NOT RUN` |
-| RC6 Final O4/O9 re-certification | `NOT RUN`; source-side rollout compatibility implementation is not final runtime evidence |
+| RC6 real Global upgrade and O1–O10 | `PASS` in the documented environment; bounded evidence |
+| RC6 Final O4/O9 re-certification | `PASS` through the isolated acceptance harness |
 | RC6 product-runtime regression | No confirmed product-runtime regression |
 | RC4 source suite | `PASS` |
 | RC4 real Global upgrade | `PASS` |

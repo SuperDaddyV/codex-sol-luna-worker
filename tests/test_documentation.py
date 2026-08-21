@@ -29,7 +29,7 @@ ISSUE_FORMS = {
 PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
-PINNED_SETUP_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
+PINNED_SETUP_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
 RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 RC5_SETUP_CONTRACT_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
 RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
@@ -69,12 +69,12 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("actions/workflows/validate.yml/badge.svg", content)
             self.assertIn("releases/tag/v4.0.0", content)
             self.assertIn("img.shields.io/badge/stable-v4.0.0", content)
-            self.assertIn("releases/tag/v4.1.0-rc5", content)
-            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc5", content)
+            self.assertIn("releases/tag/v4.1.0-rc6", content)
+            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc6", content)
             self.assertIn("github/license", content)
             self.assertIn(heading, content)
 
-    def test_rc5_installation_entry_declares_hard_prerequisites(self):
+    def test_rc6_installation_entry_declares_hard_prerequisites(self):
         english = text(README)
         chinese = text(README_ZH)
         for content in (english, chinese):
@@ -90,20 +90,20 @@ class DocumentationTests(unittest.TestCase):
                 "git ls-remote",
             ):
                 self.assertIn(phrase, content)
-            self.assertIn(RC5_SETUP_CONTRACT_COMMIT, content)
+            self.assertIn(RC6_SETUP_CONTRACT_COMMIT, content)
 
         self.assertIn("Codex Desktop alone is not sufficient", english)
         self.assertIn("Git for the required immutable exact-commit checkout", english)
         self.assertIn("仅安装 Codex Desktop 还不够", chinese)
         self.assertIn("必须使用 Git 获取并校验不可变的精确 commit", chinese)
 
-    def test_rc6_candidate_does_not_replace_rc5_default_installation_entry(self):
+    def test_rc6_release_replaces_rc5_default_installation_entry(self):
         english = text(README)
         chinese = text(README_ZH)
         for content in (english, chinese):
             setup_url = (
                 "https://raw.githubusercontent.com/SuperDaddyV/"
-                f"codex-sol-luna-worker/{RC5_SETUP_CONTRACT_COMMIT}/"
+                f"codex-sol-luna-worker/{RC6_SETUP_CONTRACT_COMMIT}/"
                 "CODEX_SOL_LUNA_SETUP.md"
             )
             self.assertEqual(content.count(setup_url), 2)
@@ -111,26 +111,26 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(RC6_SETUP_CONTRACT_COMMIT, content)
         self.assertIn(
-            "The default installation path is now the immutable RC5 Setup contract",
+            "The default installation path is the immutable RC6 Setup contract",
             english,
         )
         self.assertIn(
-            "RC6 is not tagged, published, or the default installation target",
+            "the installer runtime source remains separately fixed at",
             english,
         )
         self.assertIn(
-            "RC6 Final O4/O9 re-certification | `NOT RUN`",
+            "RC6 Final O4/O9 re-certification | `PASS`",
             english,
         )
         self.assertIn(
-            "默认安装路径现在使用当前 Preview／Public Beta 的 immutable RC5 Setup contract",
+            "默认安装路径使用当前 Preview／Public Beta 的 immutable RC6 Setup contract",
             chinese,
         )
         self.assertIn(
-            "RC6 尚未打 tag、发布，也不是默认安装目标",
+            "installer runtime source 则单独固定为",
             chinese,
         )
-        self.assertIn("RC6 最终 O4/O9 再认证 | `NOT RUN`", chinese)
+        self.assertIn("RC6 最终 O4/O9 再认证 | 通过 isolated acceptance harness 获得 `PASS`", chinese)
 
     def test_setup_preflight_stops_missing_dependencies_before_writes(self):
         content = text(SETUP)
@@ -241,13 +241,13 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("CODEX_HOME", content)
             self.assertIn(whole_warning, content)
         self.assertIn("`v4.0.0` remains the Stable release", english)
-        self.assertIn("`v4.1.0-rc5` is the current Preview prerelease", english)
+        self.assertIn("`v4.1.0-rc6` is the current Preview prerelease", english)
         self.assertIn("`v4.0.0` 仍是 Stable 稳定版本", chinese)
-        self.assertIn("`v4.1.0-rc5` 是当前 Preview prerelease", chinese)
+        self.assertIn("`v4.1.0-rc6` 是当前 Preview prerelease", chinese)
         self.assertIn("欢迎提交 Bug 报告", chinese)
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
 
-    def test_rc4_historical_flow_and_rc5_rc6_status_are_explicit(self):
+    def test_rc4_rc5_history_and_rc6_current_status_are_explicit(self):
         source_docs = (
             ROOT / "RUNTIME_TESTS.md",
             ROOT / "ARCHITECTURE.md",
@@ -268,25 +268,20 @@ class DocumentationTests(unittest.TestCase):
             "https://raw.githubusercontent.com/SuperDaddyV/"
             f"codex-sol-luna-worker/{PINNED_SETUP_COMMIT}/CODEX_SOL_LUNA_SETUP.md"
         )
-        preview_setup_url = (
-            "https://raw.githubusercontent.com/SuperDaddyV/"
-            f"codex-sol-luna-worker/{RC5_SETUP_CONTRACT_COMMIT}/"
-            "CODEX_SOL_LUNA_SETUP.md"
-        )
         for path, preview_heading, publication_row, runtime_row in (
             (
                 README,
                 "## Current Preview",
                 "| Publication | `PUBLISHED — GitHub Prerelease / Public Beta` |",
-                "| RC5 O1–O10 record, including O4/O9 | "
-                "`documented-environment recorded PASS` remains bounded evidence |",
+                "| RC6 O1–O10 and Runtime Cases A/B/C/D | "
+                "`PASS` in the documented environment; bounded evidence |",
             ),
             (
                 README_ZH,
                 "## 当前 Preview",
                 "| 发布状态 | `已发布 — GitHub Prerelease／Public Beta` |",
-                "| RC5 O1–O10 记录（包括 O4/O9） | "
-                "`documented-environment recorded PASS` 仍是有边界的证据 |",
+                "| RC6 O1–O10 和 Runtime Cases A/B/C/D | "
+                "在 documented environment `PASS`；仍是有边界的证据 |",
             ),
         ):
             content = text(path)
@@ -301,12 +296,12 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(runtime_row, content)
             if path == README:
                 self.assertIn(
-                    "The documented-environment RC5 O1–O10 record remains bounded evidence",
+                    "The documented-environment RC5 O1–O10 record remains bounded historical evidence",
                     content,
                 )
             else:
                 self.assertIn(
-                    "documented-environment 的 RC5 O1–O10 记录仍是有边界的证据",
+                    "documented-environment 的 RC5 O1–O10 记录仍是有边界的历史证据",
                     content,
                 )
             if path == README:
@@ -329,18 +324,17 @@ class DocumentationTests(unittest.TestCase):
             ):
                 self.assertIn(feature, content)
             self.assertEqual(content.count(default_setup_url), 2)
-            self.assertEqual(content.count(preview_setup_url), 2)
             self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
             self.assertLess(content.index(default_setup_url), content.index(preview_heading))
-            self.assertGreater(content.rfind(preview_setup_url), content.index(preview_heading))
+            self.assertGreater(content.rfind(default_setup_url), content.index(preview_heading))
             preview_start = content.index(preview_heading)
             preview_end = content.index("\n## ", preview_start + len(preview_heading))
             preview_section = content[preview_start:preview_end]
             self.assertNotIn("NOT RUN", preview_section)
             for placeholder in ("<APPROVED_40_HEX_COMMIT>", "<TBD>", "pending"):
                 self.assertNotIn(placeholder, preview_section)
-            self.assertIn("releases/tag/v4.1.0-rc5", content)
-            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc5", content)
+            self.assertIn("releases/tag/v4.1.0-rc6", content)
+            self.assertIn("img.shields.io/badge/preview-v4.1.0--rc6", content)
             self.assertNotIn("NOT PUBLISHED", content)
             self.assertNotIn("尚未发布", content)
         setup = text(SETUP)
@@ -355,11 +349,11 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, text(path))
             self.assertIn("prerelease candidate", text(path).lower())
         self.assertIn(
-            "now also the default installation target/path through the immutable RC5 entry above",
+            "is the default installation target/path through the immutable RC6 entry above",
             text(README),
         )
         self.assertIn(
-            "现在也通过上方 immutable RC5 entry 成为默认安装目标／路径",
+            "并通过上方 immutable RC6 entry 成为默认安装目标／路径",
             text(README_ZH),
         )
         self.assertIn("v4.1.0-rc3", text(ROOT / "CHANGELOG.md"))
@@ -593,7 +587,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, combined)
         self.assertEqual(
             english_shas,
-            [PINNED_SETUP_COMMIT, RC5_SETUP_CONTRACT_COMMIT],
+            [PINNED_SETUP_COMMIT, RC6_SETUP_CONTRACT_COMMIT],
         )
         for sha in english_shas:
             self.assertRegex(sha, r"^[0-9a-f]{40}$")
