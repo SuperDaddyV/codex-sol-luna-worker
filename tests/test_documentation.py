@@ -30,7 +30,8 @@ PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
 PINNED_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
 RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
-RC5_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
+RC5_SETUP_CONTRACT_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
+RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
 RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -483,6 +484,8 @@ class DocumentationTests(unittest.TestCase):
         english = text(README)
         chinese = text(README_ZH)
         combined = english + "\n" + chinese
+        for content in (english, chinese):
+            self.assertNotIn(RC5_STALE_SETUP_CONTRACT_COMMIT, content)
         self.assertNotIn(
             "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/"
             "CODEX_SOL_LUNA_SETUP.md",

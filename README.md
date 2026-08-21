@@ -75,7 +75,7 @@ RC5 contains:
 | --- | --- |
 | Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Source validation `PASS` |
 | Windows, Ubuntu, and macOS source CI | `PASS` |
-| Immutable setup contract | Available at Commit `7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9` |
+| Immutable setup contract | Available at Commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a` |
 | Publication | `NOT PUBLISHED` |
 | Runtime acceptance O1–O10 | `documented-environment recorded PASS` |
 
@@ -84,7 +84,7 @@ Advanced users who accept candidate risk may test the experimental, non-default 
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/ccd9d84da2f74df9ca2d919729b75eebf2dac27a/CODEX_SOL_LUNA_SETUP.md
 
 Before cloning or downloading source, creating a temporary directory, writing
 probe state, or invoking the installer, run a read-only prerequisite preflight.

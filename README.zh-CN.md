@@ -74,7 +74,7 @@ RC5 包含：
 | --- | --- |
 | Source Commit `5ae88ff9190b31174c55a6136c0c8c8611d0b34c` | Source validation `PASS` |
 | Windows、Ubuntu、macOS source CI | `PASS` |
-| Immutable setup contract | 已在 Commit `7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9` 提供 |
+| Immutable setup contract | 已在 Commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a` 提供 |
 | 发布状态 | `NOT PUBLISHED` |
 | Runtime acceptance O1–O10 | `documented-environment recorded PASS` |
 
@@ -83,7 +83,7 @@ RC5 包含：
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/ccd9d84da2f74df9ca2d919729b75eebf2dac27a/CODEX_SOL_LUNA_SETUP.md
 
 在 clone 或下载 source、创建临时目录、写入 probe state、调用任何 installer
 模式之前，先完成只读依赖预检。不要安装系统依赖、修改 PATH，或搜索 Codex
