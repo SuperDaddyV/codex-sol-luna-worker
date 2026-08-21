@@ -3,8 +3,8 @@
 [English](README.md)
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
-[![Stable: v4.0.0](https://img.shields.io/badge/stable-v4.0.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.0.0)
-[![Preview: v4.1.0-rc6](https://img.shields.io/badge/preview-v4.1.0--rc6-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc6)
+[![Stable: v4.1.0](https://img.shields.io/badge/stable-v4.1.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0)
+[![Historical Preview: v4.1.0-rc6](https://img.shields.io/badge/historical_preview-v4.1.0--rc6-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc6)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
 让 GPT-5.6 Sol 专注于理解、规划、编排、歧义处理与最终验收，让原生 GPT-5.6 Luna worker 承担边界清楚的执行任务。
@@ -13,11 +13,11 @@
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
 > [!NOTE]
-> `v4.1.0-rc6` 是当前已发布的 GitHub Prerelease／Preview／Public Beta 版本。`v4.0.0` 仍是 Stable 稳定版本。
+> `v4.1.0` 是当前 Stable 稳定版本和默认安装目标。`v4.1.0-rc6` 保持为不可变的历史 GitHub Prerelease／Preview／Public Beta。
 >
-> RC6 仓库验证和 exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。其记录的 real Global upgrade、fresh-task O1–O10 acceptance、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 已在一个原生 Windows Codex 环境通过。这些证据受环境和场景限制，不是通用 runtime 或 Stable 认证。
+> Stable Source Commit A 的仓库验证和 exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。RC6→Stable fake-home 验证只改变 ownership manifest；独立的发布前 compatibility smoke 针对未改变的已安装产品运行时通过全部六项检查。RC6 记录的 real Global upgrade、fresh-task O1–O10 acceptance、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 仍是一个原生 Windows Codex 环境中的有边界证据，不是通用 runtime 认证。
 >
-> immutable RC6 Setup 文档固定在 `3e19e2f547c6fca2a888a176767e8dc69240acbc`；installer runtime source 则单独固定为 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`。RC5 现为历史 Preview。
+> immutable Stable Setup 文档固定在 `2c912b1e1a0fdbd115eb605517fde9385b633745`；installer runtime source 则单独固定为 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`。RC6 和 RC5 都是历史 Preview。
 >
 > RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 的 evidence-gated Receipt 行为属于历史发布证据。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
 
@@ -50,7 +50,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/3e19e2f547c6fca2a888a176767e8dc69240acbc/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md
 
 根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
 必须使用项目现有安装器，不要覆盖无关的用户配置。
@@ -59,13 +59,13 @@ https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/3e19e2f547c6
 ```
 
 > [!WARNING]
-> 默认安装路径使用当前 Preview／Public Beta 的 immutable RC6 Setup contract。RC6 不是 Stable；`v4.0.0` 仍是 Stable；不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 默认安装路径使用 immutable `v4.1.0` Stable Setup contract。不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
-## 当前 Preview
+## 当前 Stable
 
-`v4.1.0-rc6` 是当前已发布、面向高级用户使用的 GitHub Prerelease／Preview／Public Beta，并通过上方 immutable RC6 entry 成为默认安装目标／路径。RC6 不是 Stable；Stable 仍是 `v4.0.0`。
+`v4.1.0` 是当前 Stable 稳定版本，并通过上方 immutable Stable entry 成为默认安装目标／路径。
 
-RC6 包含：
+Stable 包含：
 
 - Observability metadata
 - Sol/Luna Status
@@ -76,21 +76,22 @@ RC6 包含：
 
 | 发布依据 | 状态 |
 | --- | --- |
-| Installer runtime Source Commit `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49` | Repository validation and exact-SHA CI 已在 Windows、Ubuntu、macOS 通过 |
-| Release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b` | Exact-SHA CI 已在 Windows、Ubuntu、macOS 通过 |
-| Immutable setup 文档 | 已在 documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc` 提供；该锚点不是 runtime source |
-| 发布状态 | `已发布 — GitHub Prerelease／Public Beta` |
+| Installer runtime Source Commit `67a72f8accc5d53ef04ff8d64d8838e397ceecda` | Repository validation and exact-SHA CI 已在 Windows、Ubuntu、macOS 通过 |
+| Immutable Stable setup 文档 | 已在 documentation Commit `2c912b1e1a0fdbd115eb605517fde9385b633745` 提供；该锚点不是 runtime source |
+| RC6→Stable fake-home lifecycle | `PASS`；只改变 `sol-luna-v4/install-manifest.json` |
+| 独立 fresh-task compatibility smoke | CLI、Luna capability、Selector、Delegation、Protected state、Runtime contract 和最终 Compatibility 全部 `PASS` |
+| 发布状态 | `STABLE — 非 draft、非 prerelease GitHub Release` |
 | Real RC5→RC6 Global upgrade | 在一个已记录的原生 Windows Codex 环境 `PASS` |
 | RC6 O1–O10 和 Runtime Cases A/B/C/D | 在 documented environment `PASS`；仍是有边界的证据 |
 | RC6 最终 O4/O9 再认证 | 通过 isolated acceptance harness 获得 `PASS` |
 | Product-runtime regression | 没有已确认的 product-runtime regression |
 
-已发布的 RC6 setup contract 就是上方默认入口。愿意承担 Preview 风险的高级用户也应使用这份 immutable contract。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
+已发布的 Stable setup contract 就是上方默认入口。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
 
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/3e19e2f547c6fca2a888a176767e8dc69240acbc/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md
 
 在 clone 或下载 source、创建临时目录、写入 probe state、调用任何 installer
 模式之前，先完成只读依赖预检。不要安装系统依赖、修改 PATH，或搜索 Codex
@@ -115,7 +116,13 @@ Codex CLI、Python、Git 或其他下载工具；不要自动修改 PATH、代�
 dry-run、backup、installation 和 validation。
 ```
 
-请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。RC6 O1–O10 和最终 O4/O9 已在 documented environment 通过，但仍是受环境和场景限制的证据。没有已确认的 product-runtime regression。
+请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。Stable 保留已验收的 RC6 产品运行时，只改变已安装 manifest 的版本／source metadata。RC6 O1–O10 和最终 O4/O9 仍是受环境和场景限制的证据。没有已确认的 product-runtime regression。
+
+## RC6 历史 Preview
+
+`v4.1.0-rc6` 保持为不可变的历史 GitHub Prerelease／Preview／Public Beta。其 runtime Source Commit 为 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`，immutable setup 文档仍位于 documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`。其 annotated tag 和 Release 保持不变；不要再把历史 RC6 入口作为当前默认入口。
+
+RC6 记录的 real Global upgrade、O1–O10、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 仍是一个原生 Windows Codex 环境中的有边界历史证据。Stable 原样保留该产品 payload，差异仅是已安装 manifest 的版本／source metadata。
 
 ## RC5 历史 Preview
 
@@ -239,9 +246,9 @@ Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chat
 
 `0 Luna` 不等于安装失败。简单任务、推理或架构任务、存在歧义的任务以及紧耦合任务本就可能由 Sol 保留。Receipt 只是低噪声执行摘要，不是 runtime attestation；正式验收仍要核对真实 child metadata。
 
-## Public Beta 反馈
+## 反馈
 
-`v4.0.0` 仍是 Stable 稳定版本；`v4.1.0-rc6` 是当前 Preview prerelease／公开测试版本。
+`v4.1.0` 是当前 Stable 稳定版本；`v4.1.0-rc6` 保持为历史 Preview prerelease／公开测试版本。
 
 可反馈安装、升级、selector、Luna 委派、Delegation Receipt、rollback 和 uninstall 问题；欢迎提交 Bug 报告，也欢迎提交成功的兼容性报告。请选择对应的原生 GitHub Issue Form：
 
@@ -323,12 +330,16 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 | Sol Acceptance | `PASS` |
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
+| Stable runtime Source Commit exact-SHA CI | Windows、Ubuntu、macOS 均已通过 |
+| Stable immutable setup 文档 | Documentation Commit `2c912b1e1a0fdbd115eb605517fde9385b633745`；当前默认入口，不是 runtime source |
+| RC6→Stable fake-home lifecycle | 本地 installer/lifecycle tests PASS；仅 manifest 变化 |
+| Stable 发布前 compatibility smoke | 六项检查和最终 Compatibility 全部 `PASS` |
 | RC5 repository validation and exact-SHA CI | 已在 Windows、Ubuntu、macOS 通过 |
 | RC5 O1–O10 documented-environment 记录（包括 O4/O9） | 仅为有边界的证据 |
 | RC5 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
 | RC5 product-runtime regression | 没有已确认的 product-runtime regression |
 | RC6 runtime Source Commit exact-SHA CI | Windows、Ubuntu、macOS 均已通过 |
-| RC6 immutable setup 文档 | Documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`；当前默认入口，不是 runtime source |
+| RC6 immutable setup 文档 | 历史 Documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`；不是当前默认入口 |
 | RC6 RC5→RC6 fake-home lifecycle | 本地 installer/lifecycle tests PASS；仅 selector 和 manifest 变化 |
 | RC6 real Global upgrade 和 O1–O10 | 在 documented environment `PASS`；仍是有边界的证据 |
 | RC6 最终 O4/O9 再认证 | 通过 isolated acceptance harness 获得 `PASS` |
