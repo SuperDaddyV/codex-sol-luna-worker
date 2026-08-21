@@ -2471,6 +2471,336 @@ class Rc5RuntimeAcceptanceHarnessTests(unittest.TestCase):
             with self.subTest(relative=relative):
                 self.assertEqual(HARNESS._runtime_path_category(relative), HARNESS.UNKNOWN)
 
+    def test_sandbox_migration_exact_regular_file_is_allowed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            target = fake_home / ".sandbox_migration"
+            audits = {}
+
+            HARNESS._run_with_real_home_audit(
+                label="SANDBOX_MIGRATION_VALID",
+                real_home=real_home,
+                audits=audits,
+                isolated_home=fake_home,
+                action=lambda: target.write_bytes(b"abc"),
+            )
+
+            self.assertTrue(
+                audits["SANDBOX_MIGRATION_VALID"]["isolated_home"][
+                    "runtime_state_valid"
+                ]
+            )
+            entry = HARNESS._isolated_home_snapshot(fake_home)["entries"][
+                ".sandbox_migration"
+            ]
+            self.assertEqual(
+                HARNESS._runtime_path_category(".sandbox_migration"),
+                HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            )
+            self.assertEqual(entry["type"], "file")
+            self.assertEqual(entry["link_count"], 1)
+            self.assertFalse(entry["reparse"])
+
+    def test_sandbox_migration_wrong_type_and_reparse_are_rejected(self):
+        for scenario in ("directory", "reparse"):
+            with self.subTest(scenario=scenario):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    real_home, fake_home = self._make_isolated_home_fixture(root)
+                    target = fake_home / ".sandbox_migration"
+                    audits = {}
+
+                    if scenario == "directory":
+                        action = lambda: target.mkdir()
+                    else:
+                        external = root / "external-sandbox"
+                        external.mkdir()
+
+                        def create_reparse():
+                            try:
+                                target.symlink_to(external, target_is_directory=True)
+                            except OSError as exc:
+                                self.skipTest(
+                                    f"reparse creation is unavailable: {exc}"
+                                )
+
+                        action = create_reparse
+
+                    with self.assertRaisesRegex(
+                        HARNESS.HarnessFailure,
+                        "isolated CODEX_HOME runtime state is invalid",
+                    ):
+                        HARNESS._run_with_real_home_audit(
+                            label=f"SANDBOX_MIGRATION_{scenario.upper()}",
+                            real_home=real_home,
+                            audits=audits,
+                            isolated_home=fake_home,
+                            action=action,
+                        )
+
+    def test_skills_observed_safe_structure_is_allowed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            skills = fake_home / "skills"
+            audits = {}
+
+            def create_observed_structure():
+                for index in range(28):
+                    (skills / f"directory-{index}").mkdir(parents=True)
+                for index in range(28):
+                    (skills / f"directory-{index}" / "skill.txt").write_bytes(
+                        b"skill\n"
+                    )
+                for index in range(26):
+                    (skills / f"root-skill-{index}.txt").write_bytes(b"skill\n")
+
+            HARNESS._run_with_real_home_audit(
+                label="SKILLS_OBSERVED_STRUCTURE",
+                real_home=real_home,
+                audits=audits,
+                isolated_home=fake_home,
+                action=create_observed_structure,
+            )
+
+            self.assertTrue(
+                audits["SKILLS_OBSERVED_STRUCTURE"]["isolated_home"][
+                    "runtime_state_valid"
+                ]
+            )
+            snapshot = HARNESS._isolated_home_snapshot(fake_home)
+            descendants = {
+                relative: entry
+                for relative, entry in snapshot["entries"].items()
+                if relative.startswith("skills/")
+            }
+            self.assertEqual(
+                HARNESS._runtime_path_category("skills"),
+                HARNESS.CODEX_PLATFORM_RUNTIME_STATE,
+            )
+            self.assertEqual(
+                sum(entry["type"] == "directory" for entry in descendants.values()),
+                28,
+            )
+            self.assertEqual(
+                sum(entry["type"] == "file" for entry in descendants.values()),
+                54,
+            )
+            self.assertTrue(all(not entry["reparse"] for entry in descendants.values()))
+            self.assertTrue(
+                all(
+                    entry["type"] != "file" or entry["link_count"] == 1
+                    for entry in descendants.values()
+                )
+            )
+
+    def test_skills_and_staging_root_file_replacements_are_rejected(self):
+        for relative, label in (
+            ("skills", "SKILLS_ROOT_FILE"),
+            (
+                "plugins/.remote-plugin-install-staging",
+                "STAGING_ROOT_FILE",
+            ),
+        ):
+            with self.subTest(relative=relative):
+                with tempfile.TemporaryDirectory() as temporary:
+                    real_home, fake_home = self._make_isolated_home_fixture(
+                        Path(temporary)
+                    )
+                    target = fake_home / relative
+                    audits = {}
+
+                    with self.assertRaisesRegex(
+                        HARNESS.HarnessFailure,
+                        "isolated CODEX_HOME runtime state is invalid",
+                    ):
+                        def replace_root_with_file():
+                            target.parent.mkdir(parents=True, exist_ok=True)
+                            target.write_bytes(b"must be a directory\n")
+
+                        HARNESS._run_with_real_home_audit(
+                            label=label,
+                            real_home=real_home,
+                            audits=audits,
+                            isolated_home=fake_home,
+                            action=replace_root_with_file,
+                        )
+
+    def test_staging_safe_structure_and_persistent_empty_root_are_allowed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            staging = fake_home / "plugins/.remote-plugin-install-staging"
+            audits = {}
+
+            def create_bundle_structure():
+                bundle = staging / "remote-plugin-bundle"
+                (bundle / "nested").mkdir(parents=True)
+                (bundle / "manifest.json").write_bytes(b"{}\n")
+                (bundle / "nested" / "payload.bin").write_bytes(b"payload\n")
+
+            HARNESS._run_with_real_home_audit(
+                label="STAGING_SAFE_STRUCTURE",
+                real_home=real_home,
+                audits=audits,
+                isolated_home=fake_home,
+                action=create_bundle_structure,
+            )
+            self.assertTrue(
+                audits["STAGING_SAFE_STRUCTURE"]["isolated_home"][
+                    "runtime_state_valid"
+                ]
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            real_home, fake_home = self._make_isolated_home_fixture(Path(temporary))
+            staging = fake_home / "plugins/.remote-plugin-install-staging"
+            audits = {}
+
+            HARNESS._run_with_real_home_audit(
+                label="STAGING_PERSISTENT_EMPTY_ROOT",
+                real_home=real_home,
+                audits=audits,
+                isolated_home=fake_home,
+                action=lambda: staging.mkdir(parents=True),
+            )
+            self.assertTrue(staging.is_dir())
+            self.assertEqual(list(staging.iterdir()), [])
+            self.assertTrue(
+                audits["STAGING_PERSISTENT_EMPTY_ROOT"]["isolated_home"][
+                    "runtime_state_valid"
+                ]
+            )
+
+    def test_skills_and_staging_external_reparse_escapes_are_rejected(self):
+        for relative, label in (
+            ("skills", "SKILLS_EXTERNAL_REPARSE"),
+            (
+                "plugins/.remote-plugin-install-staging",
+                "STAGING_EXTERNAL_REPARSE",
+            ),
+        ):
+            with self.subTest(relative=relative):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    real_home, fake_home = self._make_isolated_home_fixture(root)
+                    external = root / "external-runtime"
+                    external.mkdir()
+                    target = fake_home / relative
+                    audits = {}
+
+                    def create_external_reparse():
+                        try:
+                            target.parent.mkdir(parents=True, exist_ok=True)
+                            target.symlink_to(external, target_is_directory=True)
+                        except OSError as exc:
+                            self.skipTest(
+                                f"reparse creation is unavailable: {exc}"
+                            )
+
+                    with self.assertRaisesRegex(
+                        HARNESS.HarnessFailure,
+                        "isolated CODEX_HOME runtime state is invalid",
+                    ):
+                        HARNESS._run_with_real_home_audit(
+                            label=label,
+                            real_home=real_home,
+                            audits=audits,
+                            isolated_home=fake_home,
+                            action=create_external_reparse,
+                        )
+
+    @unittest.skipUnless(os.name == "nt", "Windows junction regression")
+    def test_skills_and_staging_external_junction_descendants_are_rejected(self):
+        for relative, label in (
+            ("skills/external", "SKILLS_EXTERNAL_JUNCTION"),
+            (
+                "plugins/.remote-plugin-install-staging/external",
+                "STAGING_EXTERNAL_JUNCTION",
+            ),
+        ):
+            with self.subTest(relative=relative):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    real_home, fake_home = self._make_isolated_home_fixture(root)
+                    external = root / "external-runtime"
+                    external.mkdir()
+                    target = fake_home / relative
+                    audits = {}
+
+                    def create_external_junction():
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        self._create_junction(target, external)
+
+                    try:
+                        with self.assertRaisesRegex(
+                            HARNESS.HarnessFailure,
+                            "isolated CODEX_HOME runtime state is invalid",
+                        ):
+                            HARNESS._run_with_real_home_audit(
+                                label=label,
+                                real_home=real_home,
+                                audits=audits,
+                                isolated_home=fake_home,
+                                action=create_external_junction,
+                            )
+                    finally:
+                        if os.path.lexists(target):
+                            target.unlink()
+
+    def test_new_runtime_files_and_trees_unsafe_hardlinks_are_rejected(self):
+        for relative, label in (
+            (".sandbox_migration", "SANDBOX_MIGRATION_UNSAFE_HARDLINK"),
+            ("skills/unsafe.txt", "SKILLS_UNSAFE_HARDLINK"),
+            (
+                "plugins/.remote-plugin-install-staging/unsafe.bin",
+                "STAGING_UNSAFE_HARDLINK",
+            ),
+        ):
+            with self.subTest(relative=relative):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    real_home, fake_home = self._make_isolated_home_fixture(root)
+                    external = root / "external-runtime-file"
+                    external.write_bytes(b"external\n")
+                    target = fake_home / relative
+                    audits = {}
+
+                    def create_unsafe_hardlink():
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        try:
+                            os.link(external, target)
+                        except OSError as exc:
+                            self.skipTest(
+                                f"hardlink creation is unavailable: {exc}"
+                            )
+
+                    with self.assertRaisesRegex(
+                        HARNESS.HarnessFailure,
+                        "isolated CODEX_HOME runtime state is invalid",
+                    ):
+                        HARNESS._run_with_real_home_audit(
+                            label=label,
+                            real_home=real_home,
+                            audits=audits,
+                            isolated_home=fake_home,
+                            action=create_unsafe_hardlink,
+                        )
+
+    def test_new_runtime_namespace_names_remain_exact_and_fail_closed(self):
+        rejected = (
+            ".sandbox_migration.bak",
+            ".sandbox_other",
+            "skills-extra/file.txt",
+            "skills/../outside.txt",
+            "plugins/.remote-plugin-install-staging-extra/file.txt",
+            "plugins/.remote-plugin-install-staging/../outside.txt",
+            "plugins/other/state.json",
+        )
+        for relative in rejected:
+            with self.subTest(relative=relative):
+                self.assertEqual(
+                    HARNESS._runtime_path_category(relative), HARNESS.UNKNOWN
+                )
+
     def test_namespace_root_replaced_by_file_fails(self):
         for relative in HARNESS.EXPECTED_RUNTIME_DIRECTORY_ROOTS:
             with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:

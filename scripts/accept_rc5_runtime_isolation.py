@@ -72,6 +72,8 @@ PLATFORM_RUNTIME_ROOTS: tuple[str, ...] = (
     "browser/sessions",
     "cache/remote_plugin_catalog",
     "plugins/cache",
+    "plugins/.remote-plugin-install-staging",
+    "skills",
     "tmp/arg0",
 )
 VISUALIZATIONS_RUNTIME_ROOT = "visualizations"
@@ -84,7 +86,10 @@ VISUALIZATION_RUNTIME_ROOT_PATTERN = re.compile(
 SESSION_RUNTIME_TREE_PATHS: tuple[str, ...] = (
     *PLATFORM_RUNTIME_ROOTS,
 )
-SESSION_RUNTIME_FILE_PATHS: tuple[str, ...] = ("session_index.jsonl",)
+SESSION_RUNTIME_FILE_PATHS: tuple[str, ...] = (
+    "session_index.jsonl",
+    ".sandbox_migration",
+)
 CODEX_PLUGIN_CACHE_ROOT = "plugins/cache"
 CODEX_PLUGIN_ROOT = CODEX_PLUGIN_CACHE_ROOT.split("/", 1)[0]
 SESSION_RUNTIME_DISCOVERY_ROOTS: tuple[str, ...] = (

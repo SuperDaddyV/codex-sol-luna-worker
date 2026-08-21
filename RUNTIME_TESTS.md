@@ -69,12 +69,18 @@ acceptance.
 Runtime attribution is confined to the isolated home. The existing explicit
 Codex session, session-index, app-cache, and active-exec namespaces remain
 narrowly allowlisted. `CODEX_PLATFORM_RUNTIME_STATE` additionally accepts only
-structurally valid entries under `browser/sessions/**`,
-`cache/remote_plugin_catalog/**`, `plugins/cache/**`, `tmp/arg0/**`, and a
-validated runtime subtree under `visualizations/`; their broader parent trees
-are not allowlisted. An internal `plugins/cache/**` directory reparse is allowed
-only when its resolved target remains inside both the isolated `CODEX_HOME` and
-plugin-cache namespace, does not overlap protected state, and does not loop.
+the exact root-level `.sandbox_migration` safe regular file, safe ordinary
+objects under the exact `skills/**` and
+`plugins/.remote-plugin-install-staging/**` trees, structurally valid entries
+under `browser/sessions/**`, `cache/remote_plugin_catalog/**`,
+`plugins/cache/**`, `tmp/arg0/**`, and a validated runtime subtree under
+`visualizations/`; their broader parent trees are not allowlisted. A normal
+remote-plugin install clears staging descendants but may retain the empty exact
+staging root, so the contract does not require that root to disappear. An
+internal `plugins/cache/**` directory reparse is allowed only when its resolved
+target remains inside both the isolated `CODEX_HOME` and plugin-cache
+namespace, does not overlap protected state, and does not loop. Reparses are
+not allowed in the new staging or skills trees.
 Root SQLite storage is restricted to the `goals`, `logs`, `memories`, `queue`,
 `state`, and `thread_history` ID families with `-wal` and `-shm` sidecars coupled
 to a safe base. Global `*.sqlite` and `*.db` suffix rules are forbidden.

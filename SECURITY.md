@@ -51,13 +51,18 @@ count, and reparse status. Unrelated real-home runtime activity is not used for
 RC5 attribution. Runtime changes are classified only inside the isolated home.
 `CODEX_PLATFORM_RUNTIME_STATE` retains the existing
 explicit session, session-index, app-cache, and active-exec paths and adds only
-the exact `browser/sessions`, `cache/remote_plugin_catalog`, `plugins/cache`,
-and `tmp/arg0` trees plus a structurally validated visualization subtree. Root
+the exact root-level `.sandbox_migration` safe regular file; the exact
+`skills/**` and `plugins/.remote-plugin-install-staging/**` trees with safe
+ordinary objects; the exact `browser/sessions`, `cache/remote_plugin_catalog`,
+`plugins/cache`, and `tmp/arg0` trees; plus a structurally validated
+visualization subtree. The remote-plugin staging root may persist empty after
+normal cleanup, but its broader `plugins/**` parent is not allowed. Root
 SQLite storage accepts only the named `goals`, `logs`, `memories`, `queue`,
 `state`, and `thread_history` ID families, with `-wal` and `-shm` sidecars bound
 to a safe base. Internal plugin-cache directory reparses use the same
 resolved-target contract in real-home and isolated-home validation; external,
-protected, escaping, and looping targets are rejected. Unsupported path types,
+protected, escaping, and looping targets are rejected. Reparses are not allowed
+in the staging or skills trees. Unsupported path types,
 unexpected hardlinks, protected-state changes, and isolated writes outside the explicit
 categories fail closed. The result reports only inventory metadata, hashes,
 classifications, and symbolic category names, not credentials or real
