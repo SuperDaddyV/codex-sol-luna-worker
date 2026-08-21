@@ -5,7 +5,9 @@
 `v4.1.0-rc6` is a master-tree source candidate, not tagged, published, Stable,
 or the default installation target. RC6 Source Commit A is
 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
-Ubuntu, and macOS. The published/default Preview remains `v4.1.0-rc5` through
+Ubuntu, and macOS. Its immutable candidate setup contract is documentation
+Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; it is not the default entry or
+runtime source. The published/default Preview remains `v4.1.0-rc5` through
 immutable setup anchor `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`, and
 `v4.0.0` remains Stable. The documented-environment RC5 O1-O10 record remains
 bounded evidence; Final O4/O9 re-certification was not obtained due to

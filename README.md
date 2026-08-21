@@ -122,6 +122,8 @@ Review the contract first, begin with its dry-run, let the installer create its 
 
 `v4.1.0-rc6` is the current master-tree source candidate, not a tag, GitHub Release, Preview, Stable release, or default installation target. Its Source Commit A is `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS. The published/default Preview remains RC5 through the immutable setup entry above, and Stable remains `v4.0.0`.
 
+The immutable RC6 candidate setup contract is recorded at documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`. It is not the default installation entry and is never the installer runtime source; the contract remains pinned to Source Commit A.
+
 RC6 candidate evidence is bounded to repository validation and fake-home lifecycle coverage. The RC5→RC6 installer transition changes only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`; idempotency, backup, exact rollback, and ownership fail-closed behavior are covered by local tests. The selector change normalizes malformed URL parsing, hostname, and port `ValueError` cases to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order. The compatibility smoke adds a read-only baseline with dual exact rollout roots and bounded writer-settle/fail-closed evidence; the harness does not modify product runtime.
 
 RC6 real Global upgrade, O1–O10 acceptance, and Final O4/O9 re-certification are `NOT RUN`. The source-side `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` fix is implemented, but that implementation is not final runtime evidence. No confirmed product-runtime regression is reported. These statements do not constitute a final PASS or a release claim.
@@ -290,6 +292,7 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | RC5 Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
 | RC5 product-runtime regression | No confirmed product-runtime regression |
 | RC6 Source Commit A exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
+| RC6 immutable candidate setup contract | Documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; not the default entry |
 | RC6 RC5→RC6 fake-home lifecycle | Local installer/lifecycle tests PASS; selector and manifest only |
 | RC6 real Global upgrade and O1–O10 | `NOT RUN` |
 | RC6 Final O4/O9 re-certification | `NOT RUN`; source-side rollout compatibility implementation is not final runtime evidence |

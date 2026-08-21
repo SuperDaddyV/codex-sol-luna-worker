@@ -3,6 +3,7 @@
 ## v4.1.0-rc6 (source candidate; not released)
 
 - Added the RC6 source candidate at Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS. RC6 is not tagged, published, Stable, or the default installation target; the published/default Preview remains RC5.
+- Recorded the immutable RC6 candidate setup contract at documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`. It is not the default entry or runtime source and remains pinned to Source Commit A.
 - Bumped the source installer payload to `v4.1.0-rc6` while retaining manifest schema `1`. RC5→RC6 fake-home lifecycle coverage expects only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json` to change, with idempotency, backup, exact rollback, and ownership fail-closed checks.
 - Normalized malformed URL parsing, hostname, and port `ValueError` cases inside the selector to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order.
 - Added the compatibility-smoke baseline with dual exact rollout roots and bounded writer-settle/fail-closed evidence. The harness does not modify product runtime.
