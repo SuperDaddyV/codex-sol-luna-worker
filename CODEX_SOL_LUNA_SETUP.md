@@ -4,28 +4,27 @@ Contract version: `v4.1.0-rc6`.
 
 Release status:
 
-- RC6 is a master-tree prerelease candidate with exact-SHA CI `PASS` on Windows, Ubuntu, and macOS;
+- RC6 is the published GitHub Prerelease / Preview / Public Beta and current default installation target;
 - RC6 real Global upgrade is recorded `PASS` in one native Windows Codex environment;
 - RC6 O1–O10 runtime acceptance is recorded `PASS` in the documented environment;
-- RC6 is not tagged, not published, not Stable, and not the default installation target;
-- Published/default Preview remains `v4.1.0-rc5` through the immutable RC5 setup entry;
-- Stable remains `v4.0.0`;
+- RC6 is not Stable; Stable remains `v4.0.0`;
+- `v4.1.0-rc5` is a historical Preview;
 - RC6 Final O4/O9 re-certification is recorded `PASS` through the isolated acceptance harness with the real Global target limited to protected-state integrity checks.
 
-The RC6 Source Commit A local documentation and repository tests pass, and exact-SHA CI passed on Windows, Ubuntu, and macOS. Separately, the fresh-task compatibility smoke, O1–O10, Final O4/O9 re-certification, and Runtime Cases A/B/C/D passed in one recorded native Windows Codex environment. The runtime evidence is environment- and scenario-bounded; it does not establish three-platform real-runtime validation, universal compatibility, Stable status, or RC6 publication.
+The RC6 Source Commit A local documentation and repository tests pass, and exact-SHA CI passed on Windows, Ubuntu, and macOS. Separately, the fresh-task compatibility smoke, O1–O10, Final O4/O9 re-certification, and Runtime Cases A/B/C/D passed in one recorded native Windows Codex environment. The runtime evidence is environment- and scenario-bounded; it does not establish three-platform real-runtime validation, universal compatibility, or Stable status. Publication is independently established by the immutable `v4.1.0-rc6` tag and GitHub Prerelease.
 
 > [!IMPORTANT]
-> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. RC6 remains an unpublished prerelease candidate at this checkpoint; the public README installation entry continues to point to the published/default RC5 Preview. Never silently expand permissions, installation scope, or network access.
+> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. RC6 is the current published Preview / Public Beta and default installation target; it is not Stable, and `v4.0.0` remains Stable. Never silently expand permissions, installation scope, or network access.
 
 This document is an execution contract for Codex, not a replacement installer. Orchestrate `scripts/install.py`; do not reproduce its merge, ownership, backup, migration, rollback, or uninstall logic with ad hoc shell commands.
 
-Approved RC6 candidate runtime source commit:
+Approved RC6 runtime source commit:
 
 ```text
 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
 ```
 
-This setup contract installs the immutable RC6 candidate runtime payload from Source Commit A shown above. The repository README currently pins the published/default RC5 setup contract from a separate immutable documentation anchor. That documentation commit is not the runtime payload source and is never passed to the installer.
+This setup contract installs the immutable published RC6 runtime payload from Source Commit A shown above. The repository README pins this reviewed setup contract from a separate exact immutable documentation commit. That documentation commit is not the runtime payload source and is never passed to the installer.
 
 RC6 changes product runtime behavior only in the selector's malformed URL
 parsing, hostname, and port error normalization: those `ValueError` cases are
@@ -46,7 +45,7 @@ You are the installation agent. Your job is to inspect, plan, back up through th
 
 You must:
 
-1. obtain the exact approved RC6 candidate runtime source commit shown above;
+1. obtain the exact approved RC6 runtime source commit shown above;
 2. discover the current OS, Python, Codex, and target `CODEX_HOME` without guessing;
 3. inspect existing state without exposing unrelated private content;
 4. run the existing installer dry-run before any mutation;
@@ -163,7 +162,7 @@ Do not install or upgrade Python. If either check fails, stop with `BLOCKED: PYT
 
 ## 5. Source Acquisition
 
-The installer source must be exactly the approved RC6 candidate Runtime Source Commit A:
+The installer source must be exactly the approved RC6 Runtime Source Commit A:
 
 ```text
 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49
@@ -345,7 +344,7 @@ The natural-language request `升级 Sol/Luna 到最新版本` means the latest 
 
 Before any prerelease apply, show a clear prerelease / Public Beta risk notice. Resolve the immutable Release tag to an exact commit SHA, detect tag movement, check out that commit detached, and verify the installer version and setup/source alignment. Pass the verified immutable SHA to the transactional installer through `--source-commit`; never execute from a branch or mutable `target_commitish`. Preserve ownership validation, transaction backup, apply verification, rollback, uninstall, no-downgrade behavior, and zero-write idempotency.
 
-This installed-policy feature does not authorize the current setup run to replace RC6 candidate Runtime Source Commit A. Every RC6 command in this contract remains pinned to `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`.
+This installed-policy feature does not authorize the current setup run to replace the approved RC6 Runtime Source Commit A. Every RC6 command in this contract remains pinned to `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`.
 
 ## 16. Validation
 
@@ -393,7 +392,8 @@ acceptance artifact.
 
 This is environment- and scenario-bounded evidence from one native Windows
 Codex Desktop/CLI environment. It is not three-platform real-runtime evidence,
-a universal compatibility claim, a Stable claim, or a publication claim.
+a universal compatibility claim, or a Stable claim. Publication remains a
+separate tag and GitHub Release fact.
 
 ## 17. Fresh Session Requirement
 

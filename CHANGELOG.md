@@ -1,16 +1,17 @@
 # Changelog
 
-## v4.1.0-rc6 (prerelease candidate; release pending)
+## v4.1.0-rc6 (published prerelease / current Preview)
 
-- Added the RC6 source candidate at Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS. RC6 is not tagged, published, Stable, or the default installation target; the published/default Preview remains RC5.
-- Recorded the immutable RC6 candidate setup contract at documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`. It is not the default entry or runtime source and remains pinned to Source Commit A.
+- Added the RC6 runtime source at Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows, Ubuntu, and macOS.
+- Published annotated tag `v4.1.0-rc6`, peeled to release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b`, as the current GitHub Prerelease / Preview / Public Beta. RC6 is the default installation target but is not Stable; `v4.0.0` remains Stable and `v4.1.0-rc5` is historical.
+- The reviewed RC6 setup contract is `CODEX_SOL_LUNA_SETUP.md`. Public installation entries pin it by an exact immutable documentation commit that is distinct from runtime Source Commit A.
 - Bumped the source installer payload to `v4.1.0-rc6` while retaining manifest schema `1`. RC5→RC6 fake-home lifecycle coverage expects only `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json` to change, with idempotency, backup, exact rollback, and ownership fail-closed checks.
 - Normalized malformed URL parsing, hostname, and port `ValueError` cases inside the selector to `SnapshotInvalid`, preserving the API → snapshot → LKG → fail-closed source order.
 - Added the compatibility-smoke baseline with dual exact rollout roots and bounded writer-settle/fail-closed evidence. The harness does not modify product runtime.
 - Recorded the separately authorized real RC5→RC6 Global upgrade as `PASS` in one native Windows Codex environment: result `UPGRADED`, effective changes limited to `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`, second apply `IDEMPOTENT_PASS`, and the installer-owned rollback snapshot verified by hash. Global policy, config, five Luna agents, Daily Profile, and LKG remained unchanged.
 - Recorded fresh-task compatibility smoke, O1-O10 runtime acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D as `PASS`. Parent-visible rollout metadata, not Receipt text alone, established child role/model/effort/depth, direct-child counts, native leaf behavior, parallel overlap where claimed, and zero grandchildren.
 - The runtime record is environment- and scenario-bounded. The real Global target was read-only during acceptance; O2/O3/O4/O5/O6/O7/O9 and controlled Case D used isolated or controlled state where required, while the formal O2/O4/O9 harness verified unchanged protected Global state, zero unexpected observed paths, and zero residual acceptance artifacts. Windows, Ubuntu, and macOS CI remain source validation only.
-- RC6 is still not tagged, published, Stable, or the default installation target at this release-preparation checkpoint. The published/default Preview remains RC5 and Stable remains `v4.0.0` until the release and post-release README gates complete.
+- Release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b` and post-release README sync Commit `19221f334be2f0aeb3dd9dc42139f8e2063eeea6` each passed exact-SHA CI on Windows, Ubuntu, and macOS. The immutable setup entry is repinned separately after this reviewed contract commit exists.
 
 ## v4.1.0-rc5 (published prerelease)
 
@@ -21,10 +22,10 @@
 - Added the natural-language latest-version semantic workflow for Stable and prerelease discovery, strict SemVer selection, prerelease notice, immutable tag peeling and movement detection, and exact-commit verification. The installer remains transaction-only and contains no release client or auto-updater.
 - Bumped the source installer payload to `v4.1.0-rc5`, retained manifest schema `1`, added optional strict `--source-commit`, true zero-write transaction preflight for `--dry-run`, automatic downgrade refusal, and exact RC4→RC5 fake-home lifecycle coverage.
 - RC4→RC5 fake-home apply changes exactly the managed Global `AGENTS.md` block, installed selector, and manifest. Five Luna agents, config, Daily Profile, and LKG remain byte-identical; backup, ownership conflict, second-apply idempotency, and exact rollback are covered.
-- Source Commit A is `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`; its Windows, Ubuntu, and macOS source CI passed. The published/default RC5 setup contract is available at immutable documentation commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`.
+- Source Commit A is `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`; its Windows, Ubuntu, and macOS source CI passed. The historical RC5 setup contract remains available at immutable documentation commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`.
 - The documented-environment RC5 O1-O10 record, including O4 and O9, remains bounded evidence. Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime regression is reported.
 - Added `scripts/accept_rc5_runtime_isolation.py` and its regression suite. The final acceptance boundary runs O4 and O9 in an isolated environment, limits the real `CODEX_HOME` to protected-state integrity checks, allows only internal safe `plugins/cache/**` directory reparses, rejects all other symlinks and Windows junctions plus mount points, hardlinks, shared identity, and path escape, and fails closed outside exact Codex platform and local-storage namespaces. O9 is fail-soft observability; RC4→RC5 installer lifecycle validation is separate.
-- The earlier Phase A statement “No Source Commit A, immutable RC5 setup pin, tag, release, real Global upgrade, Daily Profile or LKG refresh, Stable promotion, or O1-O10 runtime acceptance has occurred” is superseded by the source, setup-contract, and bounded runtime evidence above. RC5 is the published/current Preview and default installation entry; RC6 remains the unpublished master-tree source candidate and is not the default target.
+- The earlier Phase A statement “No Source Commit A, immutable RC5 setup pin, tag, release, real Global upgrade, Daily Profile or LKG refresh, Stable promotion, or O1-O10 runtime acceptance has occurred” is superseded by the source, setup-contract, and bounded runtime evidence above. RC5 later became a published Preview and is now historical; RC6 supersedes it as the current published Preview and default installation target.
 
 ## v4.1.0-rc4 (published prerelease)
 

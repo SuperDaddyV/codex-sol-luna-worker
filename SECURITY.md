@@ -2,14 +2,14 @@
 
 ## Release boundary
 
-`v4.1.0-rc6` is a master-tree prerelease candidate, not tagged, published, Stable,
-or the default installation target. RC6 Source Commit A is
-`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
-Ubuntu, and macOS. Its immutable candidate setup contract is documentation
-Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; it is not the default entry or
-runtime source. The published/default Preview remains `v4.1.0-rc5` through
-immutable setup anchor `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`, and
-`v4.0.0` remains Stable. The documented-environment RC5 O1-O10 record remains
+`v4.1.0-rc6` is the published GitHub prerelease / Preview / Public Beta and the
+current default installation target. It is not Stable; `v4.0.0` remains the
+Stable release. RC6 runtime Source Commit A is
+`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA source CI passed on
+Windows, Ubuntu, and macOS. The reviewed setup contract is
+`CODEX_SOL_LUNA_SETUP.md`; public installation entries pin it by an exact
+immutable documentation commit, which is distinct from the runtime source.
+`v4.1.0-rc5` is a historical Preview. The documented-environment RC5 O1-O10 record remains
 bounded historical evidence; RC5 Final O4/O9 re-certification was not obtained
 due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime
 regression. RC6 independently passed its recorded real Global upgrade,
@@ -18,7 +18,8 @@ A/B/C/D in one native Windows Codex environment. The real protected Sol/Luna
 state and root identity remained unchanged during acceptance, observed unknown
 paths were zero, and owned acceptance residuals were zero. These facts are
 environment- and scenario-bounded evidence, not a security guarantee, Stable
-claim, universal compatibility claim, or publication claim. RC4 remains
+claim, or universal compatibility claim. Publication is independently
+established by the immutable RC6 tag and GitHub Prerelease. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
 ## Data and network behavior

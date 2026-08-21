@@ -1,17 +1,17 @@
-# v4.1.0-rc6 Prerelease Candidate Architecture Note
+# v4.1.0-rc6 Published Preview Architecture Note
 
-`v4.1.0-rc6` is a master-tree prerelease candidate, not tagged, published, Stable,
-or the default installation target. RC6 Source Commit A is
-`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
-Ubuntu, and macOS. Its immutable candidate setup contract is documentation
-Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; that contract is not the
-default entry or runtime source. The published/default Preview remains `v4.1.0-rc5` through
-immutable setup anchor `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`, and
-`v4.0.0` remains Stable.
+`v4.1.0-rc6` is the published GitHub prerelease / Preview / Public Beta and the
+current default installation target. It is not Stable; `v4.0.0` remains the
+Stable release. RC6 runtime Source Commit A is
+`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA source CI passed on
+Windows, Ubuntu, and macOS. The reviewed setup contract is
+`CODEX_SOL_LUNA_SETUP.md`; public installation entries pin it by an exact
+immutable documentation commit, which is distinct from the runtime source.
+`v4.1.0-rc5` is a historical Preview.
 
-Status: `v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`
+Status: `v4.1.0-rc6 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`
 
-`v4.0.0` remains the Stable release, and `v4.1.0-rc5` is the current published Preview / Public Beta and default installation target. The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment. That evidence is environment- and scenario-bounded and does not itself publish RC6 or promote it to Stable. RC4 remains historical release evidence for Receipt reason evidence-gating.
+`v4.0.0` remains the Stable release. The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before publication. That evidence is environment- and scenario-bounded and does not promote RC6 to Stable. RC4 remains historical release evidence for Receipt reason evidence-gating.
 
 ## Flow
 
@@ -62,7 +62,7 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - The diagnostic report is constructed from an exact whitelist and then sanitized. It exposes symbolic locations rather than real private paths and contains no environment dump, configuration or policy content, arbitrary URL, log, credential, exception message, or child reasoning.
 - The installed state directory remains the single state authority. RC5 adds no dashboard, daemon, telemetry, background service, router, sidecar state, or database.
 
-## RC6 candidate delta
+## RC6 release delta
 
 - The selector normalizes malformed URL parsing, hostname, and port `ValueError`
   cases to `SnapshotInvalid`, preserving the API -> snapshot -> LKG ->
@@ -83,7 +83,7 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
 - No Receipt-driven delegation, lower threshold, forced spawn or parallelism, extra selector call, capability probe, child inspection, tool, file or network read, network access, state, telemetry, repository write, or private reasoning exposure. Receipt text is not runtime attestation.
 - CI and static checks are supporting evidence; Native Runtime Tests 1-5 are the runtime gate.
 
-## RC6 candidate runtime acceptance isolation boundary
+## RC6 runtime acceptance isolation boundary
 
 RC6 changes product runtime behavior only in `src/selector.py` for malformed
 URL parsing, hostname, and port `ValueError` normalization. The installer

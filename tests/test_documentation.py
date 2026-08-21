@@ -339,15 +339,28 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("尚未发布", content)
         setup = text(SETUP)
         self.assertIn("Contract version: `v4.1.0-rc6`", setup)
-        self.assertIn("RC6 is a master-tree prerelease candidate", setup)
-        self.assertIn("RC6 is not tagged, not published, not Stable", setup)
+        self.assertIn(
+            "RC6 is the published GitHub Prerelease / Preview / Public Beta",
+            setup,
+        )
+        self.assertIn("RC6 is not Stable; Stable remains `v4.0.0`", setup)
         self.assertIn("Stable remains `v4.0.0`", setup)
-        self.assertIn("Published/default Preview remains `v4.1.0-rc5`", setup)
+        self.assertIn("`v4.1.0-rc5` is a historical Preview", setup)
         for path in source_docs:
-            self.assertIn("RC4", text(path))
-            self.assertIn("v4.1.0-rc5", text(path))
-            self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, text(path))
-            self.assertIn("prerelease candidate", text(path).lower())
+            content = text(path)
+            self.assertIn("RC4", content)
+            self.assertIn("v4.1.0-rc5", content)
+            self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, content)
+            self.assertIn("published", content.lower())
+            self.assertIn("prerelease", content.lower())
+            for stale in (
+                "RC6 is not tagged",
+                "RC6 is an unpublished",
+                "RC6 remains the unpublished",
+                "Published/default Preview remains `v4.1.0-rc5`",
+                "release pending",
+            ):
+                self.assertNotIn(stale, content)
         self.assertIn(
             "is the default installation target/path through the immutable RC6 entry above",
             text(README),
@@ -394,7 +407,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("| RC3 delegated Receipt | `PASS` |", content)
         runtime = text(ROOT / "RUNTIME_TESTS.md")
         self.assertIn(
-            "v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / "
+            "v4.1.0-rc6 — PUBLISHED PRERELEASE / CURRENT PREVIEW / "
             "DEFAULT INSTALLATION TARGET",
             runtime,
         )
@@ -405,7 +418,7 @@ class DocumentationTests(unittest.TestCase):
         )
         self.assertNotIn("CURRENT PREVIEW / RUNTIME ACCEPTANCE PASS", runtime)
         self.assertIn(
-            "v4.1.0-rc6 prerelease candidate — recorded fresh-task runtime acceptance",
+            "v4.1.0-rc6 published Preview — recorded fresh-task runtime acceptance",
             runtime,
         )
         self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, runtime)
@@ -469,14 +482,19 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, security)
         for number in range(1, 11):
             self.assertRegex(setup, rf"(?m)^- O{number} .* — `PASS`[;.]$")
-        self.assertIn("v4.1.0-rc6 (prerelease candidate; release pending)", changelog)
-        self.assertIn("RC6 source candidate at Source Commit A", changelog)
+        self.assertIn("v4.1.0-rc6 (published prerelease / current Preview)", changelog)
+        self.assertIn("RC6 runtime source at Source Commit A", changelog)
         self.assertIn("Contract version: `v4.1.0-rc6`", setup)
         self.assertGreaterEqual(setup.count(RC6_RUNTIME_SOURCE_COMMIT), 7)
         self.assertNotIn(RC6_SETUP_CONTRACT_COMMIT, setup)
         self.assertIn("Stable remains `v4.0.0`", setup)
-        self.assertIn("Published/default Preview remains `v4.1.0-rc5`", setup)
-        self.assertIn("RC6 is not tagged, not published, not Stable", setup)
+        self.assertIn("`v4.1.0-rc5` is a historical Preview", setup)
+        self.assertIn(
+            "RC6 is the published GitHub Prerelease / Preview / Public Beta",
+            setup,
+        )
+        self.assertNotIn("RC6 is not tagged", setup)
+        self.assertNotIn("RC6 is not published", setup)
         self.assertIn("RC6 O1–O10 runtime acceptance is recorded `PASS`", setup)
         self.assertIn("RC6 Final O4/O9 re-certification is recorded `PASS`", setup)
         self.assertIn(

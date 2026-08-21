@@ -1,17 +1,18 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0-rc5 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`; `v4.0.0 — STABLE`; RC6 is an unpublished prerelease candidate with recorded environment-bounded runtime acceptance.
+Status: `v4.1.0-rc6 — PUBLISHED PRERELEASE / CURRENT PREVIEW / DEFAULT INSTALLATION TARGET`; `v4.0.0 — STABLE`; RC5 is a historical Preview.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.0-rc6 prerelease candidate — recorded fresh-task runtime acceptance
+## v4.1.0-rc6 published Preview — recorded fresh-task runtime acceptance
 
 RC6 Source Commit A is
 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`; exact-SHA CI passed on Windows,
 Ubuntu, and macOS. The installer payload is `v4.1.0-rc6` with manifest schema
-`1`. RC6 is not tagged, published, Stable, or the default installation target;
-the published/default Preview remains RC5 through immutable setup anchor
-`ccd9d84da2f74df9ca2d919729b75eebf2dac27a`.
+`1`. RC6 is the published GitHub Prerelease / Preview / Public Beta and current
+default installation target. It is not Stable; `v4.0.0` remains Stable. The
+reviewed setup contract is pinned by the public installation entry through an
+exact immutable documentation commit that is distinct from Source Commit A.
 
 - RC5 -> RC6 fake-home lifecycle coverage expects only
   `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json` to change;
@@ -32,7 +33,7 @@ the published/default Preview remains RC5 through immutable setup anchor
 - Compatibility smoke, O1-O10 acceptance, Final O4/O9 re-certification, and
   Runtime Cases A/B/C/D are recorded `PASS` in the documented environment.
   This is not three-platform real-runtime validation, a universal compatibility
-  claim, a Stable claim, or a release claim.
+  claim, or a Stable claim. Publication is a separate tag and Release fact.
 
 - O1 Natural-language healthy status — `PASS`
 - O2 No-profile healthy status — `PASS`
@@ -88,11 +89,11 @@ the published/default Preview remains RC5 through immutable setup anchor
   overlap where claimed, completion, and descendant count. Sol performed final
   acceptance.
 
-## v4.1.0-rc5 published Preview — bounded documented-environment O1-O10 record
+## v4.1.0-rc5 historical Preview — bounded documented-environment O1-O10 record
 
 RC5 `Observability & UX` Source Commit A is
-`5ae88ff9190b31174c55a6136c0c8c8611d0b34c`. Its published/default immutable
-setup contract is available at documentation commit
+`5ae88ff9190b31174c55a6136c0c8c8611d0b34c`. Its historical immutable setup
+contract is available at documentation commit
 `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`. The documented-environment RC5
 O1-O10 record below is bounded evidence from one recorded Codex environment;
 it is not a final O4/O9 re-certification or a universal runtime claim.
@@ -123,7 +124,7 @@ regression is reported.
 
 `RC6_SOURCE_COMMIT_CREATED = YES`;
 `RC6_SOURCE_SHA = 50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`;
-`RC6_SETUP_CONTRACT_COMMIT = 86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`;
+`RC6_SETUP_CONTRACT_REVIEWED = YES`;
 `RC6_RUNTIME_ACCEPTANCE_COMPLETED = YES`;
 `RC6_FINAL_O4_O9_RECERTIFICATION = PASS`;
 `RC6_REAL_GLOBAL_UPGRADE = PASS`.
@@ -198,7 +199,7 @@ claim, or a Stable promotion. Windows, Ubuntu, and macOS CI remain source
 validation only.
 
 `SELECTOR_URL_EXCEPTION_HARDENING = DEFERRED_TO_PRE_STABLE` describes the RC5
-record; RC6 is the source candidate that implements this normalization.
+record; the published RC6 Preview implements this normalization.
 
 Native Runtime Tests 1-5 passed in fresh project sessions after the project custom-agent configuration and `AGENTS.md` policy were loaded. This document records generic results only; it intentionally omits session IDs, usernames, absolute paths, rollout IDs, and installation IDs.
 
