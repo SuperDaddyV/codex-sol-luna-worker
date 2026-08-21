@@ -29,12 +29,13 @@ ISSUE_FORMS = {
 PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
-PINNED_SETUP_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
+PINNED_SETUP_COMMIT = "3e19e2f547c6fca2a888a176767e8dc69240acbc"
 RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 RC5_SETUP_CONTRACT_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
 RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
 RC6_RUNTIME_SOURCE_COMMIT = "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
-RC6_SETUP_CONTRACT_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
+RC6_SETUP_CONTRACT_COMMIT = "3e19e2f547c6fca2a888a176767e8dc69240acbc"
+RC6_STALE_SETUP_CONTRACT_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
 RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -581,6 +582,7 @@ class DocumentationTests(unittest.TestCase):
         combined = english + "\n" + chinese
         for content in (english, chinese):
             self.assertNotIn(RC5_STALE_SETUP_CONTRACT_COMMIT, content)
+            self.assertNotIn(RC6_STALE_SETUP_CONTRACT_COMMIT, content)
         self.assertNotIn(
             "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/"
             "CODEX_SOL_LUNA_SETUP.md",

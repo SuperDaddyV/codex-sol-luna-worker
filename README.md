@@ -17,7 +17,7 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 >
 > RC6 repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS. Its recorded real Global upgrade, fresh-task O1–O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D passed in one native Windows Codex environment. This evidence is environment- and scenario-bounded, not universal runtime or Stable certification.
 >
-> The immutable RC6 Setup document is anchored at `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; the installer runtime source remains separately fixed at `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. RC5 is now a historical Preview.
+> The immutable RC6 Setup document is anchored at `3e19e2f547c6fca2a888a176767e8dc69240acbc`; the installer runtime source remains separately fixed at `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. RC5 is now a historical Preview.
 >
 > RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4's evidence-gated Receipt behavior remains historical release evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
 
@@ -50,7 +50,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/86424ea4d6f6630a34b6e4daa22d2d93a5576ddf/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/3e19e2f547c6fca2a888a176767e8dc69240acbc/CODEX_SOL_LUNA_SETUP.md
 
 Adapt paths and commands to the current operating system and Codex environment.
 Use the existing installer for discovery, dry-run, backup, installation, and validation.
@@ -79,7 +79,7 @@ RC6 contains:
 | --- | --- |
 | Installer runtime Source Commit `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49` | Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS |
 | Release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b` | Exact-SHA CI passed on Windows, Ubuntu, and macOS |
-| Immutable setup document | Available at documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; this anchor is not the runtime source |
+| Immutable setup document | Available at documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`; this anchor is not the runtime source |
 | Publication | `PUBLISHED — GitHub Prerelease / Public Beta` |
 | Real RC5→RC6 Global upgrade | `PASS` in one recorded native Windows Codex environment |
 | RC6 O1–O10 and Runtime Cases A/B/C/D | `PASS` in the documented environment; bounded evidence |
@@ -91,7 +91,7 @@ The published RC6 setup contract is the default entry above. Advanced users who 
 ```text
 Read and strictly execute the setup contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/86424ea4d6f6630a34b6e4daa22d2d93a5576ddf/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/3e19e2f547c6fca2a888a176767e8dc69240acbc/CODEX_SOL_LUNA_SETUP.md
 
 Before cloning or downloading source, creating a temporary directory, writing
 probe state, or invoking the installer, run a read-only prerequisite preflight.
@@ -292,7 +292,7 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | RC5 Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
 | RC5 product-runtime regression | No confirmed product-runtime regression |
 | RC6 runtime Source Commit exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
-| RC6 immutable setup document | Documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`; current default entry, not runtime source |
+| RC6 immutable setup document | Documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`; current default entry, not runtime source |
 | RC6 RC5→RC6 fake-home lifecycle | Local installer/lifecycle tests PASS; selector and manifest only |
 | RC6 real Global upgrade and O1–O10 | `PASS` in the documented environment; bounded evidence |
 | RC6 Final O4/O9 re-certification | `PASS` through the isolated acceptance harness |

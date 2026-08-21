@@ -17,7 +17,7 @@
 >
 > RC6 仓库验证和 exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。其记录的 real Global upgrade、fresh-task O1–O10 acceptance、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 已在一个原生 Windows Codex 环境通过。这些证据受环境和场景限制，不是通用 runtime 或 Stable 认证。
 >
-> immutable RC6 Setup 文档固定在 `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`；installer runtime source 则单独固定为 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`。RC5 现为历史 Preview。
+> immutable RC6 Setup 文档固定在 `3e19e2f547c6fca2a888a176767e8dc69240acbc`；installer runtime source 则单独固定为 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`。RC5 现为历史 Preview。
 >
 > RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 的 evidence-gated Receipt 行为属于历史发布证据。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
 
@@ -50,7 +50,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/86424ea4d6f6630a34b6e4daa22d2d93a5576ddf/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/3e19e2f547c6fca2a888a176767e8dc69240acbc/CODEX_SOL_LUNA_SETUP.md
 
 根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
 必须使用项目现有安装器，不要覆盖无关的用户配置。
@@ -78,7 +78,7 @@ RC6 包含：
 | --- | --- |
 | Installer runtime Source Commit `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49` | Repository validation and exact-SHA CI 已在 Windows、Ubuntu、macOS 通过 |
 | Release-preparation Commit `969e2b311df54c43168c4e1bfe5a28661041d50b` | Exact-SHA CI 已在 Windows、Ubuntu、macOS 通过 |
-| Immutable setup 文档 | 已在 documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf` 提供；该锚点不是 runtime source |
+| Immutable setup 文档 | 已在 documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc` 提供；该锚点不是 runtime source |
 | 发布状态 | `已发布 — GitHub Prerelease／Public Beta` |
 | Real RC5→RC6 Global upgrade | 在一个已记录的原生 Windows Codex 环境 `PASS` |
 | RC6 O1–O10 和 Runtime Cases A/B/C/D | 在 documented environment `PASS`；仍是有边界的证据 |
@@ -90,7 +90,7 @@ RC6 包含：
 ```text
 请读取并严格执行以下安装规范：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/86424ea4d6f6630a34b6e4daa22d2d93a5576ddf/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/3e19e2f547c6fca2a888a176767e8dc69240acbc/CODEX_SOL_LUNA_SETUP.md
 
 在 clone 或下载 source、创建临时目录、写入 probe state、调用任何 installer
 模式之前，先完成只读依赖预检。不要安装系统依赖、修改 PATH，或搜索 Codex
@@ -328,7 +328,7 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 | RC5 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
 | RC5 product-runtime regression | 没有已确认的 product-runtime regression |
 | RC6 runtime Source Commit exact-SHA CI | Windows、Ubuntu、macOS 均已通过 |
-| RC6 immutable setup 文档 | Documentation Commit `86424ea4d6f6630a34b6e4daa22d2d93a5576ddf`；当前默认入口，不是 runtime source |
+| RC6 immutable setup 文档 | Documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`；当前默认入口，不是 runtime source |
 | RC6 RC5→RC6 fake-home lifecycle | 本地 installer/lifecycle tests PASS；仅 selector 和 manifest 变化 |
 | RC6 real Global upgrade 和 O1–O10 | 在 documented environment `PASS`；仍是有边界的证据 |
 | RC6 最终 O4/O9 再认证 | 通过 isolated acceptance harness 获得 `PASS` |
