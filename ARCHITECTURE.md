@@ -1,6 +1,6 @@
 # v4.1.0 Stable Architecture Note
 
-`v4.1.0` is the Stable release target and current default installation target.
+`v4.1.0` is the current Stable release and default installation target.
 Stable runtime Source Commit A is
 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`; exact-SHA source CI passed on
 Windows, Ubuntu, and macOS. The reviewed Stable setup contract is
@@ -9,7 +9,7 @@ immutable documentation commit, which is distinct from the runtime source.
 `v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public
 Beta, and `v4.1.0-rc5` is an older historical Preview.
 
-Status: `v4.1.0 — STABLE RELEASE TARGET / DEFAULT INSTALLATION TARGET`
+Status: `v4.1.0 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
 
 The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before publication. Stable preserves that accepted selector, policy, agent, and config payload byte-for-byte and advances only the installed manifest version. An independent pre-publication compatibility smoke passed all six checks against the unchanged installed product runtime. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
 

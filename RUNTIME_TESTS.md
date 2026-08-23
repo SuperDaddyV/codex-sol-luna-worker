@@ -1,10 +1,10 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0 — STABLE RELEASE TARGET / DEFAULT INSTALLATION TARGET`; RC6 and RC5 remain historical Prereleases.
+Status: `v4.1.0 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; RC6 and RC5 remain historical Prereleases.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.0 Stable release target — promotion evidence
+## v4.1.0 current Stable release — promotion evidence
 
 Stable Source Commit A is
 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`; its exact-SHA CI passed on

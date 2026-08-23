@@ -42,7 +42,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ## Install with Codex
 
 1. Start a new Codex task with GPT-5.6 Sol.
-2. Review the [setup contract](CODEX_SOL_LUNA_SETUP.md).
+2. Review the [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md).
 3. Paste the prompt below.
 4. Let Codex discover the environment, run the dry-run, use the installer's transaction backup, install, and validate.
 5. Reload Codex when appropriate, start a new task, and run the smoke test. An already-open task is not a complete validation of newly loaded global configuration.
@@ -281,7 +281,7 @@ Rollback verifies the installer-owned snapshot, restores the exact pre-install s
 python scripts/install.py --uninstall --codex-home "<CODEX_HOME>"
 ```
 
-Uninstall removes only v4-owned files and blocks while preserving unrelated user content. Reload Codex and start a new task after either operation. See the [setup contract](CODEX_SOL_LUNA_SETUP.md) before acting.
+Uninstall removes only v4-owned files and blocks while preserving unrelated user content. Reload Codex and start a new task after either operation. See the [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md) before acting.
 
 ## Validation status
 
@@ -378,7 +378,7 @@ python scripts/install.py --dry-run --codex-home "<CODEX_HOME>"
 python -m unittest discover -s tests -v
 ```
 
-Do not use `--validation-sandbox` for a real global installation; that flag exists only for repository-local test targets. Apply, migration, rollback, and uninstall commands are specified in [CODEX_SOL_LUNA_SETUP.md](CODEX_SOL_LUNA_SETUP.md).
+Do not use `--validation-sandbox` for a real global installation; that flag exists only for repository-local test targets. Apply, migration, rollback, and uninstall commands are specified in [CODEX_SOL_LUNA_SETUP.md](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md).
 
 ### Optional parallel self-test
 
@@ -386,7 +386,7 @@ In a fresh task, request two or three independent bounded read-only checks and a
 
 ## Technical documentation
 
-- [Codex-executable setup contract](CODEX_SOL_LUNA_SETUP.md)
+- [Codex-executable setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)
 - [Architecture](ARCHITECTURE.md)
 - [Runtime validation](RUNTIME_TESTS.md)
 - [Security](SECURITY.md)

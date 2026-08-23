@@ -30,6 +30,10 @@ PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
 PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
 PINNED_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
+PINNED_SETUP_BLOB_URL = (
+    "https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/"
+    f"{PINNED_SETUP_COMMIT}/CODEX_SOL_LUNA_SETUP.md"
+)
 RC5_RUNTIME_SOURCE_COMMIT = "5ae88ff9190b31174c55a6136c0c8c8611d0b34c"
 RC5_SETUP_CONTRACT_COMMIT = "ccd9d84da2f74df9ca2d919729b75eebf2dac27a"
 RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
@@ -109,6 +113,8 @@ class DocumentationTests(unittest.TestCase):
                 "CODEX_SOL_LUNA_SETUP.md"
             )
             self.assertEqual(content.count(setup_url), 2)
+            self.assertEqual(content.count(PINNED_SETUP_BLOB_URL), 4)
+            self.assertNotIn("](CODEX_SOL_LUNA_SETUP.md)", content)
             self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
             self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(PINNED_SETUP_COMMIT, content)
@@ -415,7 +421,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn("| RC3 delegated Receipt | `PASS` |", content)
         runtime = text(ROOT / "RUNTIME_TESTS.md")
         self.assertIn(
-            "v4.1.0 — STABLE RELEASE TARGET / DEFAULT INSTALLATION TARGET",
+            "v4.1.0 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
             runtime,
         )
         self.assertIn(
@@ -490,8 +496,17 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, security)
         for number in range(1, 11):
             self.assertRegex(setup, rf"(?m)^- O{number} .* — `PASS`[;.]$")
-        self.assertIn("v4.1.0 (Stable release target)", changelog)
+        self.assertIn("v4.1.0 (published Stable release)", changelog)
         self.assertIn("Stable Source Commit A", changelog)
+        for content in (architecture, security):
+            self.assertIn(
+                "`v4.1.0` is the current Stable release and default installation target.",
+                content,
+            )
+        self.assertIn(
+            "v4.1.0 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
+            architecture,
+        )
         self.assertIn("Contract version: `v4.1.0`", setup)
         self.assertGreaterEqual(setup.count(STABLE_RUNTIME_SOURCE_COMMIT), 7)
         self.assertNotIn(RC6_SETUP_CONTRACT_COMMIT, setup)

@@ -1,6 +1,6 @@
 # Changelog
 
-## v4.1.0 (Stable release target)
+## v4.1.0 (published Stable release)
 
 - Added Stable Source Commit A `67a72f8accc5d53ef04ff8d64d8838e397ceecda`; local repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS.
 - Promoted the installer payload from `v4.1.0-rc6` to `v4.1.0` while retaining manifest schema `1` and the RC6 selector, policy, agent, and config payloads byte-for-byte.
@@ -35,7 +35,7 @@
 - Source Commit A is `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`; its Windows, Ubuntu, and macOS source CI passed. The historical RC5 setup contract remains available at immutable documentation commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a`.
 - The documented-environment RC5 O1-O10 record, including O4 and O9, remains bounded evidence. Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`; no confirmed product-runtime regression is reported.
 - Added `scripts/accept_rc5_runtime_isolation.py` and its regression suite. The final acceptance boundary runs O4 and O9 in an isolated environment, limits the real `CODEX_HOME` to protected-state integrity checks, allows only internal safe `plugins/cache/**` directory reparses, rejects all other symlinks and Windows junctions plus mount points, hardlinks, shared identity, and path escape, and fails closed outside exact Codex platform and local-storage namespaces. O9 is fail-soft observability; RC4→RC5 installer lifecycle validation is separate.
-- The earlier Phase A statement “No Source Commit A, immutable RC5 setup pin, tag, release, real Global upgrade, Daily Profile or LKG refresh, Stable promotion, or O1-O10 runtime acceptance has occurred” is superseded by the source, setup-contract, and bounded runtime evidence above. RC5 later became a published Preview and is now historical; RC6 supersedes it as the current published Preview and default installation target.
+- The earlier Phase A statement “No Source Commit A, immutable RC5 setup pin, tag, release, real Global upgrade, Daily Profile or LKG refresh, Stable promotion, or O1-O10 runtime acceptance has occurred” is superseded by the source, setup-contract, and bounded runtime evidence above. RC5 later became a published Preview and is now historical; RC6 was the final published Preview before Stable promotion.
 
 ## v4.1.0-rc4 (published prerelease)
 

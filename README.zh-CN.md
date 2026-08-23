@@ -42,7 +42,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ## 使用 Codex 安装
 
 1. 使用 GPT-5.6 Sol 新建一个 Codex 任务。
-2. 先审阅[安装合同](CODEX_SOL_LUNA_SETUP.md)。
+2. 先审阅[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
 3. 复制下面的提示词。
 4. 由 Codex 完成环境识别、dry-run、安装器事务备份、安装和验证。
 5. 按需完全重新加载 Codex，再新建任务完成 smoke test。已经打开的旧任务不能作为新全局配置的完整验收依据。
@@ -315,7 +315,7 @@ rollback 校验 installer-owned snapshot，精确恢复安装前状态；成功�
 python scripts/install.py --uninstall --codex-home "<CODEX_HOME>"
 ```
 
-uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成 rollback 或 uninstall 后重新加载 Codex，并新建任务。执行前请先阅读[安装合同](CODEX_SOL_LUNA_SETUP.md)。
+uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成 rollback 或 uninstall 后重新加载 Codex，并新建任务。执行前请先阅读[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
 
 ## 🧪 已验证范围
 
@@ -416,7 +416,7 @@ python scripts/install.py --dry-run --codex-home "<CODEX_HOME>"
 python -m unittest discover -s tests -v
 ```
 
-真实 global installation 不使用 `--validation-sandbox`；这个参数只允许仓库 `.tmp/installer-validation/` 下的测试目标。apply、migration、rollback 和 uninstall 见 [CODEX_SOL_LUNA_SETUP.md](CODEX_SOL_LUNA_SETUP.md)。
+真实 global installation 不使用 `--validation-sandbox`；这个参数只允许仓库 `.tmp/installer-validation/` 下的测试目标。apply、migration、rollback 和 uninstall 见 [CODEX_SOL_LUNA_SETUP.md](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
 
 ### 可选并行自测
 
@@ -424,7 +424,7 @@ python -m unittest discover -s tests -v
 
 ## 📚 技术文档
 
-- [Codex 可执行安装合同](CODEX_SOL_LUNA_SETUP.md)
+- [Codex 可执行安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)
 - [架构说明](ARCHITECTURE.md)
 - [Runtime 验证](RUNTIME_TESTS.md)
 - [安全边界](SECURITY.md)

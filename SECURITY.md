@@ -2,7 +2,7 @@
 
 ## Release boundary
 
-`v4.1.0` is the Stable release target and current default installation target.
+`v4.1.0` is the current Stable release and default installation target.
 Stable runtime Source Commit A is
 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`; exact-SHA source CI passed on
 Windows, Ubuntu, and macOS. The reviewed Stable setup contract is
