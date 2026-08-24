@@ -120,8 +120,7 @@ Codex 更新后，使用 `scripts/compatibility_smoke.py` 提供的 `Codex Compa
 - [Compatibility Report](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=compatibility-report.yml)
 - [Feature / Feedback](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=feature-feedback.yml)
 
-> [!WARNING]
-> 提交前删除或脱敏秘密与私有信息，只分享最小必要日志，不要上传整个 `CODEX_HOME`。
+提交前删除或脱敏秘密与私有信息，只分享最小必要日志，不要上传整个 `CODEX_HOME`。
 
 ## License
 

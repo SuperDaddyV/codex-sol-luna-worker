@@ -154,6 +154,7 @@ class DocumentationTests(unittest.TestCase):
             )
             self.assertGreaterEqual(len(content.splitlines()), 120)
             self.assertLessEqual(len(content.splitlines()), 180)
+            self.assertEqual(content.count("> [!WARNING]"), 1)
             self.assertNotIn("historical_preview", content)
 
     def test_stable_installation_entry_declares_hard_prerequisites(self):

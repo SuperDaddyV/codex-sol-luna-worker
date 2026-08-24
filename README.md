@@ -123,8 +123,7 @@ Reload Codex and start a new task after an upgrade, rollback, or uninstall. Comm
 - [Compatibility Report](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=compatibility-report.yml)
 - [Feature / Feedback](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=feature-feedback.yml)
 
-> [!WARNING]
-> Remove secrets and private information before submitting. Share only the minimum relevant logs, and do not upload the entire `CODEX_HOME`.
+Before submitting, remove secrets and private information, share only the minimum relevant logs, and do not upload the entire `CODEX_HOME`.
 
 ## License
 
