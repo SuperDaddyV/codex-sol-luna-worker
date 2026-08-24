@@ -5,9 +5,12 @@
 `v4.1.0` is the current Stable release and default installation target.
 Stable runtime Source Commit A is
 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`; exact-SHA source CI passed on
-Windows, Ubuntu, and macOS. The reviewed Stable setup contract is
-`CODEX_SOL_LUNA_SETUP.md`; public installation entries pin it by an exact
-immutable documentation commit, which is distinct from the runtime source.
+Windows, Ubuntu, and macOS. The default documentation-layer recovery wrapper is
+`CODEX_SOL_LUNA_INSTALL_ASSIST.md` at immutable commit
+`39594139eaeeda705528733fc383333504546fb6`. It pins the reviewed Stable setup
+contract `CODEX_SOL_LUNA_SETUP.md` at immutable documentation commit
+`2c912b1e1a0fdbd115eb605517fde9385b633745`; both anchors are distinct from the
+runtime source.
 `v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public
 Beta, and `v4.1.0-rc5` is an older historical Preview. The documented-environment RC5 O1-O10 record remains
 bounded historical evidence; RC5 Final O4/O9 re-certification was not obtained
@@ -116,9 +119,19 @@ O1-O10, Final O4/O9, and Runtime Cases A/B/C/D gates.
 
 `scripts/install.py --dry-run` executes the same payload, ownership, and effective-operation preflight as apply but performs no writable probe, backup, managed-file mutation, or manifest mutation. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. Stable accepts only an optional exact 40-hex `--source-commit`; malformed input fails before backup, write, or probe. A same-version idempotent run may preserve an existing valid SHA, while a version upgrade without the option never inherits an older source SHA. RC6→Stable lifecycle tests require only the ownership manifest to change and verify zero-write dry-run, backup, idempotency, exact rollback, downgrade refusal, and ownership conflict fail-closed behavior.
 
+The assisted installation wrapper aggregates independent read-only prerequisite
+failures and permits only bounded no-write or current-session recovery without
+another approval. Package installation, elevation, and persistent environment
+changes require an exact official-source proposal and explicit user approval.
+Authentication, credentials, proxies, certificate trust, sandbox settings,
+organization policy, exact-source checks, and installer ownership checks are
+never auto-repair targets. Deterministic remediation runs once; transient
+GitHub HTTPS checks have a bounded retry budget. The wrapper cannot replace or
+weaken the transactional setup contract.
+
 The natural-language latest-version workflow accepts only published non-draft strict SemVer releases, resolves and peels the selected tag to an immutable commit, detects tag movement, verifies detached `HEAD`, installer version, and setup/source alignment, and passes that exact SHA to the installer. Release discovery remains outside the installer; there is no auto-updater, background service, or mutable-branch apply. Legacy migration accepts only exact version `3.2`, does not convert state or access ModelDial, preserves unowned audit bundles, and writes the v4 manifest last with atomic replacement. Repository-local lifecycle validation uses fake homes. Any real global migration remains a separate, explicitly approved maintenance action.
 
-`CODEX_SOL_LUNA_SETUP.md` is client-side automation guidance, not a server-side security boundary. Review the setup contract before execution and use the immutable commit-pinned raw URL from the README. The contract must not widen permissions, replace the installer's transaction, or guess ownership; unknown ownership remains a fail-closed condition.
+`CODEX_SOL_LUNA_INSTALL_ASSIST.md` and `CODEX_SOL_LUNA_SETUP.md` are client-side automation guidance, not server-side security boundaries. Review both contracts before execution and use the immutable commit-pinned raw assisted-installation URL from the README. Neither contract may widen permissions, replace the installer's transaction, or guess ownership; unknown ownership remains a fail-closed condition.
 
 ## Reporting
 

@@ -17,7 +17,7 @@
 >
 > Stable Source Commit A 的仓库验证和 exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。RC6→Stable fake-home 验证只改变 ownership manifest；独立的发布前 compatibility smoke 针对未改变的已安装产品运行时通过全部六项检查。RC6 记录的 real Global upgrade、fresh-task O1–O10 acceptance、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 仍是一个原生 Windows Codex 环境中的有边界证据，不是通用 runtime 认证。
 >
-> immutable Stable Setup 文档固定在 `2c912b1e1a0fdbd115eb605517fde9385b633745`；installer runtime source 则单独固定为 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`。RC6 和 RC5 都是历史 Preview。
+> immutable Stable Assisted Installation 文档固定在 `39594139eaeeda705528733fc383333504546fb6`；其底层 Stable Setup 文档仍固定在 `2c912b1e1a0fdbd115eb605517fde9385b633745`，installer runtime source 则单独固定为 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`。RC6 和 RC5 都是历史 Preview。
 >
 > RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 的 evidence-gated Receipt 行为属于历史发布证据。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
 
@@ -42,28 +42,30 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ## 使用 Codex 安装
 
 1. 使用 GPT-5.6 Sol 新建一个 Codex 任务。
-2. 先审阅[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
+2. 先审阅[安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)及其固定的[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
 3. 复制下面的提示词。
-4. 由 Codex 完成环境识别、dry-run、安装器事务备份、安装和验证。
+4. 由 Codex 一次性诊断全部前置条件、执行有边界的安全修复、为任何系统变更请求确认，然后完成安装器 dry-run、事务备份、安装和验证。
 5. 按需完全重新加载 Codex，再新建任务完成 smoke test。已经打开的旧任务不能作为新全局配置的完整验收依据。
 
 ```text
-请读取并严格执行以下安装规范：
+请读取并严格执行以下安装协助合同：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-根据当前操作系统和 Codex 环境完成环境识别、dry-run、备份、安装与验证。
-必须使用项目现有安装器，不要覆盖无关的用户配置。
-如果无法安全安装，请停止并报告准确阻塞，不要猜测修复或扩大权限。
-安装完成后，请告诉我是否需要重新加载 Codex，并在新任务中验证结果。
+安装固定的 v4.1.0 Stable 目标。一次性诊断全部彼此独立的前置条件。
+只自动执行合同允许的安全修复。安装软件包、提升管理员权限或持久修改环境前，
+先给出一份来自官方来源的准确修复方案并等待我的明确确认。获得确认后自动复检并续跑。
+不得修改认证、代理、证书信任、sandbox、组织策略或无关用户配置。
+Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
+安装后告诉我如何重新加载 Codex，并给出新任务 smoke 的续接内容。
 ```
 
 > [!WARNING]
-> 默认安装路径使用 immutable `v4.1.0` Stable Setup contract。不得改用可变 `master`。执行前先审阅合同。安装器只合并已知托管块，ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 默认路径使用 immutable `v4.1.0` Stable Assisted Installation contract，并由它包装单独固定的 Stable Setup contract。不得改用可变 `master`。只允许有边界的会话级安全修复；系统变更必须明确确认。安装器仍在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
 ## 当前 Stable
 
-`v4.1.0` 是当前 Stable 稳定版本，并通过上方 immutable Stable entry 成为默认安装目标／路径。
+`v4.1.0` 是当前 Stable 稳定版本，并通过上方 immutable assisted Stable entry 成为默认安装目标／路径。
 
 Stable 包含：
 
@@ -77,6 +79,7 @@ Stable 包含：
 | 发布依据 | 状态 |
 | --- | --- |
 | Installer runtime Source Commit `67a72f8accc5d53ef04ff8d64d8838e397ceecda` | Repository validation and exact-SHA CI 已在 Windows、Ubuntu、macOS 通过 |
+| Immutable Stable 安装协助文档 | 已在 documentation Commit `39594139eaeeda705528733fc383333504546fb6` 提供；新增有边界的前置条件恢复，不改变 runtime payload |
 | Immutable Stable setup 文档 | 已在 documentation Commit `2c912b1e1a0fdbd115eb605517fde9385b633745` 提供；该锚点不是 runtime source |
 | RC6→Stable fake-home lifecycle | `PASS`；只改变 `sol-luna-v4/install-manifest.json` |
 | 独立 fresh-task compatibility smoke | CLI、Luna capability、Selector、Delegation、Protected state、Runtime contract 和最终 Compatibility 全部 `PASS` |
@@ -86,34 +89,18 @@ Stable 包含：
 | RC6 最终 O4/O9 再认证 | 通过 isolated acceptance harness 获得 `PASS` |
 | Product-runtime regression | 没有已确认的 product-runtime regression |
 
-已发布的 Stable setup contract 就是上方默认入口。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。在下载或写入任何内容前，任务必须确认当前已有可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
+immutable 安装协助合同就是上方默认入口。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。它会一起报告全部独立的前置条件问题，只自动解决安全的会话级条件，并在任何拟议的系统变更前集中请求一次确认。硬依赖仍然是可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
 
 ```text
-请读取并严格执行以下安装规范：
+请读取并严格执行以下安装协助合同：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-在 clone 或下载 source、创建临时目录、写入 probe state、调用任何 installer
-模式之前，先完成只读依赖预检。不要安装系统依赖、修改 PATH，或搜索 Codex
-Desktop 内部应用目录来寻找可执行文件。
-
-先显示：
-
-Sol/Luna Installation Preflight
-Codex Desktop: CURRENT_SESSION / NOT_CONFIRMED
-Codex CLI: PASS <version> / MISSING_OR_UNUSABLE
-Python: PASS <version> / MISSING_OR_UNSUPPORTED
-Git: PASS <version> / MISSING
-GitHub HTTPS: PASS / BLOCKED
-Ready: YES / NO
-
-只有 codex --version、Python 3.11+ 与 tomllib、git --version，以及针对公开仓库的
-只读 git ls-remote 全部通过，Ready 才能为 YES。缺少任一硬依赖时，设置
-Ready: NO，说明唯一的准确阻塞，并在所有文件系统写入前停止。不要自动安装
-Codex CLI、Python、Git 或其他下载工具；不要自动修改 PATH、代理或系统设置。
-
-只有 Ready: YES 后，才继续执行合同规定的 immutable source、capability probe、
-dry-run、backup、installation 和 validation。
+完成固定的 v4.1.0 Stable 安装。恢复前先汇总全部彼此独立的只读前置条件结果。
+自动执行有边界的安全修复。需要安装软件包、提升权限或持久修改环境时，给出准确命令、
+官方来源、作用范围、持久影响和回滚方式；等待一次明确确认后复检并续跑。
+认证、代理、证书信任、sandbox、策略、exact-SHA、ownership、事务和 fresh-task
+门禁必须保持不变。
 ```
 
 请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。Stable 保留已验收的 RC6 产品运行时，只改变已安装 manifest 的版本／source metadata。RC6 O1–O10 和最终 O4/O9 仍是受环境和场景限制的证据。没有已确认的 product-runtime regression。
@@ -424,6 +411,7 @@ python -m unittest discover -s tests -v
 
 ## 📚 技术文档
 
+- [Codex 可执行安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
 - [Codex 可执行安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)
 - [架构说明](ARCHITECTURE.md)
 - [Runtime 验证](RUNTIME_TESTS.md)

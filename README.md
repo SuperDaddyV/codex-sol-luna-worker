@@ -17,7 +17,7 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 >
 > Stable Source Commit A passed repository validation and exact-SHA CI on Windows, Ubuntu, and macOS. RC6→Stable fake-home validation changes only the ownership manifest, and an independent pre-publication compatibility smoke passed all six checks against the unchanged installed product runtime. RC6's recorded real Global upgrade, fresh-task O1–O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D remain bounded evidence from one native Windows Codex environment, not universal runtime certification.
 >
-> The immutable Stable Setup document is anchored at `2c912b1e1a0fdbd115eb605517fde9385b633745`; the installer runtime source remains separately fixed at `67a72f8accc5d53ef04ff8d64d8838e397ceecda`. RC6 and RC5 are historical Previews.
+> The immutable Stable Assisted Installation document is anchored at `39594139eaeeda705528733fc383333504546fb6`; its underlying Stable Setup document remains anchored at `2c912b1e1a0fdbd115eb605517fde9385b633745`, and the installer runtime source remains separately fixed at `67a72f8accc5d53ef04ff8d64d8838e397ceecda`. RC6 and RC5 are historical Previews.
 >
 > RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4's evidence-gated Receipt behavior remains historical release evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
 
@@ -42,29 +42,33 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ## Install with Codex
 
 1. Start a new Codex task with GPT-5.6 Sol.
-2. Review the [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md).
+2. Review the [assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md) and its pinned [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md).
 3. Paste the prompt below.
-4. Let Codex discover the environment, run the dry-run, use the installer's transaction backup, install, and validate.
+4. Let Codex diagnose all prerequisites, apply bounded safe recovery, request approval for any system change, then run the installer's dry-run, transaction backup, installation, and validation.
 5. Reload Codex when appropriate, start a new task, and run the smoke test. An already-open task is not a complete validation of newly loaded global configuration.
 
 ```text
-Read and strictly execute the setup contract at:
+Read and strictly execute the assisted installation contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-Adapt paths and commands to the current operating system and Codex environment.
-Use the existing installer for discovery, dry-run, backup, installation, and validation.
-Do not overwrite unrelated user configuration.
-If installation cannot be completed safely, stop and report the exact blocker instead of guessing a fix.
-After installation, tell me whether Codex must be reloaded and validate the result in a new task.
+Install the pinned v4.1.0 Stable target. Diagnose all independent prerequisites
+in one pass. Apply only the contract's safe automatic recovery. Before any
+package install, administrator elevation, or persistent environment change,
+show one exact official-source recovery proposal and wait for my explicit
+approval. After an approved recovery, recheck and continue automatically.
+Never change authentication, proxy, certificate trust, sandbox, organization
+policy, or unrelated user configuration. Once Ready: YES, follow the pinned
+setup contract and installer exactly. After installation, tell me how to reload
+Codex and provide the fresh-task smoke continuation.
 ```
 
 > [!WARNING]
-> The default installation path is the immutable `v4.1.0` Stable Setup contract. Never substitute mutable `master`. Review the contract before execution. The installer merges only known managed blocks, fails closed on ownership conflicts, and creates a transaction backup before changes, but no installation is risk-free.
+> The default path uses the immutable `v4.1.0` Stable Assisted Installation contract, which wraps the separately pinned Stable Setup contract. Never substitute mutable `master`. Safe session-only recovery is bounded; system changes require explicit approval. The installer still fails closed on ownership conflicts and creates a transaction backup before changes, but no installation is risk-free.
 
 ## Current Stable
 
-`v4.1.0` is the current Stable release and default installation target/path through the immutable Stable entry above.
+`v4.1.0` is the current Stable release and default installation target/path through the immutable assisted Stable entry above.
 
 Stable contains:
 
@@ -78,6 +82,7 @@ Stable contains:
 | Release evidence | Status |
 | --- | --- |
 | Installer runtime Source Commit `67a72f8accc5d53ef04ff8d64d8838e397ceecda` | Repository validation and exact-SHA CI passed on Windows, Ubuntu, and macOS |
+| Immutable Stable assisted installation document | Available at documentation Commit `39594139eaeeda705528733fc383333504546fb6`; it adds bounded prerequisite recovery and does not change the runtime payload |
 | Immutable Stable setup document | Available at documentation Commit `2c912b1e1a0fdbd115eb605517fde9385b633745`; this anchor is not the runtime source |
 | RC6→Stable fake-home lifecycle | `PASS`; only `sol-luna-v4/install-manifest.json` changes |
 | Independent fresh-task compatibility smoke | CLI, Luna capability, Selector, Delegation, Protected state, Runtime contract, and final Compatibility all `PASS` |
@@ -87,36 +92,20 @@ Stable contains:
 | RC6 Final O4/O9 re-certification | `PASS` through the isolated acceptance harness |
 | Product-runtime regression | No confirmed product-runtime regression |
 
-The published Stable setup contract is the default entry above. The copy-and-paste path supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. Before it downloads or writes anything, the task must confirm an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
+The immutable assisted installation contract is the default entry above. It supports Codex Desktop on Windows, Ubuntu/Linux, or macOS, with WSL treated as a separate Linux environment. It reports all independent prerequisite failures together, automatically resolves only safe session-local conditions, and asks once before any proposed system change. The hard prerequisites remain an executable `codex` command, Python 3.11+ with `tomllib`, Git, and read-only GitHub HTTPS access. Git and the CLI are required; Codex Desktop alone is not sufficient when `codex --version` cannot run.
 
 ```text
-Read and strictly execute the setup contract at:
+Read and strictly execute the assisted installation contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-Before cloning or downloading source, creating a temporary directory, writing
-probe state, or invoking the installer, run a read-only prerequisite preflight.
-Do not install system dependencies, modify PATH, or search internal Codex
-Desktop application directories for an executable.
-
-Display:
-
-Sol/Luna Installation Preflight
-Codex Desktop: CURRENT_SESSION / NOT_CONFIRMED
-Codex CLI: PASS <version> / MISSING_OR_UNUSABLE
-Python: PASS <version> / MISSING_OR_UNSUPPORTED
-Git: PASS <version> / MISSING
-GitHub HTTPS: PASS / BLOCKED
-Ready: YES / NO
-
-Ready: YES requires codex --version, Python 3.11+ with tomllib, git --version,
-and a read-only git ls-remote of the public repository to pass. If any hard
-prerequisite is missing, set Ready: NO, explain the one exact blocker, and stop
-before all filesystem writes. Do not install Codex CLI, Python, Git, or another
-download tool; do not change PATH, proxy, or system settings automatically.
-
-Only after Ready: YES, continue with the immutable source, capability probe,
-dry-run, backup, installation, and validation defined by the contract.
+Complete the pinned v4.1.0 Stable installation. Aggregate all independent
+read-only prerequisite results before recovery. Apply bounded safe recovery
+automatically. For a required package, elevation, or persistent environment
+change, present the exact commands, official sources, scope, persistent effects,
+and rollback route; wait for one explicit approval, then recheck and resume.
+Keep authentication, proxy, certificate trust, sandbox, policy, exact-SHA,
+ownership, transaction, and fresh-task gates unchanged.
 ```
 
 Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. Stable preserves the accepted RC6 product runtime and changes only installed manifest version/source metadata. RC6 O1–O10 and Final O4/O9 remain environment- and scenario-bounded evidence. No confirmed product-runtime regression.
@@ -386,6 +375,7 @@ In a fresh task, request two or three independent bounded read-only checks and a
 
 ## Technical documentation
 
+- [Codex-executable assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
 - [Codex-executable setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)
 - [Architecture](ARCHITECTURE.md)
 - [Runtime validation](RUNTIME_TESTS.md)

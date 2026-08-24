@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 README_ZH = ROOT / "README.zh-CN.md"
+ASSIST = ROOT / "CODEX_SOL_LUNA_INSTALL_ASSIST.md"
 SETUP = ROOT / "CODEX_SOL_LUNA_SETUP.md"
 ISSUE_TEMPLATE_DIR = ROOT / ".github" / "ISSUE_TEMPLATE"
 ISSUE_FORMS = {
@@ -26,10 +27,14 @@ ISSUE_FORMS = {
         "privacy_confirmation",
     },
 }
-PUBLIC_DOCS = (README, README_ZH, SETUP, ROOT / "SECURITY.md")
-PLACEHOLDER = "<PINNED_SETUP_URL_PENDING_DOCS_COMMIT>"
+PUBLIC_DOCS = (README, README_ZH, ASSIST, SETUP, ROOT / "SECURITY.md")
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
+PINNED_ASSIST_COMMIT = "39594139eaeeda705528733fc383333504546fb6"
 PINNED_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
+PINNED_ASSIST_BLOB_URL = (
+    "https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/"
+    f"{PINNED_ASSIST_COMMIT}/CODEX_SOL_LUNA_INSTALL_ASSIST.md"
+)
 PINNED_SETUP_BLOB_URL = (
     "https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/"
     f"{PINNED_SETUP_COMMIT}/CODEX_SOL_LUNA_SETUP.md"
@@ -41,7 +46,12 @@ RC6_RUNTIME_SOURCE_COMMIT = "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 RC6_SETUP_CONTRACT_COMMIT = "3e19e2f547c6fca2a888a176767e8dc69240acbc"
 RC6_STALE_SETUP_CONTRACT_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
 STABLE_RUNTIME_SOURCE_COMMIT = "67a72f8accc5d53ef04ff8d64d8838e397ceecda"
-RAW_PATTERN = re.compile(
+ASSIST_RAW_PATTERN = re.compile(
+    r"https://raw\.githubusercontent\.com/"
+    r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
+    r"CODEX_SOL_LUNA_INSTALL_ASSIST\.md"
+)
+SETUP_RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
     r"CODEX_SOL_LUNA_SETUP\.md"
@@ -62,6 +72,7 @@ def local_markdown_targets(content: str):
 
 class DocumentationTests(unittest.TestCase):
     def test_bilingual_navigation_and_setup_contract(self):
+        self.assertTrue(ASSIST.is_file())
         self.assertTrue(SETUP.is_file())
         self.assertIn("[简体中文](README.zh-CN.md)", text(README))
         self.assertIn("[English](README.md)", text(README_ZH))
@@ -83,19 +94,22 @@ class DocumentationTests(unittest.TestCase):
     def test_stable_installation_entry_declares_hard_prerequisites(self):
         english = text(README)
         chinese = text(README_ZH)
+        assist = text(ASSIST)
+        for phrase in (
+            "Sol/Luna Assisted Installation",
+            "Codex CLI: PASS <version> / MISSING_OR_UNUSABLE",
+            "Python: PASS <version> / MISSING_OR_UNSUPPORTED",
+            "Git: PASS <version> / MISSING",
+            "GitHub HTTPS: PASS / BLOCKED / NOT_CHECKED (Git required)",
+            "Recovery: NONE / SAFE / AWAITING_APPROVAL / NEEDS_USER_ACTION",
+            "Ready: YES / NO",
+            "codex --version",
+            "git --version",
+            "git ls-remote",
+        ):
+            self.assertIn(phrase, assist)
         for content in (english, chinese):
-            for phrase in (
-                "Sol/Luna Installation Preflight",
-                "Codex CLI: PASS <version> / MISSING_OR_UNUSABLE",
-                "Python: PASS <version> / MISSING_OR_UNSUPPORTED",
-                "Git: PASS <version> / MISSING",
-                "GitHub HTTPS: PASS / BLOCKED",
-                "Ready: YES / NO",
-                "codex --version",
-                "git --version",
-                "git ls-remote",
-            ):
-                self.assertIn(phrase, content)
+            self.assertIn(PINNED_ASSIST_COMMIT, content)
             self.assertIn(PINNED_SETUP_COMMIT, content)
 
         self.assertIn("Codex Desktop alone is not sufficient", english)
@@ -107,21 +121,24 @@ class DocumentationTests(unittest.TestCase):
         english = text(README)
         chinese = text(README_ZH)
         for content in (english, chinese):
-            setup_url = (
+            assist_url = (
                 "https://raw.githubusercontent.com/SuperDaddyV/"
-                f"codex-sol-luna-worker/{PINNED_SETUP_COMMIT}/"
-                "CODEX_SOL_LUNA_SETUP.md"
+                f"codex-sol-luna-worker/{PINNED_ASSIST_COMMIT}/"
+                "CODEX_SOL_LUNA_INSTALL_ASSIST.md"
             )
-            self.assertEqual(content.count(setup_url), 2)
+            self.assertEqual(content.count(assist_url), 2)
+            self.assertEqual(content.count(PINNED_ASSIST_BLOB_URL), 2)
             self.assertEqual(content.count(PINNED_SETUP_BLOB_URL), 4)
+            self.assertNotIn("](CODEX_SOL_LUNA_INSTALL_ASSIST.md)", content)
             self.assertNotIn("](CODEX_SOL_LUNA_SETUP.md)", content)
             self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
             self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
+            self.assertIn(PINNED_ASSIST_COMMIT, content)
             self.assertIn(PINNED_SETUP_COMMIT, content)
             self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(RC6_SETUP_CONTRACT_COMMIT, content)
         self.assertIn(
-            "The default installation path is the immutable `v4.1.0` Stable Setup contract",
+            "The default path uses the immutable `v4.1.0` Stable Assisted Installation contract",
             english,
         )
         self.assertIn(
@@ -133,7 +150,7 @@ class DocumentationTests(unittest.TestCase):
             english,
         )
         self.assertIn(
-            "默认安装路径使用 immutable `v4.1.0` Stable Setup contract",
+            "默认路径使用 immutable `v4.1.0` Stable Assisted Installation contract",
             chinese,
         )
         self.assertIn(
@@ -165,6 +182,56 @@ class DocumentationTests(unittest.TestCase):
             "`curl` and other download tools are not required",
         ):
             self.assertIn(phrase, content)
+
+    def test_assisted_installation_recovery_is_bounded_and_preserves_setup_gates(self):
+        content = text(ASSIST)
+        setup_url = (
+            "https://raw.githubusercontent.com/SuperDaddyV/"
+            f"codex-sol-luna-worker/{PINNED_SETUP_COMMIT}/"
+            "CODEX_SOL_LUNA_SETUP.md"
+        )
+
+        for identity in (
+            "Stable release: `v4.1.0`",
+            STABLE_RUNTIME_SOURCE_COMMIT,
+            PINNED_SETUP_COMMIT,
+            setup_url,
+            "`v4.1.0-rc6` remains an immutable historical",
+        ):
+            self.assertIn(identity, content)
+
+        for boundary in (
+            "Do not stop at the first missing",
+            "Safe automatic recovery",
+            "Approval-required recovery",
+            "request to install Sol/Luna is not approval",
+            "Persistent `PATH` changes require separate inclusion",
+            "Guided user action",
+            "SOL_LUNA_ASSIST_RESUME",
+            "Run a deterministic remediation command at most once",
+            "at most three total attempts for a transient GitHub HTTPS check",
+            "No output for 30 seconds is not by itself a product failure",
+            "Any setup result containing",
+            "fresh-task smoke",
+            "--dangerously-bypass-approvals-and-sandbox",
+        ):
+            self.assertIn(boundary, content)
+
+        for protected in (
+            "authentication",
+            "proxy",
+            "certificate trust",
+            "sandbox",
+            "organization policy",
+            "ownership",
+            "transaction",
+        ):
+            self.assertIn(protected, content.lower())
+
+        self.assertNotIn(
+            "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/",
+            content,
+        )
 
     def test_public_beta_feedback_forms_and_guidance(self):
         self.assertEqual(
@@ -269,14 +336,16 @@ class DocumentationTests(unittest.TestCase):
             for path in (
                 README,
                 README_ZH,
+                ASSIST,
                 SETUP,
                 ROOT / "ARCHITECTURE.md",
                 ROOT / "SECURITY.md",
             )
         )
-        default_setup_url = (
+        default_assist_url = (
             "https://raw.githubusercontent.com/SuperDaddyV/"
-            f"codex-sol-luna-worker/{PINNED_SETUP_COMMIT}/CODEX_SOL_LUNA_SETUP.md"
+            f"codex-sol-luna-worker/{PINNED_ASSIST_COMMIT}/"
+            "CODEX_SOL_LUNA_INSTALL_ASSIST.md"
         )
         for path, release_heading, publication_row, runtime_row in (
             (
@@ -303,6 +372,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(RC5_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(RC5_SETUP_CONTRACT_COMMIT, content)
             self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
+            self.assertIn(PINNED_ASSIST_COMMIT, content)
             self.assertIn(PINNED_SETUP_COMMIT, content)
             self.assertIn(release_heading, content)
             self.assertIn(publication_row, content)
@@ -336,10 +406,10 @@ class DocumentationTests(unittest.TestCase):
                 "Upgrade-to-latest UX",
             ):
                 self.assertIn(feature, content)
-            self.assertEqual(content.count(default_setup_url), 2)
+            self.assertEqual(content.count(default_assist_url), 2)
             self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
-            self.assertLess(content.index(default_setup_url), content.index(release_heading))
-            self.assertGreater(content.rfind(default_setup_url), content.index(release_heading))
+            self.assertLess(content.index(default_assist_url), content.index(release_heading))
+            self.assertGreater(content.rfind(default_assist_url), content.index(release_heading))
             release_start = content.index(release_heading)
             release_end = content.index("\n## ", release_start + len(release_heading))
             release_section = content[release_start:release_end]
@@ -376,11 +446,11 @@ class DocumentationTests(unittest.TestCase):
             ):
                 self.assertNotIn(stale, content)
         self.assertIn(
-            "is the current Stable release and default installation target/path through the immutable Stable entry above",
+            "is the current Stable release and default installation target/path through the immutable assisted Stable entry above",
             text(README),
         )
         self.assertIn(
-            "并通过上方 immutable Stable entry 成为默认安装目标／路径",
+            "并通过上方 immutable assisted Stable entry 成为默认安装目标／路径",
             text(README_ZH),
         )
         self.assertIn("v4.1.0-rc3", text(ROOT / "CHANGELOG.md"))
@@ -610,33 +680,32 @@ class DocumentationTests(unittest.TestCase):
             "CODEX_SOL_LUNA_SETUP.md",
             combined,
         )
+        self.assertNotIn(
+            "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/"
+            "CODEX_SOL_LUNA_INSTALL_ASSIST.md",
+            combined,
+        )
 
-        if PLACEHOLDER in combined:
-            self.assertEqual(english.count(PLACEHOLDER), 1)
-            self.assertEqual(chinese.count(PLACEHOLDER), 1)
-            self.assertEqual(RAW_PATTERN.findall(combined), [])
-            self.assertIn("deliberate for RC3 source Commit A", english)
-            self.assertIn("RC3 source Commit A 的有意占位", chinese)
-            self.assertNotIn("During RC assembly, the placeholder above", english)
-            self.assertNotIn("RC 组装阶段，上面的 placeholder", chinese)
-            return
-
-        english_shas = RAW_PATTERN.findall(english)
-        chinese_shas = RAW_PATTERN.findall(chinese)
+        english_shas = ASSIST_RAW_PATTERN.findall(english)
+        chinese_shas = ASSIST_RAW_PATTERN.findall(chinese)
         self.assertEqual(len(english_shas), 2)
         self.assertEqual(len(chinese_shas), 2)
         self.assertEqual(english_shas, chinese_shas)
         self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, combined)
         self.assertEqual(
             english_shas,
-            [PINNED_SETUP_COMMIT, PINNED_SETUP_COMMIT],
+            [PINNED_ASSIST_COMMIT, PINNED_ASSIST_COMMIT],
         )
         self.assertNotIn(RC6_SETUP_CONTRACT_COMMIT, english_shas)
         for sha in english_shas:
             self.assertRegex(sha, r"^[0-9a-f]{40}$")
 
+        self.assertEqual(SETUP_RAW_PATTERN.findall(english), [])
+        self.assertEqual(SETUP_RAW_PATTERN.findall(chinese), [])
+        self.assertEqual(SETUP_RAW_PATTERN.findall(text(ASSIST)), [PINNED_SETUP_COMMIT])
+
     def test_all_local_documentation_links_exist(self):
-        for document in (README, README_ZH, SETUP, ROOT / "SECURITY.md"):
+        for document in (README, README_ZH, ASSIST, SETUP, ROOT / "SECURITY.md"):
             for target in local_markdown_targets(text(document)):
                 with self.subTest(document=document.name, target=target):
                     self.assertTrue((document.parent / target).exists())
