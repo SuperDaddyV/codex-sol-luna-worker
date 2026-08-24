@@ -4,6 +4,50 @@ Status: `v4.1.1 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
+## v4.1.2 unreleased candidate — setup and runtime evidence
+
+`v4.1.2` is not published; `v4.1.1` remains the current Stable release and
+default public installation target. Candidate Source Commit A is
+`551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run `32717295801`
+passed on Windows, Ubuntu, and macOS and reported `357` tests all `PASS`.
+Current-master evidence commit `fac118ac5ca096aaf1ef8d68b79bfc1372998a5a`
+passed CI run `32717520585` on the same three source-validation platforms. The
+current-master evidence commit is not Source Commit A and is not an installer
+source substitute.
+
+The recorded real Global baseline was `v4.1.0-rc6`, source
+`50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. From a detached exact Source A
+checkout, dry-run returned `DRY_RUN_PASS`, `writes NO`, `effective_changes 2`,
+and five-effort capability `PASS`. Apply returned `UPGRADED`,
+`configuration_preserved true`, `effective_changes 2`, changed only the
+selector and install manifest, and created one transaction backup. Second apply
+returned `CURRENT_INSTALLATION_PASS`, `writes NO`, `effective_changes 0`, and
+`backup NONE`.
+
+Daily selector proof returned a legal role and matching effort; the specific
+day's effort is intentionally not recorded. Same-day Profile and LKG were not
+rewritten. Exactly one fresh-task compatibility smoke ran for about `169.4`
+seconds with `codex-cli 0.146.0`, exited `0`, and passed `CLI`, `Luna
+capability`, `Selector`, `Delegation`, `Protected state`, `Runtime contract`,
+and final `Compatibility`. Pre/post protected hashes for `AGENTS.md`,
+configuration, the five agents, selector, manifest, Profile, LKG, and lock were
+unchanged; the smoke created no backup.
+
+This record is limited to one native Windows Codex environment. Windows,
+Ubuntu, and macOS CI are source validation only, not three-platform real-runtime
+validation. No `v4.1.2` tag or Release is established by this record. The
+current public README and assisted-installation entry remain the immutable
+`v4.1.1` chain.
+
+`V412_CANDIDATE_SOURCE_SHA = 551520c2435aca94d60132f292edbd53cc975cbe`;
+`V412_EXACT_SHA_CI = PASS`;
+`V412_CURRENT_MASTER_EVIDENCE_CI = PASS`;
+`V412_DRY_RUN = DRY_RUN_PASS`;
+`V412_APPLY = UPGRADED`;
+`V412_SECOND_APPLY = CURRENT_INSTALLATION_PASS`;
+`V412_FRESH_TASK_COMPATIBILITY = PASS`;
+`V412_PUBLIC_RELEASE = NOT_ESTABLISHED`.
+
 ## v4.1.1 current Stable release — promotion evidence
 
 Stable Source Commit A2 is

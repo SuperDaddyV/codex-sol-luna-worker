@@ -28,7 +28,17 @@ ISSUE_FORMS = {
         "privacy_confirmation",
     },
 }
-PUBLIC_DOCS = (README, README_ZH, ASSIST, ASSIST_ZH, SETUP, ROOT / "SECURITY.md")
+PUBLIC_DOCS = (
+    README,
+    README_ZH,
+    ASSIST,
+    ASSIST_ZH,
+    SETUP,
+    ROOT / "ARCHITECTURE.md",
+    ROOT / "RUNTIME_TESTS.md",
+    ROOT / "SECURITY.md",
+    ROOT / "CHANGELOG.md",
+)
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
 PREVIOUS_STABLE_ASSIST_COMMIT = "39594139eaeeda705528733fc383333504546fb6"
 PREVIOUS_STABLE_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
@@ -52,6 +62,13 @@ RC6_SETUP_CONTRACT_COMMIT = "3e19e2f547c6fca2a888a176767e8dc69240acbc"
 RC6_STALE_SETUP_CONTRACT_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
 STABLE_RUNTIME_SOURCE_COMMIT = "ca8e9e4caf5564ffe8d0a11fe376047594f8a748"
 V411_RUNTIME_SOURCE_COMMIT = STABLE_RUNTIME_SOURCE_COMMIT
+CANDIDATE_RUNTIME_SOURCE_COMMIT = "551520c2435aca94d60132f292edbd53cc975cbe"
+CANDIDATE_EXACT_CI_RUN = "32717295801"
+CANDIDATE_MASTER_EVIDENCE_COMMIT = "fac118ac5ca096aaf1ef8d68b79bfc1372998a5a"
+CANDIDATE_MASTER_CI_RUN = "32717520585"
+CANDIDATE_BASELINE_RUNTIME_SOURCE_COMMIT = (
+    "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
+)
 ASSIST_RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -352,17 +369,17 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn(PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT, content)
         self.assertNotIn(PREVIOUS_STABLE_SETUP_COMMIT, content)
 
-    def test_setup_records_v411_stable_assisted_handoff(self):
+    def test_setup_records_v412_stable_evidence_and_handoff(self):
         content = text(SETUP)
         architecture = text(ROOT / "ARCHITECTURE.md")
         security = text(ROOT / "SECURITY.md")
-        handoff = content.index("## 22. v4.1.1 Stable assisted installation handoff")
+        handoff = content.index("## 22. v4.1.2 Stable assisted installation handoff")
         self.assertGreater(handoff, content.index("## 21. Final Report"))
         for phrase in (
-            "Sections 0–21 are the reviewed `v4.1.1` Stable transactional setup contract",
+            "Sections 0–21 are the reviewed `v4.1.2` Stable transactional setup contract",
             "scripts/install_assist.py",
             "scripts/install_recovery_catalog.json",
-            "clean detached Source Commit A2 checkout",
+            "clean detached Stable Source Commit A checkout",
             "runs the five",
             "ephemeral read-only Luna capability checks",
             "Without `--apply`, it stops at `DRY_RUN`",
@@ -373,21 +390,20 @@ class DocumentationTests(unittest.TestCase):
             "P3 standalone bootstrap remains out of scope",
         ):
             self.assertIn(phrase, content)
-        self.assertIn(V411_RUNTIME_SOURCE_COMMIT, content[:handoff])
-        self.assertNotIn("<V4_1_1_SOURCE_COMMIT>", content)
-        self.assertNotIn("candidate assistance handoff", content)
+        self.assertIn(CANDIDATE_RUNTIME_SOURCE_COMMIT, content[:handoff])
+        self.assertNotIn("<V4_1_2_SOURCE_COMMIT>", content)
+        self.assertIn("pins this Setup contract", content)
+        self.assertIn("The public README pins this contract", content)
         for phrase in (
-            "## v4.1.1 Stable installation assistance",
+            "v4.1.2",
             "exact recovery plan + SHA-256 Plan ID",
             "scripts/install_recovery_catalog.json",
-            "installer manifest version from `v4.1.0` to",
             "explicit Daily selector initialization and proof",
             "compatibility smoke remains read-only and status-only",
-            "No real Global `v4.1.1` installer apply was performed",
         ):
-            self.assertIn(phrase, architecture)
+            self.assertIn(phrase, architecture + content)
         for phrase in (
-            "`v4.1.1` Stable installation assistant",
+            "v4.1.2 candidate boundary",
             "executes approved recovery as argument vectors without a",
             "five-effort Luna probe is ephemeral",
             "P3",
@@ -397,6 +413,19 @@ class DocumentationTests(unittest.TestCase):
             "cannot initialize Daily selection itself",
         ):
             self.assertIn(phrase, security)
+        for value in (
+            CANDIDATE_RUNTIME_SOURCE_COMMIT,
+            CANDIDATE_EXACT_CI_RUN,
+            CANDIDATE_MASTER_EVIDENCE_COMMIT,
+            CANDIDATE_MASTER_CI_RUN,
+            CANDIDATE_BASELINE_RUNTIME_SOURCE_COMMIT,
+            "DRY_RUN_PASS",
+            "UPGRADED",
+            "CURRENT_INSTALLATION_PASS",
+            "169.4",
+            "0.146.0",
+        ):
+            self.assertIn(value, content)
 
     def test_stable_feedback_forms_and_guidance(self):
         self.assertEqual(
@@ -594,12 +623,14 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("NOT PUBLISHED", content)
             self.assertNotIn("尚未发布", content)
         setup = text(SETUP)
-        self.assertIn("Contract version: `v4.1.1`", setup)
+        self.assertIn("Contract version: `v4.1.2`", setup)
         self.assertIn(
-            "`v4.1.1` is the Stable release target and current default installation target",
+            "`v4.1.2` is the Stable release target and default installation target",
             setup,
         )
-        self.assertIn("`v4.1.0` remains the previous immutable Stable release", setup)
+        self.assertIn(CANDIDATE_RUNTIME_SOURCE_COMMIT, setup)
+        self.assertIn("`v4.1.1` remains the previous immutable Stable release", setup)
+        self.assertIn("`v4.1.0` remains an older immutable Stable release", setup)
         self.assertIn("`v4.1.0-rc6` remains an immutable historical Prerelease", setup)
         self.assertIn("`v4.1.0-rc5` is an older historical Preview", setup)
         for path in source_docs:
@@ -629,7 +660,7 @@ class DocumentationTests(unittest.TestCase):
         for path in (README, README_ZH, ROOT / "ARCHITECTURE.md"):
             self.assertIn("FRESH_REPO_CONTEXT_DELEGATION_PASS", text(path))
         self.assertIn(
-            "An existing valid `v4.1.0` installation upgrades to `v4.1.1` by changing only",
+            "For v4.1.2 Stable, the recorded real Global baseline was `v4.1.0-rc6`",
             text(SETUP),
         )
         self.assertIn("https://modeldial.com/api/v1/radar/latest.json", combined)
@@ -730,11 +761,33 @@ class DocumentationTests(unittest.TestCase):
 
         self.assertIn("## v4.1.2 (unreleased candidate)", changelog)
         self.assertIn("## v4.1.2 candidate boundary", security)
-        candidate_evidence = changelog + "\n" + security
-        self.assertIn(
-            "551520c2435aca94d60132f292edbd53cc975cbe", candidate_evidence
+        candidate_docs = (
+            changelog,
+            security,
+            text(ROOT / "ARCHITECTURE.md"),
+            text(ROOT / "RUNTIME_TESTS.md"),
+            text(SETUP),
         )
-        self.assertIn("32717295801", candidate_evidence)
+        candidate_evidence = "\n".join(candidate_docs)
+        for value in (
+            CANDIDATE_RUNTIME_SOURCE_COMMIT,
+            CANDIDATE_EXACT_CI_RUN,
+            CANDIDATE_MASTER_EVIDENCE_COMMIT,
+            CANDIDATE_MASTER_CI_RUN,
+            CANDIDATE_BASELINE_RUNTIME_SOURCE_COMMIT,
+            "357",
+            "DRY_RUN_PASS",
+            "UPGRADED",
+            "CURRENT_INSTALLATION_PASS",
+            "configuration_preserved true",
+            "effective_changes 2",
+            "effective_changes 0",
+            "backup NONE",
+            "169.4",
+            "codex-cli 0.146.0",
+            "V412_PUBLIC_RELEASE = NOT_ESTABLISHED",
+        ):
+            self.assertIn(value, candidate_evidence)
         self.assertIn(
             "`v4.1.1` is the current Stable release and default installation target.",
             security,
@@ -743,6 +796,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn("img.shields.io/badge/stable-v4.1.2", public_installation)
         self.assertIn("releases/tag/v4.1.1", public_installation)
         self.assertIn("img.shields.io/badge/stable-v4.1.1", public_installation)
+        self.assertIn("Stable release: `v4.1.1`", text(ASSIST))
+        self.assertNotIn("releases/tag/v4.1.2", text(README) + text(README_ZH) + text(ASSIST) + text(ASSIST_ZH))
 
     def test_stable_setup_contract_pins_runtime_source_without_self_reference(self):
         architecture = text(ROOT / "ARCHITECTURE.md")
@@ -779,23 +834,23 @@ class DocumentationTests(unittest.TestCase):
             "v4.1.1 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
             architecture,
         )
-        self.assertIn("Contract version: `v4.1.1`", setup)
-        self.assertGreaterEqual(setup.count(V411_RUNTIME_SOURCE_COMMIT), 7)
+        self.assertIn("Contract version: `v4.1.2`", setup)
+        self.assertGreaterEqual(setup.count(CANDIDATE_RUNTIME_SOURCE_COMMIT), 7)
         self.assertNotIn(RC6_SETUP_CONTRACT_COMMIT, setup)
-        self.assertIn("`v4.1.0` remains the previous immutable Stable release", setup)
+        self.assertIn("`v4.1.1` remains the previous immutable Stable release", setup)
+        self.assertIn("`v4.1.0` remains an older immutable Stable release", setup)
         self.assertIn("`v4.1.0-rc6` remains an immutable historical Prerelease", setup)
         self.assertIn("`v4.1.0-rc5` is an older historical Preview", setup)
         self.assertIn(
-            "`v4.1.1` is the Stable release target and current default installation target",
+            "`v4.1.2` is the Stable release target and default installation target",
             setup,
         )
         self.assertNotIn("RC6 is not tagged", setup)
         self.assertNotIn("RC6 is not published", setup)
-        self.assertIn("RC6 real Global upgrade, O1–O10 runtime acceptance", setup)
+        self.assertIn("recorded real Global baseline was `v4.1.0-rc6`", setup)
         self.assertIn("Final O4/O9 re-certification", setup)
         self.assertIn(
-            "An existing valid `v4.1.0` installation upgrades to `v4.1.1` by changing only:\n\n"
-            "1. `sol-luna-v4/install-manifest.json`.",
+            "only `sol-luna-v4/selector.py`",
             setup,
         )
         self.assertIn("v4.1.0-rc5", readmes)
@@ -807,9 +862,9 @@ class DocumentationTests(unittest.TestCase):
             "当前 Stable 稳定版本和默认安装目标",
             text(README_ZH),
         )
-        self.assertIn(f"checkout --detach {V411_RUNTIME_SOURCE_COMMIT}", setup)
+        self.assertIn(f"checkout --detach {CANDIDATE_RUNTIME_SOURCE_COMMIT}", setup)
         self.assertIn(
-            f"Require `git rev-parse HEAD` to equal `{V411_RUNTIME_SOURCE_COMMIT}` exactly",
+            f"Require `git rev-parse HEAD` to equal `{CANDIDATE_RUNTIME_SOURCE_COMMIT}` exactly",
             setup,
         )
         installer_commands = [
@@ -820,7 +875,7 @@ class DocumentationTests(unittest.TestCase):
         ]
         self.assertEqual(len(installer_commands), 4)
         for command in installer_commands:
-            self.assertIn(f"--source-commit {V411_RUNTIME_SOURCE_COMMIT}", command)
+            self.assertIn(f"--source-commit {CANDIDATE_RUNTIME_SOURCE_COMMIT}", command)
 
         for placeholder in (
             "<APPROVED_40_HEX_COMMIT>",
@@ -844,7 +899,7 @@ class DocumentationTests(unittest.TestCase):
             setup,
         )
         self.assertIn("a separate documentation anchor", setup)
-        self.assertIn("is not the runtime payload source", setup)
+        self.assertIn("not the runtime payload source", setup)
         self.assertIn("SETUP_CONTRACT_SELF_REFERENCE_REQUIRED = NO", setup)
         for placeholder in ("<source-sha>", "TBD", "TODO-for-release"):
             self.assertNotIn(placeholder, "\n".join((architecture, security, runtime, changelog)))
@@ -973,11 +1028,11 @@ class DocumentationTests(unittest.TestCase):
         content = text(SETUP)
         for command in (
             "scripts/install.py --dry-run --codex-home <CODEX_HOME> "
-            f"--source-commit {V411_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {CANDIDATE_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --codex-home <CODEX_HOME> "
-            f"--source-commit {V411_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {CANDIDATE_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> "
-            f"--source-commit {V411_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {CANDIDATE_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --rollback <BACKUP_PATH> --codex-home <CODEX_HOME>",
             "scripts/install.py --uninstall --codex-home <CODEX_HOME>",
         ):

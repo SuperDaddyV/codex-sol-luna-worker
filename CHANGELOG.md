@@ -24,6 +24,31 @@
   `32717295801` on Windows, Ubuntu, and macOS. This is repository source
   validation only; it does not establish a tag, Release, real Global install,
   or runtime acceptance.
+- The current-master evidence commit
+  `fac118ac5ca096aaf1ef8d68b79bfc1372998a5a` passed CI run `32717520585` on
+  Windows, Ubuntu, and macOS; it is current-tip evidence, not a replacement for
+  Source Commit A. The exact Source-A run reported `357` tests all `PASS`.
+- The recorded real Global baseline was `v4.1.0-rc6`, source
+  `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. Detached exact-Source-A dry-run
+  returned `DRY_RUN_PASS`, `writes NO`, `effective_changes 2`, and five-effort
+  capability `PASS`. Apply returned `UPGRADED`,
+  `configuration_preserved true`, `effective_changes 2`, changed only the
+  selector and install manifest, and created one transaction backup. Second
+  apply returned `CURRENT_INSTALLATION_PASS`, `writes NO`,
+  `effective_changes 0`, and `backup NONE`.
+- Daily proof returned a legal role and matching effort without recording the
+  day's specific effort; same-day Profile and LKG were not rewritten. Exactly
+  one fresh-task compatibility smoke ran for about `169.4` seconds with
+  `codex-cli 0.146.0`, exited `0`, and passed `CLI`, `Luna capability`,
+  `Selector`, `Delegation`, `Protected state`, `Runtime contract`, and final
+  `Compatibility`. Protected hashes for `AGENTS.md`, configuration, five
+  agents, selector, manifest, Profile, LKG, and lock were unchanged, and the
+  smoke created no backup.
+- This evidence is limited to one native Windows Codex environment. Windows,
+  Ubuntu, and macOS CI are source validation only, not three-platform
+  real-runtime validation. The current public README and assisted-installation
+  entry remain the immutable `v4.1.1` chain; no `v4.1.2` tag or Release is
+  established by this candidate record.
 
 ## v4.1.1 (published Stable release)
 
