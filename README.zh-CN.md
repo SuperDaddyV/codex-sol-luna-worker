@@ -3,7 +3,7 @@
 [English](README.md)
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
-[![Stable: v4.1.0](https://img.shields.io/badge/stable-v4.1.0-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0)
+[![Stable: v4.1.1](https://img.shields.io/badge/stable-v4.1.1-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.1)
 [![Historical Preview: v4.1.0-rc6](https://img.shields.io/badge/historical_preview-v4.1.0--rc6-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc6)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
@@ -13,11 +13,11 @@
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
 > [!NOTE]
-> `v4.1.0` 是当前 Stable 稳定版本和默认安装目标。`v4.1.0-rc6` 保持为不可变的历史 GitHub Prerelease／Preview／Public Beta。
+> `v4.1.1` 是当前 Stable 稳定版本和默认安装目标。`v4.1.0` 是上一版不可变 Stable，`v4.1.0-rc6` 保持为不可变的历史 GitHub Prerelease／Preview／Public Beta。
 >
-> Stable Source Commit A 的仓库验证和 exact-SHA CI 已在 Windows、Ubuntu 和 macOS 通过。RC6→Stable fake-home 验证只改变 ownership manifest；独立的发布前 compatibility smoke 针对未改变的已安装产品运行时通过全部六项检查。RC6 记录的 real Global upgrade、fresh-task O1–O10 acceptance、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 仍是一个原生 Windows Codex 环境中的有边界证据，不是通用 runtime 认证。
+> Stable Source Commit A2 已通过 332 项本地测试及 Windows、Ubuntu、macOS exact-SHA CI。`v4.1.0`→`v4.1.1` fake-home lifecycle 只改变 ownership manifest。显式初始化 Daily selection 后，独立 fresh-task compatibility smoke 只运行一次，约 144.2 秒后以退出码 `0` 完成，六项检查与最终 Compatibility 全部 `PASS`。未执行真实 Global `v4.1.1` installer apply。RC6 记录的 real Global upgrade、fresh-task O1–O10 acceptance、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 仍是一个原生 Windows Codex 环境中的有边界证据，不是通用 runtime 认证。
 >
-> immutable Stable Assisted Installation 文档固定在 `39594139eaeeda705528733fc383333504546fb6`；其底层 Stable Setup 文档仍固定在 `2c912b1e1a0fdbd115eb605517fde9385b633745`，installer runtime source 则单独固定为 `67a72f8accc5d53ef04ff8d64d8838e397ceecda`。RC6 和 RC5 都是历史 Preview。
+> immutable Stable Assisted Installation 文档固定在 `17eb1d370929e884f91c5f1920a2e0868ce4a421`；其底层 Stable Setup 文档固定在 `d4a044a04df509285ef38c6afc28b5a68a48a0f9`，installer Source Commit A2 则单独固定为 `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`。RC6 和 RC5 都是历史 Preview。
 >
 > RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 的 evidence-gated Receipt 行为属于历史发布证据。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
 
@@ -42,7 +42,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ## 使用 Codex 安装
 
 1. 使用 GPT-5.6 Sol 新建一个 Codex 任务。
-2. 可先阅读[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)；实际执行仍以固定的[英文安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)及其固定的[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)为唯一权威。
+2. 可先阅读[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)；实际执行仍以固定的[英文安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md)及其固定的[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md)为唯一权威。
 3. 复制下面的提示词。
 4. 由 Codex 一次性诊断全部前置条件、执行有边界的安全修复、为任何系统变更请求确认，然后完成安装器 dry-run、事务备份、安装和验证。
 5. 按需完全重新加载 Codex，再新建任务完成 smoke test。已经打开的旧任务不能作为新全局配置的完整验收依据。
@@ -50,9 +50,9 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ```text
 请读取并严格执行以下安装协助合同：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-安装固定的 v4.1.0 Stable 目标。一次性诊断全部彼此独立的前置条件。
+安装固定的 v4.1.1 Stable 目标。一次性诊断全部彼此独立的前置条件。
 只自动执行合同允许的安全修复。安装软件包、提升管理员权限或持久修改环境前，
 先给出一份来自官方来源的准确修复方案并等待我的明确确认。获得确认后自动复检并续跑。
 不得修改认证、代理、证书信任、sandbox、组织策略或无关用户配置。
@@ -61,14 +61,14 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 ```
 
 > [!WARNING]
-> 默认路径使用 immutable `v4.1.0` Stable Assisted Installation contract，并由它包装单独固定的 Stable Setup contract。不得改用可变 `master`。只允许有边界的会话级安全修复；系统变更必须明确确认。安装器仍在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 默认路径使用 immutable `v4.1.1` Stable Assisted Installation contract，并由它包装单独固定的 Stable Setup contract。不得改用可变 `master`。只允许有边界的会话级安全修复；系统变更必须明确确认。安装器仍在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
 ## 当前 Stable
 
-`v4.1.0` 是当前 Stable 稳定版本，并通过上方 immutable assisted Stable entry 成为默认安装目标／路径。
+`v4.1.1` 是当前 Stable 稳定版本，并通过上方 immutable assisted Stable entry 成为默认安装目标／路径。
 
 > [!NOTE]
-> `v4.1.1` 安装体验目前仍是未发布候选，不改变当前 `v4.1.0` Stable 提示词、tag、Release 或 immutable anchors。不得从可变 `master` 安装候选版本。
+> `v4.1.0` 保持为上一版不可变 Stable，其 tag 与 Release 不变；`v4.1.0-rc6` 继续作为不可变的历史 Prerelease。
 
 Stable 包含：
 
@@ -81,11 +81,11 @@ Stable 包含：
 
 | 发布依据 | 状态 |
 | --- | --- |
-| Installer runtime Source Commit `67a72f8accc5d53ef04ff8d64d8838e397ceecda` | Repository validation and exact-SHA CI 已在 Windows、Ubuntu、macOS 通过 |
-| Immutable Stable 安装协助文档 | 已在 documentation Commit `39594139eaeeda705528733fc383333504546fb6` 提供；新增有边界的前置条件恢复，不改变 runtime payload |
-| Immutable Stable setup 文档 | 已在 documentation Commit `2c912b1e1a0fdbd115eb605517fde9385b633745` 提供；该锚点不是 runtime source |
-| RC6→Stable fake-home lifecycle | `PASS`；只改变 `sol-luna-v4/install-manifest.json` |
-| 独立 fresh-task compatibility smoke | CLI、Luna capability、Selector、Delegation、Protected state、Runtime contract 和最终 Compatibility 全部 `PASS` |
+| Installer runtime Source Commit A2 `ca8e9e4caf5564ffe8d0a11fe376047594f8a748` | 332 项本地测试及 Windows、Ubuntu、macOS exact-SHA CI 全部通过 |
+| Immutable Stable 安装协助文档 | Documentation Commit `17eb1d370929e884f91c5f1920a2e0868ce4a421`；新增有边界的前置条件恢复，不改变 runtime payload |
+| Immutable Stable setup 文档 | Documentation Commit `d4a044a04df509285ef38c6afc28b5a68a48a0f9`；该锚点不是 runtime source |
+| `v4.1.0`→`v4.1.1` fake-home lifecycle | `PASS`；只改变 `sol-luna-v4/install-manifest.json` |
+| 独立一次 fresh-task compatibility smoke | 约 144.2 秒后退出码 `0`；CLI、Luna capability、Selector、Delegation、Protected state、Runtime contract 和最终 Compatibility 全部 `PASS` |
 | 发布状态 | `STABLE — 非 draft、非 prerelease GitHub Release` |
 | Real RC5→RC6 Global upgrade | 在一个已记录的原生 Windows Codex 环境 `PASS` |
 | RC6 O1–O10 和 Runtime Cases A/B/C/D | 在 documented environment `PASS`；仍是有边界的证据 |
@@ -97,9 +97,9 @@ immutable 安装协助合同就是上方默认入口。复制提示词的安装�
 ```text
 请读取并严格执行以下安装协助合同：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-完成固定的 v4.1.0 Stable 安装。恢复前先汇总全部彼此独立的只读前置条件结果。
+完成固定的 v4.1.1 Stable 安装。恢复前先汇总全部彼此独立的只读前置条件结果。
 自动执行有边界的安全修复。需要安装软件包、提升权限或持久修改环境时，给出准确命令、
 官方来源、作用范围、持久影响和回滚方式；等待一次明确确认后复检并续跑。
 认证、代理、证书信任、sandbox、策略、exact-SHA、ownership、事务和 fresh-task
@@ -238,7 +238,7 @@ Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chat
 
 ## 反馈
 
-`v4.1.0` 是当前 Stable 稳定版本；`v4.1.0-rc6` 保持为历史 Preview prerelease／公开测试版本。
+`v4.1.1` 是当前 Stable 稳定版本；`v4.1.0` 是上一版 Stable，`v4.1.0-rc6` 保持为历史 Preview prerelease／公开测试版本。
 
 可反馈安装、升级、selector、Luna 委派、Delegation Receipt、rollback 和 uninstall 问题；欢迎提交 Bug 报告，也欢迎提交成功的兼容性报告。请选择对应的原生 GitHub Issue Form：
 
@@ -305,7 +305,7 @@ rollback 校验 installer-owned snapshot，精确恢复安装前状态；成功�
 python scripts/install.py --uninstall --codex-home "<CODEX_HOME>"
 ```
 
-uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成 rollback 或 uninstall 后重新加载 Codex，并新建任务。执行前请先阅读[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
+uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成 rollback 或 uninstall 后重新加载 Codex，并新建任务。执行前请先阅读[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md)。
 
 ## 🧪 已验证范围
 
@@ -321,9 +321,10 @@ uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
 | Stable runtime Source Commit exact-SHA CI | Windows、Ubuntu、macOS 均已通过 |
-| Stable immutable setup 文档 | Documentation Commit `2c912b1e1a0fdbd115eb605517fde9385b633745`；当前默认入口，不是 runtime source |
-| RC6→Stable fake-home lifecycle | 本地 installer/lifecycle tests PASS；仅 manifest 变化 |
-| Stable 发布前 compatibility smoke | 六项检查和最终 Compatibility 全部 `PASS` |
+| Stable immutable assisted installation 文档 | Documentation Commit `17eb1d370929e884f91c5f1920a2e0868ce4a421`；当前默认入口，不是 runtime source |
+| Stable immutable setup 文档 | Documentation Commit `d4a044a04df509285ef38c6afc28b5a68a48a0f9`；由 assisted contract 固定，不是 runtime source |
+| `v4.1.0`→`v4.1.1` fake-home lifecycle | 本地 installer/lifecycle tests PASS；仅 manifest 变化 |
+| Stable 发布前 compatibility smoke | 只运行一次，退出码 `0`，六项检查和最终 Compatibility 全部 `PASS` |
 | RC5 repository validation and exact-SHA CI | 已在 Windows、Ubuntu、macOS 通过 |
 | RC5 O1–O10 documented-environment 记录（包括 O4/O9） | 仅为有边界的证据 |
 | RC5 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
@@ -406,7 +407,7 @@ python scripts/install.py --dry-run --codex-home "<CODEX_HOME>"
 python -m unittest discover -s tests -v
 ```
 
-真实 global installation 不使用 `--validation-sandbox`；这个参数只允许仓库 `.tmp/installer-validation/` 下的测试目标。apply、migration、rollback 和 uninstall 见 [CODEX_SOL_LUNA_SETUP.md](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
+真实 global installation 不使用 `--validation-sandbox`；这个参数只允许仓库 `.tmp/installer-validation/` 下的测试目标。apply、migration、rollback 和 uninstall 见 [CODEX_SOL_LUNA_SETUP.md](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md)。
 
 ### 可选并行自测
 
@@ -414,9 +415,9 @@ python -m unittest discover -s tests -v
 
 ## 📚 技术文档
 
-- [Codex 可执行安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
+- [Codex 可执行安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
 - [安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)
-- [Codex 可执行安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)
+- [Codex 可执行安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md)
 - [架构说明](ARCHITECTURE.md)
 - [Runtime 验证](RUNTIME_TESTS.md)
 - [安全边界](SECURITY.md)

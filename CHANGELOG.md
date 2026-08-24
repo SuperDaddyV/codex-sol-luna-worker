@@ -1,6 +1,6 @@
 # Changelog
 
-## v4.1.1 (Stable release target)
+## v4.1.1 (published Stable release)
 
 - Added Stable Source Commit A2
   `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; 332 local tests and exact-SHA CI
@@ -29,10 +29,11 @@
   `Delegation`, `Protected state`, `Runtime contract`, and final
   `Compatibility` all explicit `PASS`. No real Global `v4.1.1` installer apply
   was performed.
-- Prepared the reviewed Stable setup and evidence contract around immutable
-  Source Commit A2. A later immutable assisted-contract commit pins this setup
-  commit, and a still later bilingual README commit pins both layers; no commit
-  self-references its own SHA.
+- Anchored the reviewed Stable setup and evidence contract at immutable Commit
+  `d4a044a04df509285ef38c6afc28b5a68a48a0f9` around Source Commit A2. The
+  immutable assisted-installation contract at Commit
+  `17eb1d370929e884f91c5f1920a2e0868ce4a421` pins that setup contract, and the
+  bilingual README pins both layers; no commit self-references its own SHA.
 - Preserved the published `v4.1.0` Stable tag and Release and the annotated
   `v4.1.0-rc6` tag and historical Prerelease unchanged.
 

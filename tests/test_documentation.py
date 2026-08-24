@@ -30,9 +30,12 @@ ISSUE_FORMS = {
 }
 PUBLIC_DOCS = (README, README_ZH, ASSIST, ASSIST_ZH, SETUP, ROOT / "SECURITY.md")
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
-PINNED_ASSIST_COMMIT = "39594139eaeeda705528733fc383333504546fb6"
-PINNED_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
-V411_SETUP_CONTRACT_COMMIT = "d4a044a04df509285ef38c6afc28b5a68a48a0f9"
+PREVIOUS_STABLE_ASSIST_COMMIT = "39594139eaeeda705528733fc383333504546fb6"
+PREVIOUS_STABLE_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
+PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT = "67a72f8accc5d53ef04ff8d64d8838e397ceecda"
+PINNED_ASSIST_COMMIT = "17eb1d370929e884f91c5f1920a2e0868ce4a421"
+PINNED_SETUP_COMMIT = "d4a044a04df509285ef38c6afc28b5a68a48a0f9"
+V411_SETUP_CONTRACT_COMMIT = PINNED_SETUP_COMMIT
 PINNED_ASSIST_BLOB_URL = (
     "https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/"
     f"{PINNED_ASSIST_COMMIT}/CODEX_SOL_LUNA_INSTALL_ASSIST.md"
@@ -47,8 +50,8 @@ RC5_STALE_SETUP_CONTRACT_COMMIT = "7affbcda6f68cd125aaf6eec3c0e3ff04ebd60d9"
 RC6_RUNTIME_SOURCE_COMMIT = "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 RC6_SETUP_CONTRACT_COMMIT = "3e19e2f547c6fca2a888a176767e8dc69240acbc"
 RC6_STALE_SETUP_CONTRACT_COMMIT = "86424ea4d6f6630a34b6e4daa22d2d93a5576ddf"
-STABLE_RUNTIME_SOURCE_COMMIT = "67a72f8accc5d53ef04ff8d64d8838e397ceecda"
-V411_RUNTIME_SOURCE_COMMIT = "ca8e9e4caf5564ffe8d0a11fe376047594f8a748"
+STABLE_RUNTIME_SOURCE_COMMIT = "ca8e9e4caf5564ffe8d0a11fe376047594f8a748"
+V411_RUNTIME_SOURCE_COMMIT = STABLE_RUNTIME_SOURCE_COMMIT
 ASSIST_RAW_PATTERN = re.compile(
     r"https://raw\.githubusercontent\.com/"
     r"SuperDaddyV/codex-sol-luna-worker/([0-9a-f]{40})/"
@@ -96,8 +99,8 @@ class DocumentationTests(unittest.TestCase):
         ):
             content = text(path)
             self.assertIn("actions/workflows/validate.yml/badge.svg", content)
-            self.assertIn("releases/tag/v4.1.0", content)
-            self.assertIn("img.shields.io/badge/stable-v4.1.0", content)
+            self.assertIn("releases/tag/v4.1.1", content)
+            self.assertIn("img.shields.io/badge/stable-v4.1.1", content)
             self.assertIn("releases/tag/v4.1.0-rc6", content)
             self.assertIn("img.shields.io/badge/historical_preview-v4.1.0--rc6", content)
             self.assertIn("github/license", content)
@@ -150,30 +153,36 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(RC6_RUNTIME_SOURCE_COMMIT, content)
             self.assertIn(RC6_SETUP_CONTRACT_COMMIT, content)
         self.assertIn(
-            "The default path uses the immutable `v4.1.0` Stable Assisted Installation contract",
+            "The default path uses the immutable `v4.1.1` Stable Assisted Installation contract",
             english,
         )
         self.assertIn(
-            "the installer runtime source remains separately fixed at",
+            "installer Source Commit A2 remains separately fixed at",
             english,
         )
         self.assertIn(
-            "Independent fresh-task compatibility smoke | CLI, Luna capability",
+            "Independent one-run fresh-task compatibility smoke | Exit `0`",
             english,
         )
         self.assertIn(
-            "默认路径使用 immutable `v4.1.0` Stable Assisted Installation contract",
+            "默认路径使用 immutable `v4.1.1` Stable Assisted Installation contract",
             chinese,
         )
         self.assertIn(
-            "installer runtime source 则单独固定为",
+            "installer Source Commit A2 则单独固定为",
             chinese,
         )
-        self.assertIn("独立 fresh-task compatibility smoke | CLI、Luna capability", chinese)
-        self.assertIn("`v4.1.1` installation experience work is an unreleased candidate", english)
-        self.assertIn("Do not install the candidate from mutable `master`", english)
-        self.assertIn("`v4.1.1` 安装体验目前仍是未发布候选", chinese)
-        self.assertIn("不得从可变 `master` 安装候选版本", chinese)
+        self.assertIn("独立一次 fresh-task compatibility smoke | 约 144.2 秒", chinese)
+        self.assertIn("`v4.1.0` remains the previous immutable Stable release", english)
+        self.assertIn("`v4.1.0` 保持为上一版不可变 Stable", chinese)
+        for stale in (
+            PREVIOUS_STABLE_ASSIST_COMMIT,
+            PREVIOUS_STABLE_SETUP_COMMIT,
+            PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT,
+            "unreleased candidate",
+            "未发布候选",
+        ):
+            self.assertNotIn(stale, english + chinese)
 
     def test_setup_preflight_stops_missing_dependencies_before_writes(self):
         content = text(SETUP)
@@ -302,8 +311,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("The smoke remains status-only", content)
         self.assertNotIn("unreleased `v4.1.1`", content)
         self.assertNotIn("assistance candidate", content)
-        self.assertNotIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
-        self.assertNotIn(PINNED_SETUP_COMMIT, content)
+        self.assertNotIn(PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT, content)
+        self.assertNotIn(PREVIOUS_STABLE_SETUP_COMMIT, content)
         self.assertEqual(content.count(f"--source-commit {V411_RUNTIME_SOURCE_COMMIT}"), 2)
 
     def test_chinese_assistance_document_is_review_only_and_covers_same_boundaries(self):
@@ -340,8 +349,8 @@ class DocumentationTests(unittest.TestCase):
             content,
         )
         self.assertNotIn("安装助手候选", content)
-        self.assertNotIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
-        self.assertNotIn(PINNED_SETUP_COMMIT, content)
+        self.assertNotIn(PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT, content)
+        self.assertNotIn(PREVIOUS_STABLE_SETUP_COMMIT, content)
 
     def test_setup_records_v411_stable_assisted_handoff(self):
         content = text(SETUP)
@@ -473,9 +482,9 @@ class DocumentationTests(unittest.TestCase):
                 )
             self.assertIn("CODEX_HOME", content)
             self.assertIn(whole_warning, content)
-        self.assertIn("`v4.1.0` is the current Stable release", english)
+        self.assertIn("`v4.1.1` is the current Stable release", english)
         self.assertIn("`v4.1.0-rc6` remains a historical Preview prerelease", english)
-        self.assertIn("`v4.1.0` 是当前 Stable 稳定版本", chinese)
+        self.assertIn("`v4.1.1` 是当前 Stable 稳定版本", chinese)
         self.assertIn("`v4.1.0-rc6` 保持为历史 Preview prerelease", chinese)
         self.assertIn("欢迎提交 Bug 报告", chinese)
         self.assertIn("欢迎提交成功的兼容性报告", chinese)
@@ -508,7 +517,8 @@ class DocumentationTests(unittest.TestCase):
                 README,
                 "## Current Stable",
                 "| Publication | `STABLE — non-draft, non-prerelease GitHub Release` |",
-                "| Independent fresh-task compatibility smoke | CLI, Luna capability, "
+                "| Independent one-run fresh-task compatibility smoke | Exit `0` after "
+                "about 144.2 seconds; CLI, Luna capability, "
                 "Selector, Delegation, Protected state, Runtime contract, and final "
                 "Compatibility all `PASS` |",
             ),
@@ -516,7 +526,8 @@ class DocumentationTests(unittest.TestCase):
                 README_ZH,
                 "## 当前 Stable",
                 "| 发布状态 | `STABLE — 非 draft、非 prerelease GitHub Release` |",
-                "| 独立 fresh-task compatibility smoke | CLI、Luna capability、Selector、"
+                "| 独立一次 fresh-task compatibility smoke | 约 144.2 秒后退出码 `0`；"
+                "CLI、Luna capability、Selector、"
                 "Delegation、Protected state、Runtime contract 和最终 Compatibility 全部 `PASS` |",
             ),
         ):
@@ -572,8 +583,8 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("NOT RUN", release_section)
             for placeholder in ("<APPROVED_40_HEX_COMMIT>", "<TBD>", "pending"):
                 self.assertNotIn(placeholder, release_section)
-            self.assertIn("releases/tag/v4.1.0", content)
-            self.assertIn("img.shields.io/badge/stable-v4.1.0", content)
+            self.assertIn("releases/tag/v4.1.1", content)
+            self.assertIn("img.shields.io/badge/stable-v4.1.1", content)
             self.assertIn("releases/tag/v4.1.0-rc6", content)
             self.assertIn("img.shields.io/badge/historical_preview-v4.1.0--rc6", content)
             self.assertNotIn("NOT PUBLISHED", content)
@@ -630,8 +641,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("公开测试版本", text(README_ZH))
         self.assertIn("no selector, no delegation, and no availability evidence", text(README))
         self.assertIn("没有 selector、没有 delegation、没有 availability evidence", text(README_ZH))
-        self.assertIn("v4.1.0` is the current Stable release", text(README))
-        self.assertIn("v4.1.0` 是当前 Stable 稳定版本", text(README_ZH))
+        self.assertIn("v4.1.1` is the current Stable release", text(README))
+        self.assertIn("v4.1.1` 是当前 Stable 稳定版本", text(README_ZH))
         self.assertNotRegex(combined, r"v4\.1\.0-rc3[^\n]*(?:—|is|是)\s*STABLE")
         self.assertNotIn(
             "RC2 repository-context delegation validation remains pending", combined
@@ -723,7 +734,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, security)
         for number in range(1, 11):
             self.assertRegex(setup, rf"(?m)^- O{number} .* — `PASS`[;.]$")
-        self.assertIn("v4.1.1 (Stable release target)", changelog)
+        self.assertIn("v4.1.1 (published Stable release)", changelog)
         self.assertIn("Stable Source Commit A2", changelog)
         for content in (architecture, security):
             self.assertIn(
