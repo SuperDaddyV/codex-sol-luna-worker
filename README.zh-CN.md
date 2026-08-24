@@ -1,51 +1,45 @@
 # Codex Sol + Luna Worker
 
+让 GPT-5.6 Sol 专注于规划与验收，让原生 GPT-5.6 Luna worker 承担边界清楚的执行任务。
+
 [English](README.md)
 
-[![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![Stable: v4.1.2](https://img.shields.io/badge/stable-v4.1.2-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.2)
-[![Historical Preview: v4.1.0-rc6](https://img.shields.io/badge/historical_preview-v4.1.0--rc6-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc6)
+[![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
-
-让 GPT-5.6 Sol 专注于理解、规划、编排、歧义处理与最终验收，让原生 GPT-5.6 Luna worker 承担边界清楚的执行任务。
 
 > [!IMPORTANT]
 > 这是独立的社区项目，与 OpenAI、ModelDial 均无隶属、赞助或背书关系。
 
-> [!NOTE]
-> `v4.1.2` 是当前 Stable 稳定版本和默认安装目标。`v4.1.1` 是上一版不可变 Stable，`v4.1.0-rc6` 保持为不可变的历史 GitHub Prerelease／Preview／Public Beta。
->
-> Stable Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe` 已通过 `357` 项本地测试及 Windows、Ubuntu、macOS exact-SHA CI。记录中的 real Global `v4.1.0-rc6`→`v4.1.2` transition 只改变 selector 和 install manifest。显式初始化 Daily selection 后，独立 fresh-task compatibility smoke 只运行一次，约 169.4 秒后以退出码 `0` 完成，CLI、Luna capability、Selector、Delegation、Protected state、Runtime contract 和最终 Compatibility 全部 `PASS`。RC6 记录的 real Global upgrade、fresh-task O1–O10 acceptance、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 仍是一个原生 Windows Codex 环境中的有边界证据，不是通用 runtime 认证。
->
-> immutable Stable Assisted Installation 文档固定在 `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`；其底层 Stable Setup 文档固定在 `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`，installer Source Commit A 则单独固定为 `551520c2435aca94d60132f292edbd53cc975cbe`。RC6 和 RC5 都是历史 Preview。
->
-> RC3 可能在没有 selector、没有 delegation、没有 availability evidence 时错误输出 `Luna unavailable`。RC4 的 evidence-gated Receipt 行为属于历史发布证据。详细记录见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)。
+## 这是什么
 
-```text
-GPT-5.6 Sol
-      ↓
-AGENTS delegation policy
-      ↓
-Daily Selector
-      ↓
-Native Luna / daily selected effort
-      ↓
-Native leaf execution
-      ↓
-Sol Acceptance Gate
-      ↓
-Delegation Receipt
-```
+Codex Sol + Luna Worker 在 Codex 中建立清晰的职责分工：
 
-v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna effort，当天重复使用同一结果。准备开始时，直接看[使用 Codex 安装](#使用-codex-安装)。
+- **Sol 负责规划与验收。** Sol 负责需求、架构、编排、歧义处理和最终答复。
+- **Luna 负责边界明确的执行。** Luna 承担范围清楚的实现、定向检查、测试、构建和重复性任务，然后把证据交回 Sol。
+
+Sol 始终掌握控制权：它判断任务是否适合委派，并在验收前复核每一份 Luna 结果。
+
+## 核心价值
+
+- **原生 Agent：** 使用 Codex custom agents 和 subagents，不需要 Hook Router 或自建编排引擎。
+- **自动 Daily Luna：** 按北京时间每天从五档 Luna effort 中选择一个；日常提示词无需指定 role 或 effort。
+- **独立任务委派：** 思考与最终决策留给 Sol，边界清楚的执行交给 Luna。
+- **有限并行：** 最多同时运行三个直属 Luna，只并行真正独立的任务；Luna 是 native leaf，不能继续委派。
+- **配置保护和可恢复：** 保留无关用户配置，遇到冲突 fail closed，并通过事务备份支持受控回滚和安全卸载。
+
+## 系统要求
+
+- Codex Desktop，或其他支持 custom agent 与 subagent 的当前 Codex 客户端。
+- 当前任务环境可执行 `codex` 命令；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
+- 账号可使用 GPT-5.6 Sol，以及所需五档 effort 的 GPT-5.6 Luna。
+- Python 3.11 或更高版本并包含 `tomllib`，以及用于不可变精确 commit checkout 的 Git。
+- 能以只读 HTTPS 访问本公开 GitHub 仓库。
+- Windows、Ubuntu/Linux 或 macOS。WSL 应视为独立 Linux 环境。
 
 ## 使用 Codex 安装
 
-1. 使用 GPT-5.6 Sol 新建一个 Codex 任务。
-2. 可先阅读[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)；实际执行仍以固定的[英文安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md)及其固定的[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)为唯一权威。
-3. 复制下面的提示词。
-4. 由 Codex 一次性诊断全部前置条件、执行有边界的安全修复、为任何系统变更请求确认，然后完成安装器 dry-run、事务备份、安装和验证。
-5. 按需完全重新加载 Codex，再新建任务完成 smoke test。已经打开的旧任务不能作为新全局配置的完整验收依据。
+使用 GPT-5.6 Sol 新建一个 Codex 任务，然后只粘贴下面这一个提示词：
 
 ```text
 请读取并严格执行以下安装协助合同：
@@ -60,372 +54,74 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 安装后告诉我如何重新加载 Codex，并给出新任务 smoke 的续接内容。
 ```
 
+固定的[英文 Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md)是唯一执行权威；[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)仅供审阅。该协助合同会继续固定独立的 [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)，再由 Setup 固定 runtime Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe`。
+
 > [!WARNING]
-> 默认路径使用 immutable `v4.1.2` Stable Assisted Installation contract，并由它包装单独固定的 Stable Setup contract。不得改用可变 `master`。只允许有边界的会话级安全修复；系统变更必须明确确认。安装器仍在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
+> 不得把不可变安装 URL 改成 `master`、tag 或其他可变入口。系统变更必须获得明确确认。安装器在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
 
-## 当前 Stable
+安装完成后，按提示重新加载 Codex 并新建任务，让全局 instructions、agents 和 configuration 进入新任务。
 
-`v4.1.2` 是当前 Stable 稳定版本，并通过上方 immutable assisted Stable entry 成为默认安装目标／路径。
+## 日常使用
 
-> [!NOTE]
-> `v4.1.1` 保持为上一版不可变 Stable，`v4.1.0` 保持为更早的不可变 Stable；它们的 tag 与 Release 均不变，`v4.1.0-rc6` 继续作为不可变的历史 Prerelease。
-
-Stable 包含：
-
-- Observability metadata
-- Sol/Luna Status
-- Diagnostic report
-- Degraded indicators
-- Luna ref-cost Receipt
-- Upgrade-to-latest UX
-- 最小权限 child-process environment
-- Installer filesystem-alias hardening
-- 严格的同日 Profile 与 selector-status 校验
-
-| 发布依据 | 状态 |
-| --- | --- |
-| Installer runtime Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe` | `357` 项测试及 exact-SHA CI run `32717295801` 在 Windows、Ubuntu、macOS 全部通过 |
-| Immutable Stable 安装协助文档 | Documentation Commit `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`；新增有边界的前置条件恢复，不改变 runtime payload |
-| Immutable Stable setup 文档 | Documentation Commit `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`；该锚点不是 runtime source |
-| `v4.1.0-rc6`→`v4.1.2` 记录中的 Global transition | `PASS`；只改变 selector 和 `sol-luna-v4/install-manifest.json`，创建一个 transaction backup |
-| 独立一次 fresh-task compatibility smoke | 约 169.4 秒后退出码 `0`；CLI、Luna capability、Selector、Delegation、Protected state、Runtime contract 和最终 Compatibility 全部 `PASS` |
-| 发布状态 | `STABLE — 非 draft、非 prerelease GitHub Release` |
-| Real RC5→RC6 Global upgrade | 在一个已记录的原生 Windows Codex 环境 `PASS` |
-| RC6 O1–O10 和 Runtime Cases A/B/C/D | 在 documented environment `PASS`；仍是有边界的证据 |
-| RC6 最终 O4/O9 再认证 | 通过 isolated acceptance harness 获得 `PASS` |
-| Product-runtime regression | 没有已确认的 product-runtime regression |
-
-immutable 安装协助合同就是上方默认入口。复制提示词的安装路径支持 Windows、Ubuntu/Linux、macOS 上的 Codex Desktop；WSL 视为独立 Linux 环境。它会一起报告全部独立的前置条件问题，只自动解决安全的会话级条件，并在任何拟议的系统变更前集中请求一次确认。硬依赖仍然是可执行的 `codex` 命令、Python 3.11+ 与 `tomllib`、Git，以及对公开 GitHub 仓库的只读 HTTPS 访问。Git 和 CLI 都是硬依赖；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
-
-```text
-请读取并严格执行以下安装协助合同：
-
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md
-
-完成固定的 v4.1.2 Stable 安装。恢复前先汇总全部彼此独立的只读前置条件结果。
-自动执行有边界的安全修复。需要安装软件包、提升权限或持久修改环境时，给出准确命令、
-官方来源、作用范围、持久影响和回滚方式；等待一次明确确认后复检并续跑。
-认证、代理、证书信任、sandbox、策略、exact-SHA、ownership、事务和 fresh-task
-门禁必须保持不变。
-```
-
-请先审阅合同，从其中的 dry-run 开始，让安装器创建 transaction backup，并保留精确 backup path 以便 rollback。记录中的 RC6→v4.1.2 transition 只改变已安装 selector 与 manifest；policy、五个 agent、configuration、Daily Profile 和 LKG 均保持不变。RC6 O1–O10 和最终 O4/O9 仍是受环境和场景限制的证据。没有已确认的 product-runtime regression。
-
-## RC6 历史 Preview
-
-`v4.1.0-rc6` 保持为不可变的历史 GitHub Prerelease／Preview／Public Beta。其 runtime Source Commit 为 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`，immutable setup 文档仍位于 documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`。其 annotated tag 和 Release 保持不变；不要再把历史 RC6 入口作为当前默认入口。
-
-RC6 记录的 real Global upgrade、O1–O10、最终 O4/O9 再认证和 Runtime Cases A/B/C/D 仍是一个原生 Windows Codex 环境中的有边界历史证据。记录中的 v4.1.2 transition 会改变已安装 selector 与 manifest，同时保持 policy、五个 agent、configuration、Daily Profile 和 LKG 不变。
-
-## RC5 历史 Preview
-
-`v4.1.0-rc5` 是上一版已发布 Preview／Public Beta，现已转为历史版本。其 runtime Source Commit 为 `5ae88ff9190b31174c55a6136c0c8c8611d0b34c`，immutable setup 文档仍可在 documentation Commit `ccd9d84da2f74df9ca2d919729b75eebf2dac27a` 查阅。不要再把该历史入口作为当前默认安装入口。
-
-documented-environment 的 RC5 O1–O10 记录仍是有边界的历史证据。由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`，其最终 O4/O9 再认证未获得；没有已确认的 product-runtime regression。RC6 在发布前独立完成了自己的 runtime acceptance。
-
-RC6 installer transition 只改变 `sol-luna-v4/selector.py` 和 `sol-luna-v4/install-manifest.json`。selector 将 malformed URL parsing、hostname 和 port 的 `ValueError` 统一规范为 `SnapshotInvalid`，保留 API → snapshot → LKG → fail-closed 的来源顺序。compatibility smoke 增加只读基线、两个精确 rollout 根目录，以及有界 writer settle／fail-closed evidence；它不能替代 runtime acceptance。
-
-## 🚀 这是什么
-
-本项目把 Codex 中两类工作明确分开：
-
-- **GPT-5.6 Sol**：理解需求、思考、规划、架构、编排、处理歧义，并对最终结果负责。
-- **GPT-5.6 Luna**：编码执行、定向搜索、文件检查、测试、lint/build、重复性工作，以及范围明确的批量任务。
-
-Sol 始终是唯一主脑。它判断一个任务是否已经足够清楚、是否值得委派；Luna 只执行被明确限定的工作并返回证据，最后仍由 Sol 验收。
-
-## 为什么要这样做
-
-设计目标是把高价值的思考、取舍和验收留给 Sol，把机械且边界清楚的执行交给 Luna。并不是为了让 Sol 退出工作，也不是把所有任务强制交给 Luna。本项目不承诺未经测量的固定成本比例、速度提升或质量数字。
-
-## ✨ 核心功能
-
-- **Sol 唯一主脑**：规划、架构、编排、歧义处理和最终验收不下放。
-- **自动判断是否委派**：正常使用时无需手工指定 Luna role；Sol 依据有效的 `AGENTS.md` 与 installed Global selector 返回的北京时间当天 role 决策。
-- **Daily Luna effort selection**：在 `low`、`medium`、`high`、`xhigh`、`max` 五档中选择；`ultra` 永久排除在 v4 allowlist 外。
-- **北京时间每日一次**：当天复用同一个选择，跨日重新选择。
-- **LKG fallback 与 first-use fail closed**：实时来源无效时可使用有效的 last-known-good；首次使用既无有效来源也无 LKG 时返回 `NO_LUNA_PROFILE_AVAILABLE`，Sol 自己完成任务，不猜 effort。
-- **Capability degradation**：显式提供本地 supported-effort 集合时，source winner 不可用可降级到最优的受支持档位并记录状态。
-- **五个稳定角色**：`luna_low`、`luna_medium`、`luna_high`、`luna_xhigh`、`luna_max`。
-- **Native leaf**：五个 Luna 都设置 `[agents] enabled = false`，不能继续创建子 Agent。
-- **最多 3 个直属并行 child**：只对彼此独立的任务并行。
-- **Sol Acceptance Gate**：Luna 的返回不是最终结论，Sol 必须复核。
-- **Context Firewall**：只向 Luna 传递完成限定任务所需的最小上下文。
-- **Task Contract**：每次委派明确 Goal、Scope、Constraints、Acceptance Criteria 和 Verification。
-- **Delegation Receipt**：对非平凡任务，用最终一行汇总已经发生的 delegated 或 Sol-only 结果；`Luna unavailable` 必须有当前任务 parent-visible availability failure evidence，且绝不是 Sol-only 默认 fallback。Receipt 不降低委派门槛，也不得通过 selector、probe、tool、child、network、state、telemetry 或 repository write 主动创造证据。
-- **Global 与 project-scoped usage**：支持全局默认，也尊重项目自己的 Codex 配置层。
-- **事务安装器**：显式目标、ownership、原子写入、backup、exact rollback 和安全 uninstall。
-- **Legacy `3.2` migration**：只接受精确 schema，未知历史状态 fail closed。
-- **三平台仓库 CI**：Windows、Ubuntu、macOS 使用 Python 3.11 验证。
-
-## 🧠 工作原理
-
-```text
-用户给 Sol 一个正常任务
-          ↓
-Sol 理解需求并处理歧义
-          ↓
-读取 AGENTS policy + 调用 installed Global selector
-          ↓
-任务是否清楚、独立且值得委派？
-       ↙             ↘
-     否                 是
-Sol 直接完成      选定的 native Luna 执行
-       ↘             ↙
-         Sol 复核并给出最终结果
-```
-
-v3 prototype 曾探索 Hook enforcement。v4 stable 改用已完成真实 runtime validation 的 native custom-agent 路径，结构更小，也不需要 Hook Router。这不是对其它实现的评价，只是本项目当前的冻结边界。
-
-## ✅ 安装后会得到什么
-
-| 能力 | 全局位置 | 作用 |
-| --- | --- | --- |
-| 五个 Luna roles | `<CODEX_HOME>/agents/luna-{low,medium,high,xhigh,max}.toml` | 五档原生 GPT-5.6 Luna worker |
-| Global AGENTS | `<CODEX_HOME>/AGENTS.md` 中的托管块 | Sol/Luna 分工、Task Contract、Context Firewall、验收与 Delegation Receipt 规则 |
-| Multi-agent config | `<CODEX_HOME>/config.toml` 中的托管块 | 启用 multi-agent，直属 child 上限为 3 |
-| Daily Selector | `<CODEX_HOME>/sol-luna-v4/selector.py` | 解析北京时间当天 Luna role |
-| v4 state | `<CODEX_HOME>/sol-luna-v4/state/` | 首次使用时生成 daily profile、LKG 和 lock |
-| Install manifest | `<CODEX_HOME>/sol-luna-v4/install-manifest.json` | 记录安装器 ownership，支持升级、回滚和卸载 |
-
-仓库本地 `.var/` 可供 selector 开发命令使用，但它只是非权威开发状态，不是实际 Codex 项目委派的 authority。实际项目委派遵循继承的 Global installed-selector policy。
-
-五个 role 全部使用 `model = "gpt-5.6-luna"`，effort 依次为 `low`、`medium`、`high`、`xhigh`、`max`，且全部是 `[agents] enabled = false` 的 native leaf。
-
-不会安装 Hook Router、`PreToolUse` enforcement、managed-child registry、daemon、database、scheduler、dashboard、plugin framework 或 custom orchestration engine。
-
-## 💻 系统要求
-
-- 使用 Codex Desktop 完成复制提示词的安装流程。
-- 当前 Codex 客户端支持 custom agents 与 multi-agent/subagent。
-- 当前任务环境已经能解析 `codex` 命令；如果 `codex --version` 不能运行，仅安装 Codex Desktop 还不够。
-- 主任务可使用 GPT-5.6 Sol，账号可访问 GPT-5.6 Luna 及所需五档 effort。
-- Python 3.11 或更高版本，并能导入标准库 `tomllib`。
-- 必须使用 Git 获取并校验不可变的精确 commit；setup contract 没有 archive 或 downloader fallback。
-- 能以只读 HTTPS 访问公开 GitHub 仓库。不要求 `curl`。
-- Windows、Ubuntu/Linux、macOS。WSL 是独立 Linux 环境，不能把 native Windows 的路径和配置直接混用。
-
-RC5 repository validation 和 exact-SHA CI 已在 Windows、Ubuntu、macOS 通过。documented-environment 的 RC5 O1–O10 记录仍是有边界的证据，其中包括 O4 和 O9；由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`，未获得最终 O4/O9 再认证。没有已确认的 product-runtime regression。已发布 RC1、RC2、RC3 和 RC4 的 runtime 记录继续作为历史证据，其中包括 RC2 的 `FRESH_REPO_CONTEXT_DELEGATION_PASS`。**三平台 CI PASS 不等于三个操作系统、所有客户端、所有账号或所有用户都做过真实 runtime 验收。**
-
-Codex 能力事实以 OpenAI 官方文档为准：[AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)、[Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Configuration Reference](https://learn.chatgpt.com/docs/config-file/config-reference) 和 [Models](https://developers.openai.com/api/docs/models)。
-
-## 🎯 日常使用
-
-正常情况下，无需每天写“使用 Luna”，也无需手工填写 `luna_max`。像平时一样把完整目标交给 Sol；Sol 根据有效的 AGENTS policy、当天 Daily Profile 和 bounded-task policy 判断是否委派。以下示例不保证一定创建 child，因为有些任务由 Sol 直接完成更合适。
-
-### 编码
+像平时一样使用 Codex。Sol 判断任务是否适合委派；不是每个提示词都应创建 Luna worker。
 
 ```text
 请审查这个项目，修复测试失败，并验证结果。
 ```
 
-### 检查
-
 ```text
-请检查这些模块是否存在不一致的配置，并汇总发现。
+请检查这些模块是否存在不一致的配置，只报告发现，不要修改文件。
 ```
 
-### 独立并行工作
+```text
+请更新这个功能的用户文档，然后运行相关检查。
+```
 
 ```text
 请分别审查前端、后端和测试，最后给我一份统一结论。
 ```
 
-第三个例子允许 Sol 考虑并行，但只有彼此独立的部分才应并行。安装或更新后第一次使用，应重新加载 Codex 并新建任务，让全局 AGENTS、agents 与 config 重新进入当前运行上下文。
+最后一个示例向 Sol 提供了可以考虑并行的独立工作；是否并行及最终复核仍由 Sol 负责。
 
-## 怎么判断 Sol + Luna 是否已经生效？
+## 如何确认生效
 
-非平凡任务的最后一行会报告一个已经观察到的结果。发生委派时使用 `Sol/Luna: delegated · <role> ×<direct_child_count>`；只有至少两个直属 Luna child 确实重叠执行时才追加 ` · parallel`。Sol-only 任务只给一个高层原因：`task too small`、`reasoning/architecture task`、`no independent bounded work` 或 `Luna unavailable`。最后一类只有在当前任务的正常执行路径已经自然产生 parent-visible selector 或 native-agent availability failure evidence 时才成立；没有委派本身不等于 Luna unavailable。
+在新的 Codex 任务中运行这条只读 status 命令：
 
-`0 Luna` 不等于安装失败。简单任务、推理或架构任务、存在歧义的任务以及紧耦合任务本就可能由 Sol 保留。Receipt 只是低噪声执行摘要，不是 runtime attestation；正式验收仍要核对真实 child metadata。
+```text
+检查 Sol/Luna 状态
+```
+
+`Status Healthy` 表示已安装的 Sol/Luna 文件和托管配置通过健康检查。`Agents 5/5 Ready` 与 `Native leaf Ready` 表示五个 Luna profile 均可用，并保持为不能继续委派的 worker。如果当天尚未首次需要委派，健康安装仍可能显示 selection 尚未初始化。
+
+安装后或 Codex 更新后的深入 runtime 证据见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)；status 结果本身不等于完整 runtime acceptance。
+
+Codex 更新后，使用 `scripts/compatibility_smoke.py` 提供的 `Codex Compatibility Smoke` 做定向检查：`PASS` 表示无需修改项目，`REVIEW REQUIRED` 表示只进入建议的 review。它不能替代 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 中的 O1–O10 证据。
+
+## 升级、回滚与卸载
+
+- **升级：** 在新任务中说「升级 Sol/Luna 到最新版本」。Codex 会遵守已安装的 release discovery 和不可变 source 门禁。
+- **回滚：** 使用 installer 返回的精确 transaction backup；成功回滚会恢复经过校验的变更前状态。
+- **卸载：** 使用 installer 的 manifest-owned uninstall 流程，不要手工编辑托管 TOML 或 agent 文件。
+
+升级、回滚或卸载后重新加载 Codex 并新建任务。具体命令、停止条件、ownership 规则和 backup 行为以不可变 [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)为准。
+
+## 技术文档
+
+- [安装、升级、回滚与卸载](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)
+- [架构说明](ARCHITECTURE.md)
+- [Runtime 证据](RUNTIME_TESTS.md)
+- [安全边界](SECURITY.md)
+- [版本历史](CHANGELOG.md)
+- [GitHub Releases](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases)
 
 ## 反馈
 
-`v4.1.2` 是当前 Stable 稳定版本；`v4.1.1` 是上一版不可变 Stable，`v4.1.0-rc6` 保持为历史 Preview prerelease／公开测试版本。
-
-可反馈安装、升级、selector、Luna 委派、Delegation Receipt、rollback 和 uninstall 问题；欢迎提交 Bug 报告，也欢迎提交成功的兼容性报告。请选择对应的原生 GitHub Issue Form：
-
 - [Bug Report](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=bug-report.yml)
-- [Compatibility Report（包括成功运行）](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=compatibility-report.yml)
+- [Compatibility Report](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=compatibility-report.yml)
 - [Feature / Feedback](https://github.com/SuperDaddyV/codex-sol-luna-worker/issues/new?template=feature-feedback.yml)
 
 > [!WARNING]
-> 提交前必须删除或脱敏秘密与私有信息，包括 API Key、Token、Cookie、密码、私有仓库凭据、个人邮箱、不必要的绝对 home-directory 信息，以及除非你有意分享的专有源代码。日志只保留最小相关内容。除非后续故障排查明确要求，否则不要上传整个 CODEX_HOME（即整个 `CODEX_HOME`）。`CODEX_HOME` 是私有用户配置根目录。
-
-### Codex Compatibility Smoke
-
-Codex Desktop 或 CLI 更新后，优先在新任务中说「检查 Sol/Luna 与当前 Codex 是否兼容」，也可以直接运行轻量 smoke：
-
-```text
-python scripts/compatibility_smoke.py --codex-home "<CODEX_HOME>"
-```
-
-smoke 对仓库和托管 selector state 保持只读。它的 ephemeral capability checks 与单 child delegation 会生成正常的 Codex session／runtime 记录，最多可能发起 6 次模型调用；before／after 快照不能证明完全瞬态活动从未发生。
-
-`PASS` 只表示当前已观察的 Codex 环境下，基础 Sol/Luna 使用兼容；无需修改项目，也无需继续 review。`REVIEW REQUIRED` 才进入输出所建议的 targeted compatibility review。`BLOCKED` 表示 Codex CLI 前置条件无法执行。报告中的 runtime 路径会显示为不可逆指纹，不显示私有相对路径。此 smoke 不替代 O1–O10 full acceptance、跨平台认证、Stable certification 或未来版本兼容保证。
-
-### Basic 只读自测
-
-安装或升级后在新任务中运行。它自然包含边界明确的检查工作，但不要求一定创建 child：
-
-```text
-请只读检查 README.md 和 README.zh-CN.md，不要修改文件。比较两者的安装状态与验证边界描述，并报告不一致。正常遵循当前 delegation policy；不要指定 role、model 或 effort。Sol 必须独立复核结果，并在最后附上正常的 Delegation Receipt。
-```
-
-## 🔄 Daily Luna 选择
-
-selector 要求完整且无重复的五档发布数据，选择最高 score；同分时偏向较低 effort。显式限制 supported-effort 集合时，如果来源赢家在本地不可用，会选择最优受支持档并记录 `capability_degraded=true`。结果按北京时间自然日加锁，当天复用。
-
-v4.1 的来源顺序为官方 [ModelDial API v1](https://modeldial.com/api/v1/radar/latest.json)、官方 [Full Snapshot JSON](https://modeldial.com/data/reference-snapshots/latest.json)、有效 LKG。API 有效时立即停止获取；v4.1 已移除 Radar HTML runtime fallback。首次使用既无有效来源也无 LKG 时 fail closed，Sol 保留任务，不猜测 effort。installer 本身不访问 ModelDial，也不转换旧版 Daily Profile 或 LKG。某一天的具体 score 不是永久产品事实。
-
-## ⚡ 并行
-
-Sol 最多同时运行 3 个直属 Luna child。并行只用于互不依赖的搜索、检查、测试或分区执行；共享写入、存在顺序依赖或需要统一架构判断的任务不应强行并行。Luna 自己不能继续 spawn。
-
-## 🛡️ 安全与配置保护
-
-- 所有写入模式都要求明确的 `--codex-home`。
-- `config.toml` 和 `AGENTS.md` 只合并项目拥有的 marker block，块外用户内容保留。
-- 非空 `AGENTS.override.md`、未被 manifest 拥有的同名 agent、被修改的 owned file、无效 TOML 或不支持的 manifest 都会 fail closed。
-- 每次有效安装或升级先创建并校验集中 backup，再最后原子写 v4 manifest。
-- migration 只接受精确 legacy schema `3.2`，只删除 manifest-owned 内容，并保留无 ownership 的历史审计证据。
-- 发布或更新 GitHub 仓库不会自动写入用户的 Codex home。
-- Native leaf 是本地工作流边界，不是服务端或密码学安全边界。
-
-完整边界见 [SECURITY.md](SECURITY.md)。
-
-## ↩️ 回滚与卸载
-
-安装或升级成功后，保存 installer 返回的精确 backup path。需要回滚时使用真实 CLI：
-
-```powershell
-python scripts/install.py --rollback "<BACKUP_PATH>" --codex-home "<CODEX_HOME>"
-```
-
-rollback 校验 installer-owned snapshot，精确恢复安装前状态；成功后该 backup 会被消费。卸载使用 manifest ownership，遇到已修改的 owned content 会停止：
-
-```powershell
-python scripts/install.py --uninstall --codex-home "<CODEX_HOME>"
-```
-
-uninstall 只移除 v4-owned 文件和 block，保留无关用户内容。完成 rollback 或 uninstall 后重新加载 Codex，并新建任务。执行前请先阅读[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)。
-
-## 🧪 已验证范围
-
-### Repository CI
-
-| Validation | Status |
-| --- | --- |
-| Native custom Luna | `PASS` |
-| Automatic AGENTS delegation | `PASS` |
-| Native leaf | `PASS` |
-| Native parallel | `PASS` |
-| Sol Acceptance | `PASS` |
-| Clean installer | `PASS` |
-| Legacy migration simulation | `PASS` |
-| Stable runtime Source Commit exact-SHA CI | Windows、Ubuntu、macOS 均已通过 |
-| Stable immutable assisted installation 文档 | Documentation Commit `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`；当前默认入口，不是 runtime source |
-| Stable immutable setup 文档 | Documentation Commit `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`；由 assisted contract 固定，不是 runtime source |
-| `v4.1.0-rc6`→`v4.1.2` 记录中的 Global transition | installer apply `PASS`；仅 selector 和 manifest 变化，创建一个 transaction backup |
-| Stable compatibility smoke | 只运行一次，退出码 `0`，七项检查和最终 Compatibility 全部 `PASS` |
-| RC5 repository validation and exact-SHA CI | 已在 Windows、Ubuntu、macOS 通过 |
-| RC5 O1–O10 documented-environment 记录（包括 O4/O9） | 仅为有边界的证据 |
-| RC5 最终 O4/O9 再认证 | 由于 `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` 未获得 |
-| RC5 product-runtime regression | 没有已确认的 product-runtime regression |
-| RC6 runtime Source Commit exact-SHA CI | Windows、Ubuntu、macOS 均已通过 |
-| RC6 immutable setup 文档 | 历史 Documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`；不是当前默认入口 |
-| RC6 RC5→RC6 fake-home lifecycle | 本地 installer/lifecycle tests PASS；仅 selector 和 manifest 变化 |
-| RC6 real Global upgrade 和 O1–O10 | 在 documented environment `PASS`；仍是有边界的证据 |
-| RC6 最终 O4/O9 再认证 | 通过 isolated acceptance harness 获得 `PASS` |
-| RC6 product-runtime regression | 没有已确认的 product-runtime regression |
-| RC4 source suite | `PASS` |
-| RC4 real Global upgrade | `PASS` |
-| RC4 Case A | `PASS` |
-| RC4 Case B | `PASS` |
-| RC4 Case C | `PASS` |
-| RC4 controlled Case D | `PASS` |
-| RC3 real Global upgrade | `PASS` |
-| RC3 Sol-only Receipt | `PASS` |
-| RC3 delegated Receipt | `PASS` |
-| Windows CI | `PASS` |
-| Ubuntu CI | `PASS` |
-| macOS CI | `PASS` |
-
-### Real Runtime
-
-已发布 RC4 prerelease 的留档真实 RC3→RC4 Global upgrade 以两项有效变更完成，并通过 second-apply 幂等和 rollback readiness 检查。Case A 验证 Sol reasoning Receipt；Case B 验证 3 个直属 `luna_max` child、native leaf、并行重叠、0 个孙级 child 和 Sol acceptance；Case C 直接回归 no-selector、no-delegation、no-evidence 误分类；受控 Case D 只在真实 availability evidence 存在时允许 `Luna unavailable`，无证据时禁止。RC3 继续作为历史 prerelease 证据。以上结果只适用于实际观察所用的留档环境，不扩大为所有操作系统、账号、客户端或用户均已通过真实 runtime 验收。详细边界见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 和 [ARCHITECTURE.md](ARCHITECTURE.md)。
-
-## ❓ FAQ
-
-### 为什么不用全部任务都让 Sol 做？
-
-Sol 可以自己完成任务，也会保留简单、模糊或不值得委派的工作。对边界清楚的执行进行委派，是为了让 Sol 把注意力放在需求、取舍、编排和验收上。
-
-### 为什么不是所有任务都交给 Luna？
-
-Luna 被明确限制为执行 worker。架构决策、未解决歧义、范围扩张和最终验收必须由 Sol 负责。
-
-### 我需要手工选择 Luna effort 吗？
-
-通常不需要。Daily Selector 为北京时间当天返回一个稳定 role，Sol 只在值得委派时使用它。
-
-### ModelDial 访问失败怎么办？
-
-当天已有 profile 会继续复用；跨日选择依次尝试官方 API、官方完整快照和有效 LKG。首次使用没有有效来源和 LKG 时 fail closed，Sol 自己执行，不猜 effort。
-
-### 为什么不用 Ultra？
-
-冻结的 v4 policy 只定义并验证了 `low` 到 `max` 五档。`ultra` 不属于这个稳定选择与验证合同。
-
-### Luna 可以继续创建子 Agent 吗？
-
-不可以。五个正式 Luna role 都设置 `[agents] enabled = false`，是 native leaf。
-
-### 安装后旧 Codex 会话能生效吗？
-
-不应依赖。Codex 在一次 run 或任务开始时构建 instruction chain。安装或更新全局 AGENTS、agents、config、selector 后，应按需重新加载 Codex Desktop/App Server，并新开任务做完整验证；不需要因为本项目重启 Windows。
-
-### 项目自己的 `.codex/agents` 会怎样？
-
-全局 agent 提供个人默认，项目级 agents 和项目 `AGENTS.md` 会在项目上下文中共同参与有效配置。不要假设全局文件会覆盖项目拥有的定义或指令；遇到同名或语义冲突应检查当前项目的有效配置并 fail closed。
-
-### 需要 Hook 吗？
-
-v4 core 不需要。历史 Hook 文件可能作为旧证据存在，但不是当前 runtime dependency 或安装前提。
-
-### 可以卸载或回滚吗？
-
-可以，前提是 v4 manifest 与相关 backup 完整。必须使用 installer 的 `--rollback` 和 `--uninstall`，不要手工编辑 TOML 模拟回滚或卸载。
-
-## Advanced / Manual
-
-普通用户优先使用 Codex 安装。人工审阅时，应获取不可变 commit，检查合同与源码，并先执行只读步骤：
-
-```powershell
-git clone https://github.com/SuperDaddyV/codex-sol-luna-worker.git
-cd codex-sol-luna-worker
-git checkout --detach <APPROVED_40_HEX_COMMIT>
-python scripts/install.py --help
-python scripts/install.py --dry-run --codex-home "<CODEX_HOME>"
-python -m unittest discover -s tests -v
-```
-
-真实 global installation 不使用 `--validation-sandbox`；这个参数只允许仓库 `.tmp/installer-validation/` 下的测试目标。apply、migration、rollback 和 uninstall 见 [CODEX_SOL_LUNA_SETUP.md](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)。
-
-### 可选并行自测
-
-在新任务中提出两到三个彼此独立、边界明确的只读检查，并要求 Sol 给出一份经过复核的统一结论。不要强制 spawn，也不要指定 role。只有 parent-visible runtime evidence 证明至少两个直属 Luna child 确实重叠执行时，才接受 ` · parallel`；Receipt 文本本身不是证明。
-
-## 📚 技术文档
-
-- [Codex 可执行安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
-- [安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)
-- [Codex 可执行安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)
-- [架构说明](ARCHITECTURE.md)
-- [Runtime 验证](RUNTIME_TESTS.md)
-- [安全边界](SECURITY.md)
-- [变更记录](CHANGELOG.md)
-- [MIT License](LICENSE)
+> 提交前删除或脱敏秘密与私有信息，只分享最小必要日志，不要上传整个 `CODEX_HOME`。
 
 ## License
 
