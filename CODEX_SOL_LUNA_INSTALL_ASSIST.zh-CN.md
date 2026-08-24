@@ -137,7 +137,7 @@ Plan ID: sha256:<64hex>
 ```text
 SOL_LUNA_ASSIST_RESUME
 Target: <version>
-Phase: PREREQUISITE_RECHECK / CAPABILITY_PRECHECK / FRESH_TASK_SMOKE
+Phase: PREREQUISITE_RECHECK / CAPABILITY_PRECHECK / SELECTOR_INITIALIZATION / FRESH_TASK_SMOKE
 Pending blocker: <one reason code>
 Next proof: <one read-only proof or user action>
 ```
@@ -178,6 +178,7 @@ CAPABILITY_PRECHECK
 DRY_RUN
 INSTALLING
 RELOAD_REQUIRED
+SELECTOR_INITIALIZATION
 FRESH_TASK_SMOKE
 COMPLETE
 NEEDS_USER_ACTION
@@ -204,8 +205,8 @@ BLOCKED
 先检查 manifest 元数据。新版本拒绝自动降级；无效 manifest 直接
 `BLOCKED`。当前版本仍必须先通过 capability precheck，再由 installer
 dry-run 验证 ownership 和字节一致性。只有 dry-run 返回
-`IDEMPOTENT_PASS`，才能进入零写入、零备份 fast path；之后仍要新任务
-smoke。
+`IDEMPOTENT_PASS`，才能进入零写入、零备份 fast path；之后仍要显式取得
+Daily selection 证明，再进入新任务 smoke。
 
 ### 8.3 Capability 前置门禁
 
@@ -226,6 +227,25 @@ migration 和 uninstall。
 无 `--apply` 的 `install` 只运行 capability 和 installer dry-run，然后停在
 `DRY_RUN`。只有用户明确授权 apply 后，才能调用事务安装器。
 
+### 8.5 Selector 初始化门禁
+
+apply 成功后先进入 `RELOAD_REQUIRED`；完成 Codex 重新加载后进入
+`SELECTOR_INITIALIZATION`。`IDEMPOTENT_PASS` fast path 不执行 installer 写入或
+备份，但同样必须经过此门禁。只运行以下标准命令一次：
+
+```text
+<PYTHON> <CODEX_HOME>/sol-luna-v4/selector.py --state-dir <CODEX_HOME>/sol-luna-v4/state --ensure-daily --print-selection
+```
+
+只有退出码为 `0`、`selected_role` 是 `luna_low`、`luna_medium`、
+`luna_high`、`luna_xhigh` 或 `luna_max`，且 `selected_effort` 与角色一致，才算
+证明完整。该命令是显式的正常 selector state 初始化／复用操作，不是安装助手
+擅自修补；续接块必须记录
+`Pending blocker: DAILY_SELECTION_PROOF_REQUIRED`。若失败或证据不完整，立即
+停止，不自动重试；若通过，再开另一个全新
+任务运行唯一一次 compatibility smoke。smoke 保持 status-only，只读检查，不能
+自行添加 `--ensure-daily` 或初始化 Daily selection。
+
 ## 9．脱敏支持报告
 
 支持报告只允许输出：schema、target、phase、标准 reason code、系统分类、
@@ -237,6 +257,28 @@ WSL、调用方提供的权限标签、工具状态和版本、包管理器名�
 必须从同一份白名单数据生成。
 
 ## 10．结果卡
+
+### 重新加载
+
+```text
+Reload Required
+Version: <version>
+Source: <40HEX>
+Backup: <symbolic location or NONE>
+Next: reload Codex, then initialize the Daily selection
+Resume: <sanitized SELECTOR_INITIALIZATION continuation block>
+```
+
+### Selector 初始化
+
+```text
+Selector Initialization Required
+Version: <version>
+Reason: DAILY_SELECTION_PROOF_REQUIRED
+Action: <canonical --ensure-daily --print-selection command>
+Proof: <allowed selected_role and matching selected_effort>
+Next: start a new task for the one-run compatibility smoke
+```
 
 ### 安装完成
 
@@ -274,7 +316,9 @@ Next: stop; do not patch managed state or retry automatically
 
 ## 11．Fresh-task 验收与安全底线
 
-安装后必须完全重新加载 Codex，并在新任务中从 verified exact checkout 运行：
+安装后必须完全重新加载 Codex，先按 `SELECTOR_INITIALIZATION` 门禁取得上述
+Daily selection 证明；只有通过后，才能在另一个新任务中从 verified exact
+checkout 运行：
 
 ```text
 <PYTHON> scripts/compatibility_smoke.py --codex-home <CODEX_HOME>

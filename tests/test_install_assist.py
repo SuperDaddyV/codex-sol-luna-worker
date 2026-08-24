@@ -478,9 +478,12 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
             },
             apply_runner=unexpected_apply,
         )
-        self.assertEqual(result["phase"], "FRESH_TASK_SMOKE")
+        self.assertEqual(result["phase"], "SELECTOR_INITIALIZATION")
         self.assertEqual(result["writes_performed"], "NO")
         self.assertEqual(result["backup"], "NONE")
+        self.assertIn("DAILY_SELECTION_PROOF_REQUIRED", result["resume"])
+        self.assertIn("--ensure-daily --print-selection", result["resume"])
+        self.assertIn("Next phase: FRESH_TASK_SMOKE", result["resume"])
 
     def test_dry_run_stops_before_apply(self):
         result = install_workflow(
@@ -537,7 +540,9 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
             result["backup"],
             "<CODEX_HOME>/sol-luna-v4/backups/transaction-1",
         )
-        self.assertIn("FRESH_TASK_SMOKE", result["resume"])
+        self.assertIn("Phase: SELECTOR_INITIALIZATION", result["resume"])
+        self.assertIn("--ensure-daily --print-selection", result["resume"])
+        self.assertIn("Next phase: FRESH_TASK_SMOKE", result["resume"])
         self.assertEqual(
             observed,
             {"dry_migrate_legacy": True, "apply_migrate_legacy": True},
@@ -575,6 +580,7 @@ class ResultCardTests(unittest.TestCase):
                 "DRY_RUN",
                 "INSTALLING",
                 "RELOAD_REQUIRED",
+                "SELECTOR_INITIALIZATION",
                 "FRESH_TASK_SMOKE",
                 "COMPLETE",
                 "NEEDS_USER_ACTION",
@@ -601,6 +607,36 @@ class ResultCardTests(unittest.TestCase):
         self.assertTrue(needs.startswith("Needs User Action"))
         self.assertTrue(blocked.startswith("Blocked"))
         self.assertIn("do not patch managed state", blocked)
+
+    def test_reload_and_selector_initialization_cards_are_actionable(self):
+        resume = (
+            "SOL_LUNA_ASSIST_RESUME\n"
+            "Phase: SELECTOR_INITIALIZATION\n"
+            "Pending blocker: DAILY_SELECTION_PROOF_REQUIRED"
+        )
+        reload_card = render_card(
+            {
+                "phase": "RELOAD_REQUIRED",
+                "target_version": VERSION,
+                "source_commit": "a" * 40,
+                "backup": "<CODEX_HOME>/sol-luna-v4/backups/transaction-1",
+                "resume": resume,
+            }
+        )
+        selector_card = render_card(
+            {
+                "phase": "SELECTOR_INITIALIZATION",
+                "target_version": VERSION,
+            }
+        )
+        self.assertTrue(reload_card.startswith("Reload Required"))
+        self.assertIn("Phase: SELECTOR_INITIALIZATION", reload_card)
+        self.assertTrue(
+            selector_card.startswith("Selector Initialization Required")
+        )
+        self.assertIn("--ensure-daily --print-selection", selector_card)
+        self.assertIn("DAILY_SELECTION_PROOF_REQUIRED", selector_card)
+        self.assertIn("start a new task", selector_card)
 
 
 class CommandLineContractTests(unittest.TestCase):

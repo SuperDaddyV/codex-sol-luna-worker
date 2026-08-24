@@ -102,7 +102,9 @@ conversation bootstrap for missing Python/Git
   -> five ephemeral read-only Luna capability calls
   -> installer dry-run
   -> optional explicitly authorized installer apply
-  -> reload and fresh-task compatibility smoke
+  -> reload when required
+  -> explicit Daily selector initialization and proof
+  -> separate fresh-task compatibility smoke
 ```
 
 `scripts/install_assist.py` owns orchestration state only in memory and JSON
@@ -111,6 +113,13 @@ content. `scripts/install_recovery_catalog.json` is data, not a shell program;
 validated argument vectors are the only executable recovery form. The existing
 `scripts/install.py` remains the only authority for ownership, target writes,
 transaction backup, rollback, migration, and uninstall.
+
+The selector initialization handoff runs the installed selector with
+`--ensure-daily --print-selection` only after any required reload. It is an
+explicit normal selector-state operation and must prove an allowed role plus
+its matching effort before the flow opens a separate fresh task. The
+compatibility smoke remains read-only and status-only; it never initializes
+Daily selection or retries a failed initialization.
 
 The candidate bumps only installer manifest version from `v4.1.0` to
 `v4.1.1`; the installed payload remains byte-identical. A valid `v4.1.0` to

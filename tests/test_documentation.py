@@ -270,6 +270,8 @@ class DocumentationTests(unittest.TestCase):
             "Codex executions with user config ignored",
             "whitelist-only",
             "Installation Complete",
+            "Reload Required",
+            "Selector Initialization Required",
             "Needs User Action",
             "Blocked",
         ):
@@ -283,6 +285,7 @@ class DocumentationTests(unittest.TestCase):
             "DRY_RUN",
             "INSTALLING",
             "RELOAD_REQUIRED",
+            "SELECTOR_INITIALIZATION",
             "FRESH_TASK_SMOKE",
             "COMPLETE",
             "NEEDS_USER_ACTION",
@@ -291,6 +294,9 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(phase, content)
         self.assertIn("does not replace the immutable `v4.1.0` public entry", content)
         self.assertIn("No preflight state file is created", content)
+        self.assertIn("DAILY_SELECTION_PROOF_REQUIRED", content)
+        self.assertIn("--ensure-daily --print-selection", content)
+        self.assertIn("The smoke remains status-only", content)
 
     def test_chinese_assistance_document_is_review_only_and_covers_same_boundaries(self):
         content = text(ASSIST_ZH)
@@ -310,8 +316,13 @@ class DocumentationTests(unittest.TestCase):
             "Installer 唯一写入权威",
             "脱敏支持报告",
             "Installation Complete",
+            "Reload Required",
+            "Selector Initialization Required",
             "Needs User Action",
             "Blocked",
+            "SELECTOR_INITIALIZATION",
+            "DAILY_SELECTION_PROOF_REQUIRED",
+            "--ensure-daily --print-selection",
             "--dangerously-bypass-approvals-and-sandbox",
         ):
             self.assertIn(phrase, content)
@@ -336,6 +347,9 @@ class DocumentationTests(unittest.TestCase):
             "ephemeral read-only Luna capability checks",
             "Without `--apply`, it stops at `DRY_RUN`",
             "zero-write, zero-backup fast path",
+            "`SELECTOR_INITIALIZATION` gate",
+            "--ensure-daily --print-selection",
+            "must not initialize Daily selection",
             "P3 standalone bootstrap remains out of scope",
         ):
             self.assertIn(phrase, content)
@@ -347,6 +361,8 @@ class DocumentationTests(unittest.TestCase):
             "scripts/install_recovery_catalog.json",
             "installer manifest version from `v4.1.0` to",
             "bilingual default prompt remain",
+            "explicit Daily selector initialization and proof",
+            "compatibility smoke remains read-only and status-only",
         ):
             self.assertIn(phrase, architecture)
         for phrase in (
@@ -356,6 +372,8 @@ class DocumentationTests(unittest.TestCase):
             "P3",
             "standalone bootstrap is excluded",
             "published `v4.1.0` tag, Release",
+            "post-reload `SELECTOR_INITIALIZATION` handoff",
+            "cannot initialize Daily selection itself",
         ):
             self.assertIn(phrase, security)
 

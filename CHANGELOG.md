@@ -17,6 +17,11 @@
   actions. P3 standalone bootstrap remains out of scope.
 - Added the documentation-layer `CODEX_SOL_LUNA_INSTALL_ASSIST.md` wrapper at immutable commit `39594139eaeeda705528733fc383333504546fb6`. It aggregates prerequisite diagnosis, permits bounded safe session-only recovery, requires explicit approval for package installation, elevation, or persistent environment changes, and provides a sanitized continuation block for external user actions.
 - Repinned the bilingual default copy-and-paste installation entry to the assisted wrapper while retaining the immutable Stable setup contract, Stable runtime Source Commit `67a72f8accc5d53ef04ff8d64d8838e397ceecda`, transaction and ownership gates, `v4.1.0` tag and Release, and historical RC6 tag and Prerelease unchanged.
+- Added an explicit post-reload `SELECTOR_INITIALIZATION` gate to the unreleased
+  assistant. Both applied and same-version idempotent paths now require the
+  canonical `--ensure-daily --print-selection` role/effort proof before a
+  separate fresh-task compatibility smoke. The smoke remains read-only and
+  never initializes or retries Daily selection.
 
 ## v4.1.0 (published Stable release)
 

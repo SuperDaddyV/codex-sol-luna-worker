@@ -532,5 +532,20 @@ installer dry-run. Without `--apply`, it stops at `DRY_RUN`. After explicit
 apply authorization, the same command with `--apply` may delegate writes,
 backup, ownership, rollback, migration, and uninstall behavior exclusively to
 `scripts/install.py`. An `IDEMPOTENT_PASS` current installation remains a
-zero-write, zero-backup fast path but still requires a fresh-task compatibility
-smoke. P3 standalone bootstrap remains out of scope.
+zero-write, zero-backup fast path, but it enters the same explicit
+`SELECTOR_INITIALIZATION` gate as an applied installation. After any required
+Codex reload, run exactly:
+
+```text
+<PYTHON> <CODEX_HOME>/sol-luna-v4/selector.py --state-dir <CODEX_HOME>/sol-luna-v4/state --ensure-daily --print-selection
+```
+
+Require exit code `0`, one of `luna_low`, `luna_medium`, `luna_high`,
+`luna_xhigh`, or `luna_max` in `selected_role`, and the matching
+`selected_effort`. This explicit normal selector operation may create or reuse
+the Beijing-day selection. A failure or incomplete proof stops without an
+automatic retry. Only after PASS may a separate new task run the one allowed
+fresh-task compatibility smoke. The smoke remains read-only and status-only; it
+must not initialize Daily selection or use `--ensure-daily`.
+
+P3 standalone bootstrap remains out of scope.

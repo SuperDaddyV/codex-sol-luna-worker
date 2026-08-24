@@ -149,6 +149,14 @@ without a usable Python interpreter or immutable source checkout. These
 candidate controls do not change the published `v4.1.0` tag, Release, or
 default immutable installation entry.
 
+The candidate adds an explicit post-reload `SELECTOR_INITIALIZATION` handoff.
+The assistant does not perform that write implicitly: the displayed canonical
+`--ensure-daily --print-selection` command invokes the installed selector's
+normal managed-state transaction and must return an allowed role and matching
+effort. Failure or incomplete proof stops without automatic retry. The
+compatibility smoke cannot initialize Daily selection itself; it remains
+read-only and status-only.
+
 ## Reporting
 
 Do not include secrets, credentials, private session transcripts, or personal filesystem paths in a report. For this public repository, use GitHub's private vulnerability reporting channel when enabled.

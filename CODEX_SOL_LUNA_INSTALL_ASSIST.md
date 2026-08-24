@@ -168,7 +168,7 @@ a preflight state file before `Ready: YES`.
 ```text
 SOL_LUNA_ASSIST_RESUME
 Target: v4.1.0
-Phase: PREREQUISITE_RECHECK / FRESH_TASK_SMOKE
+Phase: PREREQUISITE_RECHECK / SELECTOR_INITIALIZATION / FRESH_TASK_SMOKE
 Completed checks: <names only>
 Pending blocker: <one reason code>
 Next proof: <one read-only command or user action>
@@ -214,8 +214,19 @@ recovery path.
 
 An already-open task is not evidence that newly installed Global instructions
 or agent configuration loaded. After installation, tell the user exactly how to
-reload the current Codex client, then provide the continuation block with
-`Phase: FRESH_TASK_SMOKE` for a new task.
+reload the current Codex client. Continue first with
+`Phase: SELECTOR_INITIALIZATION` and run:
+
+```text
+<PYTHON> <CODEX_HOME>/sol-luna-v4/selector.py --state-dir <CODEX_HOME>/sol-luna-v4/state --ensure-daily --print-selection
+```
+
+Require exit code `0`, an allowed `selected_role` (`luna_low`, `luna_medium`,
+`luna_high`, `luna_xhigh`, or `luna_max`), and a matching `selected_effort`.
+Only after that proof may the continuation advance to
+`Phase: FRESH_TASK_SMOKE` in another new task. The smoke is deliberately
+read-only for managed selector state; it must not initialize Daily selection or
+add `--ensure-daily` to its own status check.
 
 Run the compatibility smoke from the verified immutable checkout with the
 resolved Python and `CODEX_HOME`:
@@ -293,6 +304,7 @@ CAPABILITY_PRECHECK
 DRY_RUN
 INSTALLING
 RELOAD_REQUIRED
+SELECTOR_INITIALIZATION
 FRESH_TASK_SMOKE
 COMPLETE
 NEEDS_USER_ACTION
@@ -341,7 +353,8 @@ manifest metadata as absent, current, older, newer, or invalid. After capability
 PASS, the installer dry-run is the sole byte-consistency and ownership check. A
 current installation whose dry-run returns `IDEMPOTENT_PASS` performs zero
 writes and zero backups, but it still requires immutable-source verification
-and a fresh-task smoke before `COMPLETE`. A newer version fails closed as
+and explicit Daily selection proof plus a later fresh-task smoke before
+`COMPLETE`. A newer version fails closed as
 `CURRENT_VERSION_NEWER`. Invalid or ownership-conflicting state is `BLOCKED`;
 it is never repaired by editing managed files outside `scripts/install.py`.
 
@@ -360,6 +373,23 @@ calls the installer's non-mutating dry-run. `install` without `--apply` stops at
 `DRY_RUN`; `install --apply` may hand off to the transactional installer only
 after the caller explicitly authorizes that mode.
 
+After apply, `RELOAD_REQUIRED` hands off to `SELECTOR_INITIALIZATION`; an
+`IDEMPOTENT_PASS` fast path enters the same initialization phase without an
+installer write or backup. Complete any pending Codex reload, then run exactly:
+
+```text
+<PYTHON> <CODEX_HOME>/sol-luna-v4/selector.py --state-dir <CODEX_HOME>/sol-luna-v4/state --ensure-daily --print-selection
+```
+
+This is an explicit normal selector-state operation, not an assistant repair.
+Accept only exit code `0`, one allowed `selected_role`, and the corresponding
+`selected_effort`. The command may create or reuse the valid Beijing-day
+selection. The continuation block records
+`Pending blocker: DAILY_SELECTION_PROOF_REQUIRED`. On failure or incomplete
+evidence, stop without automatic retry.
+On PASS, start another new task and run the one allowed compatibility smoke.
+The smoke remains status-only and must never initialize the selection itself.
+
 ### 11.7 Sanitized support report
 
 `report` is whitelist-only. It may include schema/version, phase, normalized
@@ -373,6 +403,24 @@ URLs, exception text, identifiers, and secrets.
 ### 11.8 Result cards
 
 Human-facing output derived from the structured result uses exactly one card:
+
+```text
+Reload Required
+Version: <version>
+Source: <40HEX>
+Backup: <symbolic identifier or NONE>
+Next: reload Codex, then initialize the Daily selection
+Resume: <sanitized SELECTOR_INITIALIZATION continuation block>
+```
+
+```text
+Selector Initialization Required
+Version: <version>
+Reason: DAILY_SELECTION_PROOF_REQUIRED
+Action: <canonical --ensure-daily --print-selection command>
+Proof: <allowed selected_role and matching selected_effort>
+Next: start a new task for the one-run compatibility smoke
+```
 
 ```text
 Installation Complete

@@ -62,10 +62,16 @@ PHASES = (
     "DRY_RUN",
     "INSTALLING",
     "RELOAD_REQUIRED",
+    "SELECTOR_INITIALIZATION",
     "FRESH_TASK_SMOKE",
     "COMPLETE",
     "NEEDS_USER_ACTION",
     "BLOCKED",
+)
+SELECTOR_INITIALIZATION_COMMAND = (
+    "<PYTHON> <CODEX_HOME>/sol-luna-v4/selector.py "
+    "--state-dir <CODEX_HOME>/sol-luna-v4/state "
+    "--ensure-daily --print-selection"
 )
 OFFICIAL_SOURCE_HOSTS = {
     "docs.brew.sh",
@@ -730,6 +736,19 @@ def _symbolic_backup(value: object, codex_home: Path) -> str:
 
 
 def _resume_block(phase: str, reason_code: str | None = None) -> str:
+    if phase == "SELECTOR_INITIALIZATION":
+        pending = reason_code or "DAILY_SELECTION_PROOF_REQUIRED"
+        return (
+            "SOL_LUNA_ASSIST_RESUME\n"
+            f"Target: {VERSION}\n"
+            "Phase: SELECTOR_INITIALIZATION\n"
+            f"Pending blocker: {pending}\n"
+            "Prerequisite: complete any pending Codex reload\n"
+            f"Action: {SELECTOR_INITIALIZATION_COMMAND}\n"
+            "Next proof: exit 0; selected_role is an allowed Luna role and "
+            "selected_effort matches that role\n"
+            "Next phase: FRESH_TASK_SMOKE"
+        )
     pending = reason_code or "FRESH_TASK_SMOKE_REQUIRED"
     return (
         "SOL_LUNA_ASSIST_RESUME\n"
@@ -864,7 +883,7 @@ def install_workflow(
         return {
             "schema": ASSIST_SCHEMA,
             "target_version": VERSION,
-            "phase": "FRESH_TASK_SMOKE",
+            "phase": "SELECTOR_INITIALIZATION",
             "status": "CURRENT_INSTALLATION_PASS",
             "reason_code": None,
             "source_commit": source_commit.lower(),
@@ -873,7 +892,7 @@ def install_workflow(
             "backup": "NONE",
             "writes_performed": "NO",
             "configuration_preserved": True,
-            "resume": _resume_block("FRESH_TASK_SMOKE"),
+            "resume": _resume_block("SELECTOR_INITIALIZATION"),
         }
 
     if not apply:
@@ -931,7 +950,7 @@ def install_workflow(
         "backup": _symbolic_backup(applied.get("backup"), codex_home),
         "writes_performed": "YES",
         "configuration_preserved": True,
-        "resume": _resume_block("FRESH_TASK_SMOKE"),
+        "resume": _resume_block("SELECTOR_INITIALIZATION"),
     }
 
 
@@ -1024,6 +1043,26 @@ def render_card(payload: Mapping[str, object]) -> str:
             f"Backup: {payload.get('backup', 'NONE')}\n"
             "Configuration preserved: YES\n"
             "Next: installation and fresh-task smoke are complete"
+        )
+    if phase == "RELOAD_REQUIRED":
+        resume = payload.get("resume", _resume_block("SELECTOR_INITIALIZATION"))
+        return (
+            "Reload Required\n"
+            f"Version: {payload.get('target_version', VERSION)}\n"
+            f"Source: {payload.get('source_commit', 'UNRECORDED')}\n"
+            f"Backup: {payload.get('backup', 'NONE')}\n"
+            "Next: reload Codex, then initialize the Daily selection\n"
+            f"Resume:\n{resume}"
+        )
+    if phase == "SELECTOR_INITIALIZATION":
+        return (
+            "Selector Initialization Required\n"
+            f"Version: {payload.get('target_version', VERSION)}\n"
+            "Reason: DAILY_SELECTION_PROOF_REQUIRED\n"
+            f"Action: {SELECTOR_INITIALIZATION_COMMAND}\n"
+            "Proof: exit 0; selected_role is an allowed Luna role and "
+            "selected_effort matches that role\n"
+            "Next: start a new task for the one-run compatibility smoke"
         )
     if phase == "NEEDS_USER_ACTION":
         action = payload.get("next_action", "Follow the single documented recovery action")
