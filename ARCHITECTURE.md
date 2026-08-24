@@ -1,36 +1,43 @@
-# v4.1.1 Stable Architecture Note
+# v4.1.2 Stable Architecture Note
 
-`v4.1.1` is the current Stable release and default installation target.
-Stable runtime Source Commit A2 is
-`ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; exact-SHA source CI passed on
-Windows, Ubuntu, and macOS. The reviewed Stable setup contract is
-`CODEX_SOL_LUNA_SETUP.md`; public installation entries pin it by an exact
-immutable documentation commit, which is distinct from the runtime source.
-`v4.1.0` remains the previous immutable Stable release.
-`v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public
-Beta, and `v4.1.0-rc5` is an older historical Preview.
+`v4.1.2` is the current Stable release and default installation target.
+Stable runtime Source Commit A is
+`551520c2435aca94d60132f292edbd53cc975cbe`; exact-SHA source CI run
+`32717295801` passed on Windows, Ubuntu, and macOS with `357` tests all
+`PASS`. The reviewed Stable Setup contract is pinned at immutable documentation
+Commit `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`, and the public Assisted
+Installation contract is pinned at immutable documentation Commit
+`a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; both documentation anchors are
+distinct from the runtime source.
+`v4.1.1` remains the previous immutable Stable release, with historical runtime
+Source Commit `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`, Setup anchor
+`d4a044a04df509285ef38c6afc28b5a68a48a0f9`, and Assisted Installation anchor
+`17eb1d370929e884f91c5f1920a2e0868ce4a421`. `v4.1.0-rc6` remains an
+immutable historical Prerelease / Preview / Public Beta, and `v4.1.0-rc5` is
+an older historical Preview.
 
-Status: `v4.1.1 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
+Status: `v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
 
-The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before publication. `v4.1.1` preserves that accepted selector, policy, agent, and config payload byte-for-byte and advances only the installed manifest version from `v4.1.0`. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke passed all six component checks and final Compatibility against the unchanged installed product runtime. No real Global `v4.1.1` installer apply was performed. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
+The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before the Stable transition. The v4.1.2 transaction then upgraded that baseline while preserving the accepted selector, policy, agent, and configuration content outside the declared installer-owned changes. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke passed all seven recorded checks and final Compatibility against the observed installed product runtime. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
 
-## v4.1.2 unreleased candidate boundary
+## v4.1.2 Stable boundary
 
-`v4.1.2` is a prepared, unreleased candidate; `v4.1.1` remains the current
-Stable release and default public installation target. Candidate Source Commit A
-is `551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run `32717295801`
-passed on Windows, Ubuntu, and macOS and reported `357` tests all `PASS`.
-Current-master evidence commit `fac118ac5ca096aaf1ef8d68b79bfc1372998a5a`
-also passed its three-platform source CI run `32717520585`; it is evidence for
-the current tip, not an alternate Source Commit A or installer identity.
+`v4.1.2` is the published Stable release and default public installation target.
+Source Commit A is `551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run
+`32717295801` passed on Windows, Ubuntu, and macOS and reported `357` tests all
+`PASS`. Current-master evidence commit
+`fac118ac5ca096aaf1ef8d68b79bfc1372998a5a` also passed its three-platform
+source CI run `32717520585`; it is evidence for the current tip, not an
+alternate Source Commit A or installer identity. The public GitHub Release is
+non-draft and non-prerelease.
 
-The recorded candidate transaction started from the real Global `v4.1.0-rc6`
-baseline with source `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. A detached
-exact-Source-A dry-run returned `DRY_RUN_PASS`, `writes NO`,
-`effective_changes 2`, and five-effort capability `PASS`. Apply returned
-`UPGRADED`, `configuration_preserved true`, and `effective_changes 2`; only the
-selector and `install-manifest` changed, and one transaction backup was
-created. A second apply returned `CURRENT_INSTALLATION_PASS`, `writes NO`,
+The recorded transaction started from the real Global `v4.1.0-rc6` baseline with
+source `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. A detached exact-Source-A
+dry-run returned `DRY_RUN_PASS`, `writes NO`, `effective_changes 2`, and
+five-effort capability `PASS`. Apply returned `UPGRADED`,
+`configuration_preserved true`, and `effective_changes 2`; only the selector
+and `install-manifest` changed, and one transaction backup was created. A
+second apply returned `CURRENT_INSTALLATION_PASS`, `writes NO`,
 `effective_changes 0`, and `backup NONE`.
 
 The Daily proof returned a legal role and matching effort without recording the
@@ -44,10 +51,8 @@ smoke created no backup.
 
 This is evidence from one native Windows Codex environment. Windows, Ubuntu,
 and macOS CI are source validation only, not three-platform real-runtime
-validation. No `v4.1.2` tag or Release is established by these facts, and the
-current public README／assisted-installation entry remains the immutable
-`v4.1.1` chain. The candidate changes the child-process environment boundary to
-purpose-specific allowlists; it does not change the Sol/Luna architecture,
+validation. The Stable change tightens the child-process environment boundary
+to purpose-specific allowlists; it does not change the Sol/Luna architecture,
 five-effort model, native-leaf rule, or acceptance ownership.
 
 ## Flow

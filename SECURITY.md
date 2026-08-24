@@ -2,16 +2,22 @@
 
 ## Release boundary
 
-`v4.1.1` is the current Stable release and default installation target.
-Stable runtime Source Commit A2 is
-`ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; exact-SHA source CI passed on
-Windows, Ubuntu, and macOS. The final bilingual README pins the reviewed
-`CODEX_SOL_LUNA_INSTALL_ASSIST.md` contract through one exact immutable
-documentation commit. That contract pins this reviewed
-`CODEX_SOL_LUNA_SETUP.md` through an earlier exact immutable documentation
-commit. Neither documentation commit is the runtime source or is passed to the
-installer; no commit is required to self-reference its own SHA.
-`v4.1.0` remains the previous immutable Stable release.
+`v4.1.2` is the current Stable release and default installation target.
+Stable runtime Source Commit A is
+`551520c2435aca94d60132f292edbd53cc975cbe`; exact-SHA source CI run
+`32717295801` passed on Windows, Ubuntu, and macOS with `357` tests all
+`PASS`. The final bilingual README pins the reviewed
+`CODEX_SOL_LUNA_INSTALL_ASSIST.md` contract at immutable documentation Commit
+`a130c676fa5924e44034dc8c27f3dc0abfc3bcad`. That contract pins this reviewed
+`CODEX_SOL_LUNA_SETUP.md` at immutable documentation Commit
+`4b2a6004fb92b6661166cb73e656cc2888b0a2ef`. Neither documentation commit is
+the runtime source or is passed to the installer; no commit is required to
+self-reference its own SHA.
+`v4.1.1` remains the previous immutable Stable release, with historical runtime
+Source Commit `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`, Setup anchor
+`d4a044a04df509285ef38c6afc28b5a68a48a0f9`, and Assisted Installation anchor
+`17eb1d370929e884f91c5f1920a2e0868ce4a421`. `v4.1.0` remains an older
+immutable Stable release.
 `v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public
 Beta, and `v4.1.0-rc5` is an older historical Preview. The documented-environment RC5 O1-O10 record remains
 bounded historical evidence; RC5 Final O4/O9 re-certification was not obtained
@@ -22,24 +28,25 @@ A/B/C/D in one native Windows Codex environment. The real protected Sol/Luna
 state and root identity remained unchanged during acceptance, observed unknown
 paths were zero, and owned acceptance residuals were zero. These facts are
 environment- and scenario-bounded evidence, not a security guarantee or
-universal compatibility claim. Stable preserves the accepted RC6 product
-payload byte-for-byte and advances only installed manifest version/source
-metadata; after explicit Daily selection initialization, an independent
-one-run pre-publication compatibility smoke passed all six component checks and
-final Compatibility against that unchanged installed runtime. No real Global
-`v4.1.1` installer apply was performed. Stable publication is independently
-established only by the immutable `v4.1.1` tag and a non-draft, non-prerelease
-GitHub Release. The immutable `v4.1.0` Stable and RC6 historical Prerelease
-remain unchanged. RC4 remains
+universal compatibility claim. v4.1.2 preserves the accepted RC6 product
+payload outside the declared selector and install-manifest changes; after
+explicit Daily selection initialization, an independent one-run compatibility
+smoke passed `CLI`, `Luna capability`, `Selector`, `Delegation`, `Protected
+state`, `Runtime contract`, and final `Compatibility` against that observed
+installed runtime. The v4.1.2 publication is represented by an immutable tag
+and a non-draft, non-prerelease GitHub Release. The immutable `v4.1.1` Stable
+and RC6 historical Prerelease remain unchanged. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
-## v4.1.2 candidate boundary
+## v4.1.2 Stable boundary
 
-`v4.1.2` is an unreleased candidate on `master`; `v4.1.1` remains the current
-Stable release and default installation target. No `v4.1.2` tag or Release is
-established by source publication or CI alone.
+`v4.1.2` is the published Stable release and default installation target. Its
+immutable Setup and Assisted Installation anchors are
+`4b2a6004fb92b6661166cb73e656cc2888b0a2ef` and
+`a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; the two documentation commits are
+distinct from Source Commit A and from one another.
 
-Candidate Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe`
+Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe`
 passed exact-SHA CI run `32717295801` on Windows, Ubuntu, and macOS. This is
 repository source validation only; it does not establish a real Global install,
 real authentication, runtime acceptance, a tag, or a Release.
@@ -69,11 +76,12 @@ agents, selector, manifest, Profile, LKG, and lock were unchanged, and the
 smoke created no backup.
 
 This evidence is limited to one native Windows Codex environment. CI is source
-validation only, not three-platform real-runtime evidence. `v4.1.2` remains
-unreleased, and the current public README／assisted-installation entry remains
-the immutable `v4.1.1` chain.
+validation only, not three-platform real-runtime evidence. The v4.1.2 GitHub
+Release is non-draft and non-prerelease, and the current public
+README／assisted-installation entry uses the immutable v4.1.2 documentation
+chain.
 
-The candidate replaces production child-process ambient inheritance with
+The Stable release replaces production child-process ambient inheritance with
 purpose-specific allowlists. Local version, selector, proof, and source checks
 receive only cross-platform runtime variables and explicit process settings.
 Codex network children additionally receive the supported authentication,

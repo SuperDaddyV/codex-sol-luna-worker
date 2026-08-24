@@ -3,7 +3,7 @@
 [简体中文](README.zh-CN.md)
 
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
-[![Stable: v4.1.1](https://img.shields.io/badge/stable-v4.1.1-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.1)
+[![Stable: v4.1.2](https://img.shields.io/badge/stable-v4.1.2-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.2)
 [![Historical Preview: v4.1.0-rc6](https://img.shields.io/badge/historical_preview-v4.1.0--rc6-orange)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.0-rc6)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
@@ -13,11 +13,11 @@ Keep GPT-5.6 Sol focused on planning, orchestration, ambiguity resolution, and f
 > This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial.
 
 > [!NOTE]
-> `v4.1.1` is the current Stable release and default installation target. `v4.1.0` is the previous immutable Stable release, and `v4.1.0-rc6` remains an immutable historical GitHub Prerelease / Preview / Public Beta.
+> `v4.1.2` is the current Stable release and default installation target. `v4.1.1` is the previous immutable Stable release, and `v4.1.0-rc6` remains an immutable historical GitHub Prerelease / Preview / Public Beta.
 >
-> Stable Source Commit A2 passed 332 local tests and exact-SHA CI on Windows, Ubuntu, and macOS. The `v4.1.0`→`v4.1.1` fake-home lifecycle changes only the ownership manifest. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke exited `0` after about 144.2 seconds with all six component checks and final Compatibility `PASS`. No real Global `v4.1.1` installer apply was performed. RC6's recorded real Global upgrade, fresh-task O1–O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D remain bounded evidence from one native Windows Codex environment, not universal runtime certification.
+> Stable Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe` passed `357` local tests and exact-SHA CI on Windows, Ubuntu, and macOS. The recorded real Global transition from `v4.1.0-rc6` changed only the selector and install manifest. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke exited `0` after about 169.4 seconds with CLI, Luna capability, Selector, Delegation, Protected state, Runtime contract, and final Compatibility all `PASS`. RC6's recorded real Global upgrade, fresh-task O1–O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D remain bounded evidence from one native Windows Codex environment, not universal runtime certification.
 >
-> The immutable Stable Assisted Installation document is anchored at `17eb1d370929e884f91c5f1920a2e0868ce4a421`; its underlying Stable Setup document is anchored at `d4a044a04df509285ef38c6afc28b5a68a48a0f9`, and installer Source Commit A2 remains separately fixed at `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`. RC6 and RC5 are historical Previews.
+> The immutable Stable Assisted Installation document is anchored at `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; its underlying Stable Setup document is anchored at `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`, and installer Source Commit A remains separately fixed at `551520c2435aca94d60132f292edbd53cc975cbe`. RC6 and RC5 are historical Previews.
 >
 > RC3 could incorrectly report `Luna unavailable` with no selector, no delegation, and no availability evidence. RC4's evidence-gated Receipt behavior remains historical release evidence. See [RUNTIME_TESTS.md](RUNTIME_TESTS.md) for the detailed record.
 
@@ -42,7 +42,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ## Install with Codex
 
 1. Start a new Codex task with GPT-5.6 Sol.
-2. Review the [assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md) and its pinned [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md). A [review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is available, but the pinned English contract remains the sole executable authority.
+2. Review the [assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md) and its pinned [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md). A [review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is available, but the pinned English contract remains the sole executable authority.
 3. Paste the prompt below.
 4. Let Codex diagnose all prerequisites, apply bounded safe recovery, request approval for any system change, then run the installer's dry-run, transaction backup, installation, and validation.
 5. Reload Codex when appropriate, start a new task, and run the smoke test. An already-open task is not a complete validation of newly loaded global configuration.
@@ -50,9 +50,9 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ```text
 Read and strictly execute the assisted installation contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-Install the pinned v4.1.1 Stable target. Diagnose all independent prerequisites
+Install the pinned v4.1.2 Stable target. Diagnose all independent prerequisites
 in one pass. Apply only the contract's safe automatic recovery. Before any
 package install, administrator elevation, or persistent environment change,
 show one exact official-source recovery proposal and wait for my explicit
@@ -64,14 +64,14 @@ Codex and provide the fresh-task smoke continuation.
 ```
 
 > [!WARNING]
-> The default path uses the immutable `v4.1.1` Stable Assisted Installation contract, which wraps the separately pinned Stable Setup contract. Never substitute mutable `master`. Safe session-only recovery is bounded; system changes require explicit approval. The installer still fails closed on ownership conflicts and creates a transaction backup before changes, but no installation is risk-free.
+> The default path uses the immutable `v4.1.2` Stable Assisted Installation contract, which wraps the separately pinned Stable Setup contract. Never substitute mutable `master`. Safe session-only recovery is bounded; system changes require explicit approval. The installer still fails closed on ownership conflicts and creates a transaction backup before changes, but no installation is risk-free.
 
 ## Current Stable
 
-`v4.1.1` is the current Stable release and default installation target/path through the immutable assisted Stable entry above.
+`v4.1.2` is the current Stable release and default installation target/path through the immutable assisted Stable entry above.
 
 > [!NOTE]
-> `v4.1.0` remains the previous immutable Stable release. Its tag and Release remain unchanged, while `v4.1.0-rc6` remains the immutable historical Prerelease.
+> `v4.1.1` remains the previous immutable Stable release, and `v4.1.0` remains an older immutable Stable. Their tags and Releases remain unchanged, while `v4.1.0-rc6` remains the immutable historical Prerelease.
 
 Stable contains:
 
@@ -81,14 +81,17 @@ Stable contains:
 - Degraded indicators
 - Luna ref-cost Receipt
 - Upgrade-to-latest UX
+- Least-privilege child-process environments
+- Installer filesystem-alias hardening
+- Strict same-day Profile and selector-status validation
 
 | Release evidence | Status |
 | --- | --- |
-| Installer runtime Source Commit A2 `ca8e9e4caf5564ffe8d0a11fe376047594f8a748` | 332 local tests and exact-SHA CI passed on Windows, Ubuntu, and macOS |
-| Immutable Stable assisted installation document | Documentation Commit `17eb1d370929e884f91c5f1920a2e0868ce4a421`; adds bounded prerequisite recovery without changing the runtime payload |
-| Immutable Stable setup document | Documentation Commit `d4a044a04df509285ef38c6afc28b5a68a48a0f9`; this anchor is not the runtime source |
-| `v4.1.0`→`v4.1.1` fake-home lifecycle | `PASS`; only `sol-luna-v4/install-manifest.json` changes |
-| Independent one-run fresh-task compatibility smoke | Exit `0` after about 144.2 seconds; CLI, Luna capability, Selector, Delegation, Protected state, Runtime contract, and final Compatibility all `PASS` |
+| Installer runtime Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe` | `357` tests and exact-SHA CI run `32717295801` passed on Windows, Ubuntu, and macOS |
+| Immutable Stable assisted installation document | Documentation Commit `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; adds bounded prerequisite recovery without changing the runtime payload |
+| Immutable Stable setup document | Documentation Commit `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`; this anchor is not the runtime source |
+| `v4.1.0-rc6`→`v4.1.2` recorded Global transition | `PASS`; only selector and `sol-luna-v4/install-manifest.json` changed, with one transaction backup |
+| Independent one-run fresh-task compatibility smoke | Exit `0` after about 169.4 seconds; CLI, Luna capability, Selector, Delegation, Protected state, Runtime contract, and final Compatibility all `PASS` |
 | Publication | `STABLE — non-draft, non-prerelease GitHub Release` |
 | Real RC5→RC6 Global upgrade | `PASS` in one recorded native Windows Codex environment |
 | RC6 O1–O10 and Runtime Cases A/B/C/D | `PASS` in the documented environment; bounded evidence |
@@ -100,9 +103,9 @@ The immutable assisted installation contract is the default entry above. It supp
 ```text
 Read and strictly execute the assisted installation contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-Complete the pinned v4.1.1 Stable installation. Aggregate all independent
+Complete the pinned v4.1.2 Stable installation. Aggregate all independent
 read-only prerequisite results before recovery. Apply bounded safe recovery
 automatically. For a required package, elevation, or persistent environment
 change, present the exact commands, official sources, scope, persistent effects,
@@ -111,13 +114,13 @@ Keep authentication, proxy, certificate trust, sandbox, policy, exact-SHA,
 ownership, transaction, and fresh-task gates unchanged.
 ```
 
-Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. Stable preserves the accepted RC6 product runtime and changes only installed manifest version/source metadata. RC6 O1–O10 and Final O4/O9 remain environment- and scenario-bounded evidence. No confirmed product-runtime regression.
+Review the contract first, begin with its dry-run, let the installer create its transaction backup, and preserve the exact backup path for rollback. The recorded RC6→v4.1.2 transition changes only the installed selector and manifest; policy, five agents, configuration, Daily Profile, and LKG remain preserved. RC6 O1–O10 and Final O4/O9 remain environment- and scenario-bounded evidence. No confirmed product-runtime regression.
 
 ## RC6 Historical Preview
 
 `v4.1.0-rc6` remains available as an immutable historical GitHub Prerelease / Preview / Public Beta. Its runtime Source Commit is `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`, and its immutable setup document remains at documentation Commit `3e19e2f547c6fca2a888a176767e8dc69240acbc`. Its annotated tag and Release remain unchanged; do not use the historical RC6 entry as the current default.
 
-RC6's recorded real Global upgrade, O1–O10, Final O4/O9 re-certification, and Runtime Cases A/B/C/D remain bounded historical evidence from one native Windows Codex environment. Stable preserves that product payload byte-for-byte except for installed manifest version/source metadata.
+RC6's recorded real Global upgrade, O1–O10, Final O4/O9 re-certification, and Runtime Cases A/B/C/D remain bounded historical evidence from one native Windows Codex environment. The recorded v4.1.2 transition changes the installed selector and manifest while preserving policy, five agents, configuration, Daily Profile, and LKG.
 
 ## RC5 Historical Preview
 
@@ -210,7 +213,7 @@ For a non-trivial task, the final line reports one observed outcome. A delegated
 
 ## Feedback
 
-`v4.1.1` is the current Stable release. `v4.1.0` is the previous Stable release, and `v4.1.0-rc6` remains a historical Preview prerelease and public beta.
+`v4.1.2` is the current Stable release. `v4.1.1` is the previous immutable Stable release, and `v4.1.0-rc6` remains a historical Preview prerelease and public beta.
 
 Use the matching native GitHub Issue Form for install, upgrade, selector, Luna delegation, Delegation Receipt, rollback, or uninstall issues. Successful compatibility reports are welcome too:
 
@@ -273,7 +276,7 @@ Rollback verifies the installer-owned snapshot, restores the exact pre-install s
 python scripts/install.py --uninstall --codex-home "<CODEX_HOME>"
 ```
 
-Uninstall removes only v4-owned files and blocks while preserving unrelated user content. Reload Codex and start a new task after either operation. See the [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md) before acting.
+Uninstall removes only v4-owned files and blocks while preserving unrelated user content. Reload Codex and start a new task after either operation. See the [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md) before acting.
 
 ## Validation status
 
@@ -287,10 +290,10 @@ Uninstall removes only v4-owned files and blocks while preserving unrelated user
 | Clean installer | `PASS` |
 | Legacy migration simulation | `PASS` |
 | Stable runtime Source Commit exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
-| Stable immutable assisted installation document | Documentation Commit `17eb1d370929e884f91c5f1920a2e0868ce4a421`; current default entry, not runtime source |
-| Stable immutable setup document | Documentation Commit `d4a044a04df509285ef38c6afc28b5a68a48a0f9`; pinned by the assisted contract, not runtime source |
-| `v4.1.0`→`v4.1.1` fake-home lifecycle | Local installer/lifecycle tests PASS; manifest only |
-| Stable pre-publication compatibility smoke | One run, exit `0`, all six checks and final Compatibility `PASS` |
+| Stable immutable assisted installation document | Documentation Commit `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; current default entry, not runtime source |
+| Stable immutable setup document | Documentation Commit `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`; pinned by the assisted contract, not runtime source |
+| `v4.1.0-rc6`→`v4.1.2` recorded Global transition | Installer apply PASS; selector and manifest only, with one transaction backup |
+| Stable compatibility smoke | One run, exit `0`, seven checks and final Compatibility `PASS` |
 | RC5 repository validation and exact-SHA CI | Passed on Windows, Ubuntu, and macOS |
 | RC5 O1–O10 documented-environment record, including O4/O9 | Bounded evidence only |
 | RC5 Final O4/O9 re-certification | Not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY` |
@@ -371,7 +374,7 @@ python scripts/install.py --dry-run --codex-home "<CODEX_HOME>"
 python -m unittest discover -s tests -v
 ```
 
-Do not use `--validation-sandbox` for a real global installation; that flag exists only for repository-local test targets. Apply, migration, rollback, and uninstall commands are specified in [CODEX_SOL_LUNA_SETUP.md](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md).
+Do not use `--validation-sandbox` for a real global installation; that flag exists only for repository-local test targets. Apply, migration, rollback, and uninstall commands are specified in [CODEX_SOL_LUNA_SETUP.md](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md).
 
 ### Optional parallel self-test
 
@@ -379,9 +382,9 @@ In a fresh task, request two or three independent bounded read-only checks and a
 
 ## Technical documentation
 
-- [Codex-executable assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/17eb1d370929e884f91c5f1920a2e0868ce4a421/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
+- [Codex-executable assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
 - [Review-only Chinese translation of the assisted installation contract](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)
-- [Codex-executable setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md)
+- [Codex-executable setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)
 - [Architecture](ARCHITECTURE.md)
 - [Runtime validation](RUNTIME_TESTS.md)
 - [Security](SECURITY.md)

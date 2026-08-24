@@ -1,19 +1,21 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.1 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.0` is the previous Stable, while RC6 and RC5 remain historical Prereleases.
+Status: `v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.1` is the previous immutable Stable, while RC6 and RC5 remain historical Prereleases.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.2 unreleased candidate — setup and runtime evidence
+## v4.1.2 Stable promotion — setup and runtime evidence
 
-`v4.1.2` is not published; `v4.1.1` remains the current Stable release and
-default public installation target. Candidate Source Commit A is
+`v4.1.2` is the published Stable release and default public installation target.
+Source Commit A is
 `551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run `32717295801`
 passed on Windows, Ubuntu, and macOS and reported `357` tests all `PASS`.
 Current-master evidence commit `fac118ac5ca096aaf1ef8d68b79bfc1372998a5a`
 passed CI run `32717520585` on the same three source-validation platforms. The
 current-master evidence commit is not Source Commit A and is not an installer
-source substitute.
+source substitute. The immutable Setup anchor is
+`4b2a6004fb92b6661166cb73e656cc2888b0a2ef`; the immutable Assisted
+Installation anchor is `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`.
 
 The recorded real Global baseline was `v4.1.0-rc6`, source
 `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. From a detached exact Source A
@@ -35,20 +37,20 @@ unchanged; the smoke created no backup.
 
 This record is limited to one native Windows Codex environment. Windows,
 Ubuntu, and macOS CI are source validation only, not three-platform real-runtime
-validation. No `v4.1.2` tag or Release is established by this record. The
-current public README and assisted-installation entry remain the immutable
-`v4.1.1` chain.
+validation. The v4.1.2 GitHub Release is non-draft and non-prerelease, and the
+current public README and assisted-installation entry use the immutable anchors
+recorded above.
 
-`V412_CANDIDATE_SOURCE_SHA = 551520c2435aca94d60132f292edbd53cc975cbe`;
+`V412_SOURCE_SHA = 551520c2435aca94d60132f292edbd53cc975cbe`;
 `V412_EXACT_SHA_CI = PASS`;
 `V412_CURRENT_MASTER_EVIDENCE_CI = PASS`;
 `V412_DRY_RUN = DRY_RUN_PASS`;
 `V412_APPLY = UPGRADED`;
 `V412_SECOND_APPLY = CURRENT_INSTALLATION_PASS`;
 `V412_FRESH_TASK_COMPATIBILITY = PASS`;
-`V412_PUBLIC_RELEASE = NOT_ESTABLISHED`.
+`V412_PUBLIC_RELEASE = STABLE`.
 
-## v4.1.1 current Stable release — promotion evidence
+## v4.1.1 previous immutable Stable — historical promotion evidence
 
 Stable Source Commit A2 is
 `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; its exact-SHA CI passed on

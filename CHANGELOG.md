@@ -1,6 +1,6 @@
 # Changelog
 
-## v4.1.2 (unreleased candidate)
+## v4.1.2 (published Stable release)
 
 - Rejects filesystem aliases inside installer-owned paths while preserving the
   established cross-platform `BACKUP_FAILED` result when an ordinary file
@@ -17,17 +17,20 @@
 - Tightens same-day Daily Profile reuse and compatibility-smoke selector status
   reason-code validation without changing the five Luna efforts or selection
   algorithm.
-- Keeps the published `v4.1.1` tag, Release, immutable setup contracts, and
-  bilingual default installation entry unchanged while this candidate remains
-  unreleased. Candidate Source Commit A
-  `551520c2435aca94d60132f292edbd53cc975cbe` passed exact-SHA CI run
-  `32717295801` on Windows, Ubuntu, and macOS. This is repository source
-  validation only; it does not establish a tag, Release, real Global install,
-  or runtime acceptance.
+- Promotes Source Commit A
+  `551520c2435aca94d60132f292edbd53cc975cbe` as the v4.1.2 Stable runtime
+  source. Exact-SHA CI run `32717295801` passed on Windows, Ubuntu, and macOS
+  with `357` tests all `PASS`; this is source validation and does not imply
+  three-platform real-runtime validation.
 - The current-master evidence commit
   `fac118ac5ca096aaf1ef8d68b79bfc1372998a5a` passed CI run `32717520585` on
   Windows, Ubuntu, and macOS; it is current-tip evidence, not a replacement for
   Source Commit A. The exact Source-A run reported `357` tests all `PASS`.
+- Pins the Stable Setup contract at immutable documentation Commit
+  `4b2a6004fb92b6661166cb73e656cc2888b0a2ef` and the Assisted Installation
+  contract at immutable documentation Commit
+  `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`. Neither documentation anchor is
+  the runtime source or a mutable branch.
 - The recorded real Global baseline was `v4.1.0-rc6`, source
   `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. Detached exact-Source-A dry-run
   returned `DRY_RUN_PASS`, `writes NO`, `effective_changes 2`, and five-effort
@@ -46,11 +49,11 @@
   smoke created no backup.
 - This evidence is limited to one native Windows Codex environment. Windows,
   Ubuntu, and macOS CI are source validation only, not three-platform
-  real-runtime validation. The current public README and assisted-installation
-  entry remain the immutable `v4.1.1` chain; no `v4.1.2` tag or Release is
-  established by this candidate record.
+  real-runtime validation. The v4.1.2 GitHub Release is the non-draft,
+  non-prerelease Stable publication, and its README and assisted-installation
+  entries use the immutable documentation anchors above.
 
-## v4.1.1 (published Stable release)
+## v4.1.1 (previous immutable Stable release)
 
 - Added Stable Source Commit A2
   `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; 332 local tests and exact-SHA CI
