@@ -1,31 +1,32 @@
-# Sol/Luna v4.1.0 Assisted Installation Contract
+# Sol/Luna v4.1.1 Assisted Installation Contract
 
-Assistance contract version: `1`.
+Assistance contract version: `2`.
 
 The English contract is the only executable authority. The review-only Chinese
 translation is `CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md`; it must identify this
 English contract and must not become a second executable installation source.
 
-This document is the user-facing recovery wrapper for the published `v4.1.0`
-Stable installation. It improves prerequisite diagnosis and recovery; it does
-not change the Stable runtime payload, installer, setup contract, tag, or
-Release.
+This document is the user-facing recovery wrapper for the reviewed `v4.1.1`
+Stable installation. It improves prerequisite diagnosis and bounded recovery;
+it does not change the Stable runtime payload or installer and does not itself
+create, move, or rewrite a tag or Release.
 
 ## 1. Immutable target
 
 Use only these reviewed identities:
 
-- Stable release: `v4.1.0`;
-- Stable runtime source commit:
-  `67a72f8accc5d53ef04ff8d64d8838e397ceecda`;
+- Stable release: `v4.1.1`;
+- Stable runtime Source Commit A2:
+  `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`;
 - Stable setup contract documentation commit:
-  `2c912b1e1a0fdbd115eb605517fde9385b633745`;
+  `d4a044a04df509285ef38c6afc28b5a68a48a0f9`;
 - Stable setup contract:
-  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md`.
+  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md`.
 
 Never substitute mutable `master`, another branch, `target_commitish`, an
-archive, or a different Release. `v4.1.0-rc6` remains an immutable historical
-Prerelease / Preview / Public Beta. Do not move or rewrite any tag or Release.
+archive, or a different Release. `v4.1.0` remains the previous immutable Stable
+release. `v4.1.0-rc6` remains an immutable historical Prerelease / Preview /
+Public Beta. Do not move or rewrite any tag or Release.
 
 ## 2. Authority and success boundary
 
@@ -75,8 +76,8 @@ Display this summary before any recovery action:
 
 ```text
 Sol/Luna Assisted Installation
-Target: v4.1.0
-Runtime source: 67a72f8accc5d53ef04ff8d64d8838e397ceecda
+Target: v4.1.1
+Runtime source: ca8e9e4caf5564ffe8d0a11fe376047594f8a748
 Codex CLI: PASS <version> / MISSING_OR_UNUSABLE
 Python: PASS <version> / MISSING_OR_UNSUPPORTED
 Git: PASS <version> / MISSING
@@ -167,7 +168,7 @@ a preflight state file before `Ready: YES`.
 
 ```text
 SOL_LUNA_ASSIST_RESUME
-Target: v4.1.0
+Target: v4.1.1
 Phase: PREREQUISITE_RECHECK / SELECTOR_INITIALIZATION / FRESH_TASK_SMOKE
 Completed checks: <names only>
 Pending blocker: <one reason code>
@@ -199,7 +200,7 @@ Only after the prerequisite summary reports `Ready: YES`:
 
 1. read the pinned Stable setup contract in full;
 2. execute it exactly against Stable runtime source commit
-   `67a72f8accc5d53ef04ff8d64d8838e397ceecda`;
+   `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`;
 3. preserve its capability, immutable-source, ownership, dry-run, transaction,
    backup, apply, validation, and fresh-task gates.
 
@@ -261,13 +262,13 @@ personal paths, or unrelated file content in reports. The installer remains the
 sole authority for owned-file merge, backup, rollback, migration, and uninstall
 behavior.
 
-## 11. v4.1.1 deterministic assistance candidate
+## 11. v4.1.1 deterministic Stable assistance
 
-This section specifies the unreleased `v4.1.1` installation experience
-candidate. It does not replace the immutable `v4.1.0` public entry above and is
-not authority to publish, retag, move a Release, or change the default Stable
-README links. Release preparation must replace the candidate boundary with
-separately pinned runtime-source, assistance-contract, and README commits.
+This section specifies the deterministic installation experience for the
+reviewed `v4.1.1` Stable target. It is subordinate to the exact setup contract
+and Source Commit A2 above and is not authority to publish, retag, or move a
+Release. The bilingual README must pin this English contract through a separate
+exact immutable documentation commit; that commit is not the runtime source.
 
 ### 11.1 Bootstrap boundary
 
@@ -289,7 +290,8 @@ The assistant exposes these commands:
 <PYTHON> scripts/install_assist.py check --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py plan --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py recover --codex-home <CODEX_HOME> --approve <PLAN_ID>
-<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit <40HEX>
+<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit ca8e9e4caf5564ffe8d0a11fe376047594f8a748
+<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit ca8e9e4caf5564ffe8d0a11fe376047594f8a748
 <PYTHON> scripts/install_assist.py report --codex-home <CODEX_HOME> --format json
 ```
 

@@ -32,6 +32,7 @@ PUBLIC_DOCS = (README, README_ZH, ASSIST, ASSIST_ZH, SETUP, ROOT / "SECURITY.md"
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
 PINNED_ASSIST_COMMIT = "39594139eaeeda705528733fc383333504546fb6"
 PINNED_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
+V411_SETUP_CONTRACT_COMMIT = "d4a044a04df509285ef38c6afc28b5a68a48a0f9"
 PINNED_ASSIST_BLOB_URL = (
     "https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/"
     f"{PINNED_ASSIST_COMMIT}/CODEX_SOL_LUNA_INSTALL_ASSIST.md"
@@ -202,14 +203,14 @@ class DocumentationTests(unittest.TestCase):
         content = text(ASSIST)
         setup_url = (
             "https://raw.githubusercontent.com/SuperDaddyV/"
-            f"codex-sol-luna-worker/{PINNED_SETUP_COMMIT}/"
+            f"codex-sol-luna-worker/{V411_SETUP_CONTRACT_COMMIT}/"
             "CODEX_SOL_LUNA_SETUP.md"
         )
 
         for identity in (
-            "Stable release: `v4.1.0`",
-            STABLE_RUNTIME_SOURCE_COMMIT,
-            PINNED_SETUP_COMMIT,
+            "Stable release: `v4.1.1`",
+            V411_RUNTIME_SOURCE_COMMIT,
+            V411_SETUP_CONTRACT_COMMIT,
             setup_url,
             "`v4.1.0-rc6` remains an immutable historical",
         ):
@@ -248,12 +249,12 @@ class DocumentationTests(unittest.TestCase):
             content,
         )
 
-    def test_v411_assistance_candidate_is_deterministic_and_not_public_authority(self):
+    def test_v411_stable_assistance_is_deterministic_and_bounded(self):
         content = text(ASSIST)
-        candidate = content.index("## 11. v4.1.1 deterministic assistance candidate")
+        stable = content.index("## 11. v4.1.1 deterministic Stable assistance")
         capability = content.index("### 11.6 Early capability and installer handoff")
         dry_run = content.index("installer's non-mutating dry-run", capability)
-        self.assertLess(candidate, capability)
+        self.assertLess(stable, capability)
         self.assertLess(capability, dry_run)
         for phrase in (
             "P3 standalone bootstrap is explicitly out of scope",
@@ -293,21 +294,28 @@ class DocumentationTests(unittest.TestCase):
             "BLOCKED",
         ):
             self.assertIn(phase, content)
-        self.assertIn("does not replace the immutable `v4.1.0` public entry", content)
+        self.assertIn("This section specifies the deterministic installation experience", content)
+        self.assertIn("exact immutable documentation commit", content)
         self.assertIn("No preflight state file is created", content)
         self.assertIn("DAILY_SELECTION_PROOF_REQUIRED", content)
         self.assertIn("--ensure-daily --print-selection", content)
         self.assertIn("The smoke remains status-only", content)
+        self.assertNotIn("unreleased `v4.1.1`", content)
+        self.assertNotIn("assistance candidate", content)
+        self.assertNotIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
+        self.assertNotIn(PINNED_SETUP_COMMIT, content)
+        self.assertEqual(content.count(f"--source-commit {V411_RUNTIME_SOURCE_COMMIT}"), 2)
 
     def test_chinese_assistance_document_is_review_only_and_covers_same_boundaries(self):
         content = text(ASSIST_ZH)
         self.assertIn("本文件只用于中文审阅，不是可执行安装权威", content)
         self.assertIn("英文 `CODEX_SOL_LUNA_INSTALL_ASSIST.md`", content)
         self.assertIn("不能执行可变 `master` 上的中文译文", content)
-        self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
-        self.assertIn(PINNED_SETUP_COMMIT, content)
+        self.assertIn(V411_RUNTIME_SOURCE_COMMIT, content)
+        self.assertIn(V411_SETUP_CONTRACT_COMMIT, content)
         for phrase in (
-            "`v4.1.0-rc6` 继续作为不可变的历史",
+            "`v4.1.0-rc6` 继续作为",
+            "不可变的历史 Prerelease",
             "P3 排除边界",
             "scripts/install_assist.py check",
             "RECOVERY_PLAN_CHANGED",
@@ -331,6 +339,9 @@ class DocumentationTests(unittest.TestCase):
             "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/",
             content,
         )
+        self.assertNotIn("安装助手候选", content)
+        self.assertNotIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
+        self.assertNotIn(PINNED_SETUP_COMMIT, content)
 
     def test_setup_records_v411_stable_assisted_handoff(self):
         content = text(SETUP)
@@ -849,7 +860,10 @@ class DocumentationTests(unittest.TestCase):
 
         self.assertEqual(SETUP_RAW_PATTERN.findall(english), [])
         self.assertEqual(SETUP_RAW_PATTERN.findall(chinese), [])
-        self.assertEqual(SETUP_RAW_PATTERN.findall(text(ASSIST)), [PINNED_SETUP_COMMIT])
+        self.assertEqual(
+            SETUP_RAW_PATTERN.findall(text(ASSIST)),
+            [V411_SETUP_CONTRACT_COMMIT],
+        )
 
     def test_all_local_documentation_links_exist(self):
         for document in (README, README_ZH, ASSIST, SETUP, ROOT / "SECURITY.md"):

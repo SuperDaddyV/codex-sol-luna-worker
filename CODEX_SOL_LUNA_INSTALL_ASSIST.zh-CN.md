@@ -6,25 +6,23 @@
 > 还必须固定到该英文文件的
 > exact commit，不能执行可变 `master` 上的中文译文。
 
-中文审阅版版本：`1`。
+中文审阅版版本：`2`。
 
-## 1．当前公开 Stable 的不可变目标
+## 1．当前 Stable 的不可变目标
 
-当前公开安装入口仍是 `v4.1.0` Stable：
+当前 Stable 目标为 `v4.1.1`：
 
-- Stable runtime source commit：
-  `67a72f8accc5d53ef04ff8d64d8838e397ceecda`；
+- Stable runtime Source Commit A2：
+  `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`；
 - Stable setup contract documentation commit：
-  `2c912b1e1a0fdbd115eb605517fde9385b633745`；
+  `d4a044a04df509285ef38c6afc28b5a68a48a0f9`；
 - Stable setup contract：
-  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md`。
+  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/d4a044a04df509285ef38c6afc28b5a68a48a0f9/CODEX_SOL_LUNA_SETUP.md`。
 
 不得替换为 `master`、其他分支、`target_commitish`、归档文件或其他
-Release。`v4.1.0-rc6` 继续作为不可变的历史 Prerelease／Preview／Public
-Beta，不移动、不改写。
-
-本分支正在开发 `v4.1.1` 安装体验候选；它尚未替换上述公开 Stable
-入口，也不授权发布、打 tag 或修改 Latest Release。
+Release。`v4.1.0` 继续作为上一版不可变 Stable，`v4.1.0-rc6` 继续作为
+不可变的历史 Prerelease／Preview／Public Beta；不移动、不改写任何 tag 或
+Release。
 
 ## 2．权限与成功边界
 
@@ -154,16 +152,17 @@ Next proof: <one read-only proof or user action>
   `scripts/install_assist.py` 接管；
 - 不得宣传脚本能独立修复「完全没有 Python／Git」的机器。
 
-## 8．`v4.1.1` 确定性安装助手候选
+## 8．`v4.1.1` 确定性 Stable 安装助手
 
-以下命令只供审阅；实际执行必须以英文合同及后续发布时的 exact-SHA 固定
-文档为准：
+以下命令只供审阅；实际执行必须以 README 通过 exact commit 固定的英文合同
+为准：
 
 ```text
 <PYTHON> scripts/install_assist.py check --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py plan --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py recover --codex-home <CODEX_HOME> --approve <PLAN_ID>
-<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit <40HEX>
+<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit ca8e9e4caf5564ffe8d0a11fe376047594f8a748
+<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit ca8e9e4caf5564ffe8d0a11fe376047594f8a748
 <PYTHON> scripts/install_assist.py report --codex-home <CODEX_HOME> --format json
 ```
 
