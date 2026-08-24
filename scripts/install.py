@@ -10,7 +10,9 @@ import platform
 import re
 import shlex
 import shutil
+import stat
 import subprocess
+import sys
 import tempfile
 import tomllib
 from datetime import datetime, timezone
@@ -19,6 +21,12 @@ from typing import Callable, Mapping
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.child_environment import build_child_environment  # noqa: E402
+
+
 SUPPORTED_PLATFORMS = {"Windows", "Linux", "Darwin"}
 VERSION = "v4.1.1"
 MANIFEST_RELATIVE = PurePosixPath("sol-luna-v4/install-manifest.json")
@@ -182,9 +190,34 @@ def _target_path(target: Path, relative: str | PurePosixPath) -> Path:
     relative_path = PurePosixPath(str(relative).replace("\\", "/"))
     if relative_path.is_absolute() or ".." in relative_path.parts:
         raise InstallerError("OWNERSHIP_CONFLICT", "owned path escapes CODEX_HOME")
-    path = target.joinpath(*relative_path.parts).resolve(strict=False)
-    if not _is_within(path, target):
-        raise InstallerError("OWNERSHIP_CONFLICT", "owned path escapes CODEX_HOME")
+    path = target.joinpath(*relative_path.parts)
+    try:
+        target_device = target.lstat().st_dev if target.exists() else None
+    except OSError as exc:
+        raise InstallerError(
+            "OWNERSHIP_CONFLICT", "CODEX_HOME identity could not be verified"
+        ) from exc
+    current = target
+    for part in relative_path.parts:
+        current = current / part
+        try:
+            metadata = current.lstat()
+        except FileNotFoundError:
+            break
+        except OSError as exc:
+            raise InstallerError(
+                "OWNERSHIP_CONFLICT", "owned path identity could not be verified"
+            ) from exc
+        file_attributes = getattr(metadata, "st_file_attributes", 0)
+        if (
+            stat.S_ISLNK(metadata.st_mode)
+            or bool(file_attributes & 0x400)
+            or os.path.ismount(current)
+            or (target_device is not None and metadata.st_dev != target_device)
+        ):
+            raise InstallerError(
+                "OWNERSHIP_CONFLICT", "owned path contains a filesystem alias"
+            )
     return path
 
 
@@ -195,12 +228,13 @@ def _relative_path(target: Path, path: Path) -> str:
         raise InstallerError("OWNERSHIP_CONFLICT", "path is outside CODEX_HOME") from exc
 
 
-def _codex_version() -> str:
+def _codex_version(codex_home: Path) -> str:
     try:
         result = subprocess.run(
             ["codex", "--version"],
             capture_output=True,
             text=True,
+            env=build_child_environment(codex_home=codex_home),
             timeout=10,
             check=False,
         )
@@ -253,7 +287,7 @@ def build_plan(
         "will_modify": False,
         "platform": current_platform,
         "platform_supported": current_platform in SUPPORTED_PLATFORMS,
-        "codex_version": _codex_version(),
+        "codex_version": _codex_version(target),
         "target_codex_home": str(target),
         "conflicts": conflicts,
         "backup_plan": {
@@ -816,12 +850,12 @@ def _effective_operations(
 
 
 def _choose_backup_root(target: Path, now: datetime) -> Path:
-    parent = target / "backups" / "sol-luna-v4"
+    _target_path(target, "backups/sol-luna-v4")
     stem = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    candidate = parent / stem
+    candidate = _target_path(target, f"backups/sol-luna-v4/{stem}")
     counter = 2
     while candidate.exists():
-        candidate = parent / f"{stem}-{counter}"
+        candidate = _target_path(target, f"backups/sol-luna-v4/{stem}-{counter}")
         counter += 1
     return candidate
 
@@ -829,6 +863,7 @@ def _choose_backup_root(target: Path, now: datetime) -> Path:
 def _create_backup(target: Path, relatives: list[str], root: Path) -> Path:
     target_existed = target.exists()
     try:
+        root = _target_path(target, _backup_relative(target, root))
         root.mkdir(parents=True, exist_ok=False)
         entries = []
         for relative in sorted(set(relatives)):
@@ -982,7 +1017,12 @@ def _ensure_target_writable(target: Path) -> None:
 
 
 def _backup_relative(target: Path, backup: Path) -> str:
-    return _relative_path(target, backup)
+    target_absolute = Path(os.path.abspath(target))
+    backup_absolute = Path(os.path.abspath(backup))
+    try:
+        return backup_absolute.relative_to(target_absolute).as_posix()
+    except ValueError as exc:
+        raise InstallerError("OWNERSHIP_CONFLICT", "backup is outside CODEX_HOME") from exc
 
 
 def _build_install_plan(
@@ -1311,7 +1351,7 @@ def install(
         _hit_failpoint(failpoint, "after_old_file_deletion")
         _validate_applied_operations(target, effective)
         _hit_failpoint(failpoint, "before_v4_manifest_write")
-        _atomic_write(current_manifest_path, manifest_bytes)
+        _atomic_write(_target_path(target, manifest_relative), manifest_bytes)
     except Exception as exc:
         try:
             rollback(
@@ -1378,15 +1418,16 @@ def rollback(
     allow_validation_sandbox: bool = False,
 ) -> dict:
     target = target.resolve(strict=False)
-    backup_root = backup_root.resolve(strict=False)
     validate_target(
         target,
         project_root,
         allow_validation_sandbox=allow_validation_sandbox,
     )
-    allowed_backup_parent = target / "backups" / "sol-luna-v4"
-    if not _is_within(backup_root, allowed_backup_parent):
+    backup_relative = _backup_relative(target, backup_root)
+    relative_parts = PurePosixPath(backup_relative).parts
+    if relative_parts[:2] != ("backups", "sol-luna-v4") or len(relative_parts) != 3:
         raise InstallerError("OWNERSHIP_CONFLICT", "backup is outside the owned root")
+    backup_root = _target_path(target, backup_relative)
     snapshot_path = backup_root / "snapshot.json"
     if not snapshot_path.is_file():
         raise InstallerError("BACKUP_NOT_FOUND", "backup snapshot is missing")

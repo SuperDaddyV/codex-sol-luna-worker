@@ -217,8 +217,8 @@ class CompatibilitySmokeTests(unittest.TestCase):
     def test_capability_probe_uses_explicit_codex_home(self):
         observed = []
 
-        def probe(_command, _timeout):
-            observed.append(os.environ.get("CODEX_HOME"))
+        def probe(_command, _timeout, *, codex_home):
+            observed.append(codex_home)
             return {
                 "all_supported": True,
                 "results": [
@@ -233,11 +233,24 @@ class CompatibilitySmokeTests(unittest.TestCase):
             )
 
         self.assertEqual(result.status, smoke.PASS)
-        self.assertEqual(observed, [str(Path("explicit-codex-home"))])
+        self.assertEqual(observed, [Path("explicit-codex-home")])
 
     def test_cli_version_uses_explicit_codex_home(self):
         completed = subprocess.CompletedProcess([], 0, "codex-cli fixture", "")
-        with patch.object(smoke.subprocess, "run", return_value=completed) as run:
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "PATH": "fixture-path",
+                    "CODEX_HOME": "ambient-codex-home",
+                    "CODEX_API_KEY": "fixture-codex-key",
+                    "HTTP_PROXY": "http://fixture-proxy",
+                    "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+                },
+                clear=True,
+            ),
+            patch.object(smoke.subprocess, "run", return_value=completed) as run,
+        ):
             result, version = smoke._check_cli(
                 "codex", Path("explicit-codex-home"), 1
             )
@@ -248,6 +261,26 @@ class CompatibilitySmokeTests(unittest.TestCase):
             run.call_args.kwargs["env"]["CODEX_HOME"],
             str(Path("explicit-codex-home")),
         )
+        self.assertEqual(run.call_args.kwargs["env"]["PATH"], "fixture-path")
+        self.assertNotIn("CODEX_API_KEY", run.call_args.kwargs["env"])
+        self.assertNotIn("HTTP_PROXY", run.call_args.kwargs["env"])
+        self.assertNotIn(
+            "UNRELATED_SENTINEL_SECRET", run.call_args.kwargs["env"]
+        )
+
+    def selector_observation(self, payload):
+        completed = subprocess.CompletedProcess(
+            [], 0, json.dumps(payload), ""
+        )
+        with (
+            patch.object(smoke, "_fingerprint_tree", return_value="same"),
+            patch.object(smoke.subprocess, "run", return_value=completed),
+        ):
+            return smoke._check_selector(
+                python_command="python",
+                codex_home=Path("codex-home"),
+                timeout=1,
+            )
 
     def test_selector_valid_misconfigured_status_still_passes_execution_check(self):
         payload = {
@@ -258,45 +291,246 @@ class CompatibilitySmokeTests(unittest.TestCase):
             "selected_role": "luna_max",
             "selected_effort": "max",
         }
-        completed = subprocess.CompletedProcess(
-            [], 0, json.dumps(payload), ""
-        )
-        with (
-            patch.object(smoke, "_fingerprint_tree", return_value="same"),
-            patch.object(smoke.subprocess, "run", return_value=completed),
-        ):
-            observation = smoke._check_selector(
-                python_command="python",
-                codex_home=Path("codex-home"),
-                timeout=1,
-            )
+        observation = self.selector_observation(payload)
 
         self.assertEqual(observation.result.status, smoke.PASS)
         self.assertEqual(observation.payload, payload)
+
+    def test_selector_process_uses_minimal_local_environment(self):
+        payload = {
+            "diagnostic_schema_version": 1,
+            "health": "Healthy",
+            "reason_codes": ["OK"],
+            "selection_initialized": True,
+            "selected_role": "luna_max",
+            "selected_effort": "max",
+        }
+        completed = subprocess.CompletedProcess([], 0, json.dumps(payload), "")
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "PATH": "fixture-path",
+                    "CODEX_API_KEY": "fixture-codex-key",
+                    "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+                },
+                clear=True,
+            ),
+            patch.object(smoke, "_fingerprint_tree", return_value="same"),
+            patch.object(
+                smoke.subprocess, "run", return_value=completed
+            ) as run,
+        ):
+            observation = smoke._check_selector(
+                python_command="python",
+                codex_home=Path("explicit-codex-home"),
+                timeout=1,
+            )
+
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(observation.result.status, smoke.PASS)
+        self.assertEqual(environment["PATH"], "fixture-path")
+        self.assertEqual(environment["CODEX_HOME"], "explicit-codex-home")
+        self.assertEqual(environment["PYTHONDONTWRITEBYTECODE"], "1")
+        self.assertNotIn("CODEX_API_KEY", environment)
+        self.assertNotIn("UNRELATED_SENTINEL_SECRET", environment)
+
+    def test_selector_expected_override_with_degradation_still_passes(self):
+        payload = {
+            "diagnostic_schema_version": 1,
+            "health": "Misconfigured",
+            "reason_codes": ["PROJECT_OVERRIDE_PRESENT", "LKG_FALLBACK_ACTIVE"],
+            "selection_initialized": True,
+            "selected_role": "luna_max",
+            "selected_effort": "max",
+        }
+
+        self.assertEqual(self.selector_observation(payload).result.status, smoke.PASS)
+
+    def test_selector_integrity_misconfiguration_requires_review(self):
+        for codes in (
+            ["MANIFEST_MISSING"],
+            ["PROJECT_OVERRIDE_PRESENT", "SELECTOR_OWNERSHIP_MISMATCH"],
+            ["PROJECT_OVERRIDE_PRESENT", "AGENT_SET_INCOMPLETE"],
+        ):
+            with self.subTest(codes=codes):
+                payload = {
+                    "diagnostic_schema_version": 1,
+                    "health": "Misconfigured",
+                    "reason_codes": codes,
+                    "selection_initialized": True,
+                    "selected_role": "luna_max",
+                    "selected_effort": "max",
+                }
+                observation = self.selector_observation(payload)
+                self.assertEqual(observation.result.status, smoke.REVIEW)
+
+    def test_selector_unavailable_status_requires_review(self):
+        payload = {
+            "diagnostic_schema_version": 1,
+            "health": "Unavailable",
+            "reason_codes": ["DAILY_ROLE_UNAVAILABLE"],
+            "selection_initialized": True,
+            "selected_role": "luna_max",
+            "selected_effort": "max",
+        }
+
+        self.assertEqual(self.selector_observation(payload).result.status, smoke.REVIEW)
 
     def test_delegation_process_uses_explicit_codex_home(self):
         observed = []
 
         def run(*_args, **kwargs):
-            observed.append(kwargs["env"].get("CODEX_HOME"))
+            observed.append(kwargs["env"])
             return subprocess.CompletedProcess([], 0, "", "")
 
-        with (
-            patch.object(smoke, "_rollout_files", side_effect=[set(), {Path("parent")}]),
-            patch.object(smoke, "_fingerprint_tree", return_value="same"),
-            patch.object(smoke.subprocess, "run", side_effect=run),
-            patch.object(smoke, "_delegation_rollout_scope", return_value={Path("parent")}),
-            patch.object(smoke, "_validate_runtime_case"),
-        ):
-            result = smoke._check_delegation(
-                codex_command="codex",
-                codex_home=Path("explicit-codex-home"),
-                selector_payload=HEALTHY_SELECTOR,
-                timeout=1,
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary)
+            (codex_home / "config.toml").write_text(
+                'model_provider = "fixture"\n'
+                '[model_providers.fixture]\n'
+                'env_key = "FIXTURE_PROVIDER_TOKEN"\n'
+                'env_http_headers = { "X-Tenant" = "FIXTURE_TENANT" }\n'
+                '[mcp_servers.fixture]\n'
+                'bearer_token_env_var = "FIXTURE_MCP_BEARER"\n'
+                'env_http_headers = { "X-MCP" = "FIXTURE_MCP_HEADER" }\n'
+                'env_vars = ["FIXTURE_MCP_LOCAL"]\n',
+                encoding="utf-8",
             )
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        "PATH": "fixture-path",
+                        "CODEX_HOME": "ambient-codex-home",
+                        "CODEX_API_KEY": "fixture-codex-key",
+                        "CODEX_ACCESS_TOKEN": "fixture-access-token",
+                        "OPENAI_FEDERATION_RULE_ID": "fixture-rule",
+                        "OPENAI_IDENTITY_TOKEN_FILE": "/fixture/identity-token",
+                        "OPENAI_WORKLOAD_IDENTITY_CONTEXT": '{"fixture":"context"}',
+                        "HTTP_PROXY": "http://fixture-proxy",
+                        "https_proxy": "http://fixture-lower-proxy",
+                        "CODEX_CA_CERTIFICATE": "/fixture/codex-ca.pem",
+                        "SSL_CERT_FILE": "/fixture/ssl-ca.pem",
+                        "FIXTURE_PROVIDER_TOKEN": "fixture-provider-token",
+                        "FIXTURE_TENANT": "fixture-tenant",
+                        "FIXTURE_MCP_BEARER": "fixture-mcp-bearer",
+                        "FIXTURE_MCP_HEADER": "fixture-mcp-header",
+                        "FIXTURE_MCP_LOCAL": "fixture-mcp-local",
+                        "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+                    },
+                    clear=True,
+                ),
+                patch.object(
+                    smoke, "_rollout_files", side_effect=[set(), {Path("parent")}]
+                ),
+                patch.object(smoke, "_fingerprint_tree", return_value="same"),
+                patch.object(smoke.subprocess, "run", side_effect=run),
+                patch.object(
+                    smoke,
+                    "_delegation_rollout_scope",
+                    return_value={Path("parent")},
+                ),
+                patch.object(smoke, "_validate_runtime_case"),
+            ):
+                result = smoke._check_delegation(
+                    codex_command="codex",
+                    codex_home=codex_home,
+                    selector_payload=HEALTHY_SELECTOR,
+                    timeout=1,
+                )
 
         self.assertEqual(result.status, smoke.PASS)
-        self.assertEqual(observed, [str(Path("explicit-codex-home"))])
+        self.assertEqual(len(observed), 1)
+        environment = observed[0]
+        self.assertEqual(environment["CODEX_HOME"], str(codex_home))
+        self.assertEqual(environment["PYTHONDONTWRITEBYTECODE"], "1")
+        for name in (
+            "CODEX_API_KEY",
+            "CODEX_ACCESS_TOKEN",
+            "OPENAI_FEDERATION_RULE_ID",
+            "OPENAI_IDENTITY_TOKEN_FILE",
+            "OPENAI_WORKLOAD_IDENTITY_CONTEXT",
+            "HTTP_PROXY",
+            "CODEX_CA_CERTIFICATE",
+            "SSL_CERT_FILE",
+            "FIXTURE_PROVIDER_TOKEN",
+            "FIXTURE_TENANT",
+            "FIXTURE_MCP_BEARER",
+            "FIXTURE_MCP_HEADER",
+            "FIXTURE_MCP_LOCAL",
+        ):
+            self.assertIn(name, environment)
+        self.assertTrue(
+            "https_proxy" in environment or "HTTPS_PROXY" in environment
+        )
+        self.assertNotIn("UNRELATED_SENTINEL_SECRET", environment)
+
+    def test_delegation_invalid_child_configuration_requires_review(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            codex_home = Path(temporary)
+            (codex_home / "config.toml").write_text(
+                '[model_providers.fixture\n',
+                encoding="utf-8",
+            )
+            with (
+                patch.object(smoke, "_rollout_files", return_value=set()),
+                patch.object(smoke, "_fingerprint_tree", return_value="same"),
+                patch.object(smoke.subprocess, "run") as run,
+            ):
+                result = smoke._check_delegation(
+                    codex_command="codex",
+                    codex_home=codex_home,
+                    selector_payload=HEALTHY_SELECTOR,
+                    timeout=1,
+                )
+
+        self.assertEqual(result.status, smoke.REVIEW)
+        self.assertEqual(
+            result.reason, "Child environment configuration is invalid"
+        )
+        self.assertEqual(
+            result.evidence, ("child environment could not be resolved",)
+        )
+        run.assert_not_called()
+
+    def test_delegation_auth_command_or_external_sqlite_home_requires_review(self):
+        fixtures = (
+            (
+                'model_provider = "fixture"\n'
+                '[model_providers.fixture.auth]\n'
+                'command = "fixture-auth-helper"\n',
+                {},
+            ),
+            ("", {"CODEX_SQLITE_HOME": "external-sqlite-home"}),
+        )
+        for config, environment in fixtures:
+            with self.subTest(config=config), tempfile.TemporaryDirectory() as temporary:
+                codex_home = Path(temporary)
+                (codex_home / "config.toml").write_text(config, encoding="utf-8")
+                with (
+                    patch.dict(
+                        os.environ,
+                        {"PATH": "fixture-path", **environment},
+                        clear=True,
+                    ),
+                    patch.object(smoke, "_rollout_files", return_value=set()),
+                    patch.object(smoke, "_fingerprint_tree", return_value="same"),
+                    patch.object(smoke.subprocess, "run") as run,
+                ):
+                    result = smoke._check_delegation(
+                        codex_command="codex",
+                        codex_home=codex_home,
+                        selector_payload=HEALTHY_SELECTOR,
+                        timeout=1,
+                    )
+
+            self.assertEqual(result.status, smoke.REVIEW)
+            self.assertEqual(
+                result.reason,
+                "Child environment configuration is invalid",
+            )
+            run.assert_not_called()
 
     def test_delegation_evidence_retries_until_rollout_writer_settles(self):
         with (

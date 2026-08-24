@@ -33,6 +33,10 @@ from scripts.install import (  # noqa: E402
     install as transactional_install,
     resolve_codex_home,
 )
+from scripts.child_environment import (  # noqa: E402
+    build_child_environment,
+    build_process_environment,
+)
 from scripts.probe_capabilities import run_probe  # noqa: E402
 
 
@@ -53,6 +57,26 @@ SUPPORTED_SANDBOX_MODES = (
     "workspace-write",
     "danger-full-access",
 )
+RECOVERY_ENVIRONMENT_NAMES = {
+    "apt-get": (
+        "APT_CONFIG",
+        "DEBIAN_FRONTEND",
+        "DEBIAN_PRIORITY",
+        "DISPLAY",
+        "SSH_ASKPASS",
+        "SUDO_ASKPASS",
+        "WAYLAND_DISPLAY",
+    ),
+    "brew": (
+        "HOMEBREW_CELLAR",
+        "HOMEBREW_NO_ANALYTICS",
+        "HOMEBREW_NO_AUTO_UPDATE",
+        "HOMEBREW_NO_ENV_HINTS",
+        "HOMEBREW_PREFIX",
+        "HOMEBREW_REPOSITORY",
+    ),
+    "winget": (),
+}
 PHASES = (
     "CHECKING",
     "SAFE_RECOVERY",
@@ -128,6 +152,7 @@ def run_command(
     command: Sequence[str],
     *,
     timeout: int,
+    env: Mapping[str, str],
     cwd: Path | None = None,
 ) -> CommandOutcome:
     """Run one argument vector without a shell and discard stderr."""
@@ -136,6 +161,7 @@ def run_command(
         completed = subprocess.run(
             list(command),
             cwd=cwd,
+            env=dict(env),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -188,11 +214,12 @@ def _tool_check(
     *,
     which: Callable[[str], str | None],
     runner: Runner,
+    environment: Mapping[str, str],
 ) -> dict:
     executable = which(name)
     if executable is None:
         return {"status": "MISSING", "version": None}
-    outcome = runner([executable, "--version"], timeout=10)
+    outcome = runner([executable, "--version"], timeout=10, env=environment)
     if outcome.returncode != 0:
         return {"status": "UNUSABLE", "version": None}
     return {
@@ -247,6 +274,7 @@ def _github_https_check(
     runner: Runner,
     attempts: int,
     sleeper: Callable[[float], None],
+    environment: Mapping[str, str],
 ) -> dict:
     if attempts not in {1, 2, 3}:
         raise AssistError("NETWORK_RETRY_BUDGET_INVALID")
@@ -257,6 +285,7 @@ def _github_https_check(
         outcome = runner(
             ["git", "ls-remote", "--exit-code", REPOSITORY_URL, "HEAD"],
             timeout=30,
+            env=environment,
         )
         if outcome.returncode == 0:
             return {"status": "PASS", "attempts": attempt}
@@ -318,14 +347,30 @@ def collect_snapshot(
         distro_id = None
     wsl = _is_wsl(platform_name) if wsl is None else wsl
 
-    codex = _tool_check("codex", "codex", which=which, runner=runner)
-    git = _tool_check("git", "git", which=which, runner=runner)
+    local_environment = build_process_environment()
+    codex_environment = build_child_environment(codex_home=codex_home)
+    network_environment = build_process_environment(transport=True)
+    codex = _tool_check(
+        "codex",
+        "codex",
+        which=which,
+        runner=runner,
+        environment=codex_environment,
+    )
+    git = _tool_check(
+        "git",
+        "git",
+        which=which,
+        runner=runner,
+        environment=local_environment,
+    )
     python = _python_check()
     github = _github_https_check(
         git["status"] == "PASS",
         runner=runner,
         attempts=network_attempts,
         sleeper=sleeper,
+        environment=network_environment,
     )
     installed = classify_installed(codex_home)
 
@@ -602,6 +647,13 @@ def check_result(plan: Mapping[str, object], *, include_actions: bool) -> dict:
     return result
 
 
+def _recovery_environment_names(command: Sequence[str]) -> Sequence[str]:
+    executable = Path(command[0]).stem.lower()
+    if executable == "sudo" and len(command) > 1:
+        executable = Path(command[1]).stem.lower()
+    return RECOVERY_ENVIRONMENT_NAMES.get(executable, ())
+
+
 def execute_recovery(
     plan: Mapping[str, object],
     approved_plan_id: str,
@@ -652,11 +704,20 @@ def execute_recovery(
         }
 
     attempted = []
+    proof_environment = build_process_environment()
     for action in executable:
         action_result = {"action_id": action["action_id"], "status": "RUNNING"}
         attempted.append(action_result)
         for command in action["commands"]:
-            outcome = runner(command, timeout=900)
+            recovery_environment = build_process_environment(
+                transport=True,
+                extra_names=_recovery_environment_names(command),
+            )
+            outcome = runner(
+                command,
+                timeout=900,
+                env=recovery_environment,
+            )
             if outcome.returncode != 0:
                 action_result["status"] = "FAILED"
                 return {
@@ -672,7 +733,7 @@ def execute_recovery(
                     "attempted_actions": attempted,
                     "writes_performed": "POSSIBLE",
                 }
-        proof = runner(action["proof"], timeout=30)
+        proof = runner(action["proof"], timeout=30, env=proof_environment)
         if proof.returncode != 0:
             action_result["status"] = "PROOF_FAILED"
             return {
@@ -706,10 +767,21 @@ def verify_source_checkout(
     normalized = source_commit.lower()
     if SHA_PATTERN.fullmatch(normalized) is None:
         return {"ok": False, "reason_code": "SOURCE_COMMIT_INVALID"}
-    head = runner(["git", "rev-parse", "HEAD"], timeout=10, cwd=PROJECT_ROOT)
+    environment = build_process_environment()
+    head = runner(
+        ["git", "rev-parse", "HEAD"],
+        timeout=10,
+        cwd=PROJECT_ROOT,
+        env=environment,
+    )
     if head.returncode != 0 or head.stdout.strip().lower() != normalized:
         return {"ok": False, "reason_code": "SOURCE_COMMIT_MISMATCH"}
-    status = runner(["git", "status", "--short"], timeout=10, cwd=PROJECT_ROOT)
+    status = runner(
+        ["git", "status", "--short"],
+        timeout=10,
+        cwd=PROJECT_ROOT,
+        env=environment,
+    )
     if status.returncode != 0 or status.stdout.strip():
         return {"ok": False, "reason_code": "SOURCE_CHECKOUT_DIRTY"}
     if require_detached:
@@ -717,6 +789,7 @@ def verify_source_checkout(
             ["git", "symbolic-ref", "-q", "HEAD"],
             timeout=10,
             cwd=PROJECT_ROOT,
+            env=environment,
         )
         if symbolic.returncode == 0:
             return {"ok": False, "reason_code": "SOURCE_NOT_DETACHED"}
@@ -769,7 +842,7 @@ def install_workflow(
     capability_timeout: int,
     allow_validation_sandbox: bool = False,
     source_verifier: Callable[..., dict] | None = None,
-    capability_probe: Callable[[str, int], dict] | None = None,
+    capability_probe: Callable[..., dict] | None = None,
     dry_runner: Callable[..., dict] | None = None,
     apply_runner: Callable[..., dict] | None = None,
 ) -> dict:
@@ -795,7 +868,11 @@ def install_workflow(
 
     capability_probe = run_probe if capability_probe is None else capability_probe
     try:
-        capability = capability_probe("codex", capability_timeout)
+        capability = capability_probe(
+            "codex",
+            capability_timeout,
+            codex_home=codex_home,
+        )
     except Exception:
         return {
             "schema": ASSIST_SCHEMA,
@@ -812,29 +889,37 @@ def install_workflow(
     if not isinstance(raw_results, list):
         raw_results = []
     capability_summary = {
-        "all_supported": bool(capability.get("all_supported"))
+        "all_supported": capability.get("all_supported") is True
         if isinstance(capability, Mapping)
         else False,
         "results": [
             {
                 "effort": item.get("effort"),
-                "supported": bool(item.get("supported")),
-                "response_exact": bool(item.get("response_exact")),
-                "exit_code": item.get("exit_code") if isinstance(item.get("exit_code"), int) else None,
+                "supported": item.get("supported") is True,
+                "response_exact": item.get("response_exact") is True,
+                "exit_code": (
+                    item.get("exit_code")
+                    if isinstance(item.get("exit_code"), int)
+                    and not isinstance(item.get("exit_code"), bool)
+                    else None
+                ),
             }
             for item in raw_results
             if isinstance(item, dict)
         ],
     }
     expected_efforts = {"low", "medium", "high", "xhigh", "max"}
-    observed_efforts = {item["effort"] for item in capability_summary["results"]}
+    observed_efforts = {
+        item["effort"]
+        for item in capability_summary["results"]
+        if isinstance(item["effort"], str)
+    }
     if (
         not capability_summary["all_supported"]
         or len(capability_summary["results"]) != len(expected_efforts)
         or observed_efforts != expected_efforts
         or not all(
             item["supported"]
-            and item["response_exact"]
             and item["exit_code"] == 0
             for item in capability_summary["results"]
         )

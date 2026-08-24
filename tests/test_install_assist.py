@@ -2,6 +2,8 @@ import copy
 import contextlib
 import io
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -25,6 +27,7 @@ from scripts.install_assist import (
     main,
     render_card,
     render_support_markdown,
+    run_command,
     verify_source_checkout,
 )
 
@@ -223,14 +226,27 @@ class RecoveryExecutionTests(unittest.TestCase):
         calls = []
 
         def runner(command, **kwargs):
-            calls.append(list(command))
+            calls.append((list(command), kwargs["env"]))
             return CommandOutcome(0)
 
-        result = execute_recovery(plan, plan["plan_id"], runner=runner)
+        with patch.dict(
+            os.environ,
+            {
+                "PATH": "fixture-path",
+                "HTTPS_PROXY": "http://fixture-proxy",
+                "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+            },
+            clear=True,
+        ):
+            result = execute_recovery(plan, plan["plan_id"], runner=runner)
         self.assertEqual(result["phase"], "RECHECKING")
         self.assertEqual(result["attempted_actions"][0]["status"], "PASS")
         self.assertEqual(len(calls), 2)
-        self.assertEqual(calls[-1], ["git", "--version"])
+        self.assertEqual(calls[-1][0], ["git", "--version"])
+        self.assertEqual(calls[0][1]["HTTPS_PROXY"], "http://fixture-proxy")
+        self.assertNotIn("HTTPS_PROXY", calls[1][1])
+        for _command, environment in calls:
+            self.assertNotIn("UNRELATED_SENTINEL_SECRET", environment)
 
     def test_failed_package_command_is_not_retried(self):
         plan = build_recovery_plan(make_snapshot(["GIT_MISSING"]), load_catalog())
@@ -243,6 +259,40 @@ class RecoveryExecutionTests(unittest.TestCase):
         result = execute_recovery(plan, plan["plan_id"], runner=runner)
         self.assertEqual(result["reason_code"], "RECOVERY_COMMAND_FAILED")
         self.assertEqual(len(calls), 1)
+
+    def test_recovery_keeps_only_named_package_manager_environment(self):
+        snapshot = make_snapshot(
+            ["GIT_MISSING"],
+            platform_name="Darwin",
+            package_manager="brew",
+        )
+        plan = build_recovery_plan(snapshot, load_catalog())
+        environments = []
+
+        def runner(_command, **kwargs):
+            environments.append(kwargs["env"])
+            return CommandOutcome(0)
+
+        with patch.dict(
+            os.environ,
+            {
+                "PATH": "fixture-path",
+                "HTTPS_PROXY": "http://fixture-proxy",
+                "HOMEBREW_PREFIX": "/fixture/homebrew",
+                "HOMEBREW_GITHUB_API_TOKEN": "must-not-cross",
+                "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+            },
+            clear=True,
+        ):
+            result = execute_recovery(plan, plan["plan_id"], runner=runner)
+
+        self.assertEqual(result["phase"], "RECHECKING")
+        self.assertEqual(environments[0]["HOMEBREW_PREFIX"], "/fixture/homebrew")
+        self.assertEqual(environments[0]["HTTPS_PROXY"], "http://fixture-proxy")
+        self.assertNotIn("HOMEBREW_GITHUB_API_TOKEN", environments[0])
+        self.assertNotIn("HOMEBREW_PREFIX", environments[1])
+        for environment in environments:
+            self.assertNotIn("UNRELATED_SENTINEL_SECRET", environment)
 
     def test_hard_block_prevents_other_approved_recovery_actions(self):
         snapshot = make_snapshot(["GIT_MISSING", "MANIFEST_INVALID"])
@@ -272,6 +322,7 @@ class RecoveryExecutionTests(unittest.TestCase):
             runner=runner,
             attempts=3,
             sleeper=sleeps.append,
+            environment={"PATH": "fixture-path"},
         )
         self.assertEqual(result, {"status": "PASS", "attempts": 3})
         self.assertEqual(len(calls), 3)
@@ -284,11 +335,72 @@ class RecoveryExecutionTests(unittest.TestCase):
                 runner=lambda *args, **kwargs: CommandOutcome(0),
                 attempts=4,
                 sleeper=lambda _seconds: None,
+                environment={"PATH": "fixture-path"},
             )
         self.assertEqual(raised.exception.reason_code, "NETWORK_RETRY_BUDGET_INVALID")
 
 
 class SnapshotAndReportTests(unittest.TestCase):
+    @patch("scripts.install_assist.subprocess.run")
+    def test_run_command_uses_only_the_supplied_environment(self, run):
+        run.return_value = subprocess.CompletedProcess([], 0, "fixture", "")
+        environment = {"PATH": "fixture-path"}
+
+        outcome = run_command(["fixture", "--version"], timeout=1, env=environment)
+
+        self.assertEqual(outcome.returncode, 0)
+        self.assertEqual(run.call_args.kwargs["env"], environment)
+
+    def test_snapshot_assigns_purpose_minimal_environments(self):
+        observed = []
+
+        def runner(command, **kwargs):
+            observed.append((list(command), kwargs["env"]))
+            return CommandOutcome(0, "available")
+
+        def which(name):
+            return name if name in {"codex", "git"} else None
+
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+            os.environ,
+            {
+                "PATH": "fixture-path",
+                "CODEX_HOME": "ambient-codex-home",
+                "CODEX_API_KEY": "fixture-codex-key",
+                "HTTPS_PROXY": "http://fixture-proxy",
+                "SSL_CERT_FILE": "/fixture/ssl-ca.pem",
+                "GIT_SSL_CAINFO": "/fixture/git-ca.pem",
+                "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+            },
+            clear=True,
+        ):
+            codex_home = Path(temporary)
+            collect_snapshot(
+                codex_home,
+                approval_policy="on-request",
+                sandbox_mode="workspace-write",
+                platform_name="Windows",
+                which=which,
+                runner=runner,
+                sleeper=lambda _seconds: None,
+            )
+
+        self.assertEqual(len(observed), 3)
+        codex_environment = observed[0][1]
+        git_environment = observed[1][1]
+        network_environment = observed[2][1]
+        self.assertEqual(codex_environment["CODEX_HOME"], str(codex_home))
+        for environment in (codex_environment, git_environment, network_environment):
+            self.assertEqual(environment["PATH"], "fixture-path")
+            self.assertNotIn("UNRELATED_SENTINEL_SECRET", environment)
+        self.assertNotIn("CODEX_API_KEY", codex_environment)
+        self.assertNotIn("CODEX_HOME", git_environment)
+        self.assertNotIn("HTTPS_PROXY", git_environment)
+        self.assertEqual(network_environment["HTTPS_PROXY"], "http://fixture-proxy")
+        self.assertEqual(network_environment["SSL_CERT_FILE"], "/fixture/ssl-ca.pem")
+        self.assertEqual(network_environment["GIT_SSL_CAINFO"], "/fixture/git-ca.pem")
+        self.assertNotIn("CODEX_API_KEY", network_environment)
+
     @patch(
         "scripts.install_assist._python_check",
         return_value={"status": "UNSUPPORTED", "version": "Python 3.10.9"},
@@ -384,8 +496,10 @@ class SnapshotAndReportTests(unittest.TestCase):
 class SourceAndInstallWorkflowTests(unittest.TestCase):
     def test_source_verification_requires_exact_clean_detached_checkout(self):
         commit = "a" * 40
+        environments = []
 
         def runner(command, **kwargs):
+            environments.append(kwargs["env"])
             if command[:3] == ["git", "rev-parse", "HEAD"]:
                 return CommandOutcome(0, commit + "\n")
             if command[:3] == ["git", "status", "--short"]:
@@ -394,9 +508,22 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
                 return CommandOutcome(1, "")
             raise AssertionError(command)
 
-        result = verify_source_checkout(commit, runner=runner)
+        with patch.dict(
+            os.environ,
+            {
+                "PATH": "fixture-path",
+                "HTTPS_PROXY": "http://fixture-proxy",
+                "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+            },
+            clear=True,
+        ):
+            result = verify_source_checkout(commit, runner=runner)
         self.assertTrue(result["ok"])
         self.assertEqual(result["source_commit"], commit)
+        for environment in environments:
+            self.assertEqual(environment["PATH"], "fixture-path")
+            self.assertNotIn("HTTPS_PROXY", environment)
+            self.assertNotIn("UNRELATED_SENTINEL_SECRET", environment)
 
     def test_attached_source_fails_closed(self):
         commit = "b" * 40
@@ -427,18 +554,50 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
             migrate_v3=False,
             capability_timeout=1,
             source_verifier=lambda *args, **kwargs: {"ok": True},
-            capability_probe=lambda *args: {"all_supported": False, "results": []},
+            capability_probe=lambda *args, **kwargs: {
+                "all_supported": False,
+                "results": [],
+            },
             dry_runner=dry_runner,
         )
         self.assertEqual(result["reason_code"], "LUNA_CAPABILITY_UNAVAILABLE")
         self.assertEqual(result["writes_performed"], "NO")
         self.assertEqual(called, [])
 
-    def test_capability_requires_exact_complete_five_effort_evidence(self):
+    def test_capability_probe_receives_explicit_codex_home(self):
+        observed = []
+
+        def capability_probe(*args, **kwargs):
+            observed.append((args, kwargs))
+            return capability_pass()
+
+        codex_home = Path("explicit-codex-home")
+        result = install_workflow(
+            make_snapshot(),
+            codex_home,
+            source_commit="2" * 40,
+            apply=False,
+            migrate_v3=False,
+            capability_timeout=1,
+            source_verifier=lambda *args, **kwargs: {"ok": True},
+            capability_probe=capability_probe,
+            dry_runner=lambda *args, **kwargs: {
+                "status": "DRY_RUN_PASS",
+                "effective_changes": 9,
+            },
+        )
+
+        self.assertEqual(result["phase"], "DRY_RUN")
+        self.assertEqual(observed[0][1]["codex_home"], codex_home)
+
+    def test_capability_requires_strict_complete_five_effort_evidence(self):
         for mutate in (
-            lambda payload: payload["results"][0].update(response_exact=False),
             lambda payload: payload["results"].pop(),
             lambda payload: payload["results"].append(copy.deepcopy(payload["results"][0])),
+            lambda payload: payload["results"][0].update(supported="true"),
+            lambda payload: payload["results"][0].update(exit_code=True),
+            lambda payload: payload["results"][0].update(effort=[]),
+            lambda payload: payload.update(all_supported="true"),
         ):
             with self.subTest(mutation=mutate):
                 capability = capability_pass()
@@ -451,13 +610,38 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
                     migrate_v3=False,
                     capability_timeout=1,
                     source_verifier=lambda *args, **kwargs: {"ok": True},
-                    capability_probe=lambda *args, payload=capability: payload,
+                    capability_probe=lambda *args, payload=capability, **kwargs: payload,
                     dry_runner=lambda *args, **kwargs: self.fail(
                         "installer dry-run must not run"
                     ),
                 )
                 self.assertEqual(result["reason_code"], "LUNA_CAPABILITY_UNAVAILABLE")
                 self.assertEqual(result["writes_performed"], "NO")
+
+    def test_non_exact_success_is_diagnostic_and_reaches_dry_run(self):
+        capability = capability_pass()
+        capability["results"][0]["response_exact"] = False
+        called = []
+
+        def dry_runner(*args, **kwargs):
+            called.append("dry")
+            return {"status": "DRY_RUN_PASS", "effective_changes": 9}
+
+        result = install_workflow(
+            make_snapshot(),
+            Path("unused"),
+            source_commit="2" * 40,
+            apply=False,
+            migrate_v3=False,
+            capability_timeout=1,
+            source_verifier=lambda *args, **kwargs: {"ok": True},
+            capability_probe=lambda *args, **kwargs: capability,
+            dry_runner=dry_runner,
+        )
+
+        self.assertEqual(result["status"], "DRY_RUN_PASS")
+        self.assertEqual(called, ["dry"])
+        self.assertFalse(result["capability"]["results"][0]["response_exact"])
 
     def test_current_installation_fast_path_has_zero_write_and_backup(self):
         def unexpected_apply(*args, **kwargs):
@@ -471,7 +655,7 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
             migrate_v3=False,
             capability_timeout=1,
             source_verifier=lambda *args, **kwargs: {"ok": True},
-            capability_probe=lambda *args: capability_pass(),
+            capability_probe=lambda *args, **kwargs: capability_pass(),
             dry_runner=lambda *args, **kwargs: {
                 "status": "IDEMPOTENT_PASS",
                 "effective_changes": 0,
@@ -494,7 +678,7 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
             migrate_v3=False,
             capability_timeout=1,
             source_verifier=lambda *args, **kwargs: {"ok": True},
-            capability_probe=lambda *args: capability_pass(),
+            capability_probe=lambda *args, **kwargs: capability_pass(),
             dry_runner=lambda *args, **kwargs: {
                 "status": "DRY_RUN_PASS",
                 "effective_changes": 9,
@@ -531,7 +715,7 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
                 capability_timeout=1,
                 allow_validation_sandbox=True,
                 source_verifier=lambda *args, **kwargs: {"ok": True},
-                capability_probe=lambda *args: capability_pass(),
+                capability_probe=lambda *args, **kwargs: capability_pass(),
                 dry_runner=dry_runner,
                 apply_runner=apply_runner,
             )
@@ -549,7 +733,7 @@ class SourceAndInstallWorkflowTests(unittest.TestCase):
         )
 
     def test_capability_exception_becomes_bounded_user_action(self):
-        def broken_probe(*args):
+        def broken_probe(*args, **kwargs):
             raise RuntimeError("sensitive provider error")
 
         result = install_workflow(

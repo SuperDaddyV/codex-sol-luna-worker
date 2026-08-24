@@ -1,5 +1,7 @@
 import json
 import hashlib
+import os
+import subprocess
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -18,6 +20,8 @@ from scripts.install import (
     dry_run_install,
     install,
     resolve_codex_home,
+    rollback,
+    uninstall,
     validate_target,
 )
 
@@ -39,6 +43,31 @@ def tree_hash(root):
             digest.update(path.relative_to(root).as_posix().encode("utf-8"))
             digest.update(path.read_bytes())
     return digest.hexdigest()
+
+
+def create_directory_alias(link: Path, destination: Path) -> None:
+    if os.name == "nt":
+        completed = subprocess.run(
+            ["cmd.exe", "/d", "/c", "mklink", "/J", str(link), str(destination)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise OSError(completed.stderr or completed.stdout)
+    else:
+        link.symlink_to(destination, target_is_directory=True)
+
+
+def remove_directory_alias(link: Path) -> None:
+    if not os.path.lexists(link):
+        return
+    if os.name == "nt":
+        os.rmdir(link)
+    else:
+        link.unlink()
 
 
 class InstallPlanTests(unittest.TestCase):
@@ -151,6 +180,89 @@ class InstallPlanTests(unittest.TestCase):
         with self.assertRaises(UnsafeTarget):
             validate_target(ROOT / ".codex-home", ROOT)
 
+    def test_transaction_rejects_internal_managed_directory_alias(self):
+        for operation in (dry_run_install, install):
+            with self.subTest(operation=operation.__name__), validation_directory() as directory:
+                target = Path(directory) / ".codex"
+                unrelated = target / "unrelated-user-directory"
+                unrelated.mkdir(parents=True)
+                alias = target / "agents"
+                try:
+                    create_directory_alias(alias, unrelated)
+                except OSError as exc:
+                    self.skipTest(f"directory alias creation is unavailable: {exc}")
+                try:
+                    with self.assertRaises(InstallerError) as raised:
+                        operation(
+                            target,
+                            generated_at=FIXED_TIME,
+                            allow_validation_sandbox=True,
+                        )
+                    self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
+                    self.assertEqual(list(unrelated.iterdir()), [])
+                    self.assertFalse((target / MANIFEST_RELATIVE).exists())
+                finally:
+                    remove_directory_alias(alias)
+
+    def test_install_rejects_internal_backup_alias_before_backup(self):
+        with validation_directory() as directory:
+            target = Path(directory) / ".codex"
+            unrelated = target / "unrelated-backups"
+            unrelated.mkdir(parents=True)
+            alias = target / "backups"
+            try:
+                create_directory_alias(alias, unrelated)
+            except OSError as exc:
+                self.skipTest(f"directory alias creation is unavailable: {exc}")
+            try:
+                with self.assertRaises(InstallerError) as raised:
+                    install(
+                        target,
+                        generated_at=FIXED_TIME,
+                        allow_validation_sandbox=True,
+                    )
+                self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
+                self.assertEqual(list(unrelated.iterdir()), [])
+                self.assertFalse((target / MANIFEST_RELATIVE).exists())
+            finally:
+                remove_directory_alias(alias)
+
+    def test_rollback_and_uninstall_reject_internal_managed_alias(self):
+        for operation in ("rollback", "uninstall"):
+            with self.subTest(operation=operation), validation_directory() as directory:
+                target = Path(directory) / ".codex"
+                installed = install(
+                    target,
+                    generated_at=FIXED_TIME,
+                    allow_validation_sandbox=True,
+                )
+                agents = target / "agents"
+                agents.rename(target / "saved-agents")
+                unrelated = target / "unrelated-user-directory"
+                unrelated.mkdir()
+                try:
+                    create_directory_alias(agents, unrelated)
+                except OSError as exc:
+                    self.skipTest(f"directory alias creation is unavailable: {exc}")
+                try:
+                    with self.assertRaises(InstallerError) as raised:
+                        if operation == "rollback":
+                            rollback(
+                                target,
+                                Path(installed["backup"]),
+                                allow_validation_sandbox=True,
+                            )
+                        else:
+                            uninstall(
+                                target,
+                                generated_at=FIXED_TIME,
+                                allow_validation_sandbox=True,
+                            )
+                    self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
+                    self.assertEqual(list(unrelated.iterdir()), [])
+                finally:
+                    remove_directory_alias(agents)
+
     def test_codex_home_resolution_uses_only_named_setting(self):
         with validation_directory() as directory:
             expected = Path(directory) / "codex-home"
@@ -160,6 +272,32 @@ class InstallPlanTests(unittest.TestCase):
                 user_home=Path(directory),
             )
             self.assertEqual(resolved, expected.resolve())
+
+    def test_plan_codex_version_uses_minimal_explicit_environment(self):
+        completed = subprocess.CompletedProcess([], 0, "codex-cli fixture", "")
+        with validation_directory() as directory, patch.dict(
+            os.environ,
+            {
+                "PATH": "fixture-path",
+                "CODEX_HOME": "ambient-codex-home",
+                "CODEX_API_KEY": "fixture-codex-key",
+                "UNRELATED_SENTINEL_SECRET": "must-not-cross",
+            },
+            clear=True,
+        ), patch("scripts.install.subprocess.run", return_value=completed) as run:
+            target = Path(directory) / ".codex"
+            plan = build_plan(
+                target,
+                generated_at=FIXED_TIME,
+                allow_validation_sandbox=True,
+            )
+
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(plan["codex_version"], "codex-cli fixture")
+        self.assertEqual(environment["CODEX_HOME"], str(target.resolve()))
+        self.assertEqual(environment["PATH"], "fixture-path")
+        self.assertNotIn("CODEX_API_KEY", environment)
+        self.assertNotIn("UNRELATED_SENTINEL_SECRET", environment)
 
     def test_plan_does_not_leak_unrelated_environment_secrets(self):
         with validation_directory() as directory:

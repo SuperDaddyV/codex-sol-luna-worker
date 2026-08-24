@@ -10,11 +10,18 @@ import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Mapping
 
 
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
 BJT = timezone(timedelta(hours=8), name="BJT")
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.child_environment import build_child_environment  # noqa: E402
+
+
 DEFAULT_STATE = PROJECT_ROOT / ".var" / "capabilities.json"
 
 
@@ -38,14 +45,38 @@ def build_command(codex: str, effort: str) -> list[str]:
     ]
 
 
-def _codex_version(codex: str) -> str:
+def _codex_version(codex: str, environment: Mapping[str, str]) -> str:
     result = subprocess.run(
-        [codex, "--version"], capture_output=True, text=True, timeout=10, check=False
+        [codex, "--version"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+        env=environment,
     )
     return result.stdout.strip() if result.returncode == 0 else "unavailable"
 
 
-def run_probe(codex: str, timeout: int) -> dict:
+def run_probe(
+    codex: str,
+    timeout: int,
+    *,
+    codex_home: Path | None = None,
+    source_environment: Mapping[str, str] | None = None,
+) -> dict:
+    inherited = os.environ if source_environment is None else source_environment
+    explicit_home = codex_home or Path(
+        inherited.get("CODEX_HOME") or Path.home() / ".codex"
+    )
+    network_environment = build_child_environment(
+        codex_home=explicit_home,
+        source=inherited,
+        network=True,
+    )
+    version_environment = build_child_environment(
+        codex_home=explicit_home,
+        source=inherited,
+    )
     results = []
     for effort in EFFORTS:
         marker = f"LUNA_CAPABILITY_{effort.upper()}_OK"
@@ -56,7 +87,7 @@ def run_probe(codex: str, timeout: int) -> dict:
                 text=True,
                 timeout=timeout,
                 check=False,
-                env=os.environ.copy(),
+                env=network_environment,
             )
             supported = result.returncode == 0
             response_exact = result.stdout.strip() == marker
@@ -76,7 +107,7 @@ def run_probe(codex: str, timeout: int) -> dict:
 
     return {
         "model": "gpt-5.6-luna",
-        "codex_version": _codex_version(codex),
+        "codex_version": _codex_version(codex, version_environment),
         "probed_at_bjt": datetime.now(BJT).isoformat(),
         "all_supported": all(item["supported"] for item in results),
         "results": results,

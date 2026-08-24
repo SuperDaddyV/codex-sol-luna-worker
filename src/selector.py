@@ -25,6 +25,7 @@ EFFORTS = ("low", "medium", "high", "xhigh", "max")
 METADATA_SCHEMA_VERSION = 1
 STATUS_SCHEMA_VERSION = 1
 REFERENCE_COST_METRIC = "modeldial_estimated_reference_cost_usd"
+USER_AGENT = "codex-sol-luna-worker/4.1.1"
 ROLE_BY_EFFORT = {effort: f"luna_{effort}" for effort in EFFORTS}
 BJT = timezone(timedelta(hours=8), name="BJT")
 UTC = timezone.utc
@@ -455,7 +456,7 @@ def _fetch_bytes(url: str, *, expected_type: str, timeout: float) -> tuple[bytes
         url,
         headers={
             "Accept": expected_type,
-            "User-Agent": "codex-sol-luna-worker/4.1.0-rc6",
+            "User-Agent": USER_AGENT,
         },
         method="GET",
     )
@@ -588,21 +589,9 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
 
 
 def _same_bjt_day(profile: Any, now: datetime) -> bool:
-    if not isinstance(profile, Mapping):
+    if not _daily_profile_is_valid(profile):
         return False
-    effort = profile.get("selected_effort")
-    if effort not in EFFORTS or profile.get("selected_role") != ROLE_BY_EFFORT[effort]:
-        return False
-    selected_at = profile.get("selected_at_bjt")
-    if not isinstance(selected_at, str):
-        return False
-    try:
-        parsed = datetime.fromisoformat(selected_at.replace("Z", "+00:00"))
-    except ValueError:
-        return False
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
-        return False
-    return parsed.astimezone(BJT).date() == now.date()
+    return _profile_date(profile) == now.date().isoformat()
 
 
 @contextlib.contextmanager
@@ -817,6 +806,41 @@ def _profile_date(profile: Mapping[str, Any]) -> str | None:
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         return None
     return parsed.astimezone(BJT).date().isoformat()
+
+
+def _daily_profile_is_valid(profile: Any) -> bool:
+    if not isinstance(profile, Mapping):
+        return False
+    effort = profile.get("selected_effort")
+    if effort not in EFFORTS or profile.get("selected_role") != ROLE_BY_EFFORT[effort]:
+        return False
+    if profile.get("source_winner_effort") not in EFFORTS:
+        return False
+    if not isinstance(profile.get("fallback"), bool) or not isinstance(
+        profile.get("capability_degraded"), bool
+    ):
+        return False
+    selected_at = profile.get("selected_at_bjt")
+    if not isinstance(selected_at, str):
+        return False
+    try:
+        parsed = datetime.fromisoformat(selected_at.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return False
+    selected_date = parsed.astimezone(BJT).date().isoformat()
+    selection_date = profile.get("selection_date_bjt")
+    if selection_date is not None:
+        if not isinstance(selection_date, str):
+            return False
+        try:
+            normalized_date = datetime.fromisoformat(selection_date).date().isoformat()
+        except ValueError:
+            return False
+        if normalized_date != selected_date:
+            return False
+    return True
 
 
 def _project_override_present(project_root: Path) -> bool:
@@ -1039,14 +1063,7 @@ def read_status(
             if profile_date is None:
                 unavailable.append("DAILY_PROFILE_INVALID")
             elif profile_date == current.date().isoformat():
-                effort = candidate_profile.get("selected_effort")
-                if (
-                    effort not in EFFORTS
-                    or candidate_profile.get("selected_role") != ROLE_BY_EFFORT.get(effort)
-                    or candidate_profile.get("source_winner_effort") not in EFFORTS
-                    or not isinstance(candidate_profile.get("fallback"), bool)
-                    or not isinstance(candidate_profile.get("capability_degraded"), bool)
-                ):
+                if not _daily_profile_is_valid(candidate_profile):
                     unavailable.append("DAILY_PROFILE_INVALID")
                 else:
                     selection_initialized = True

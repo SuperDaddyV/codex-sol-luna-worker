@@ -15,7 +15,6 @@ import re
 import shutil
 import subprocess
 import time
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -43,6 +42,10 @@ from scripts.accept_rc5_runtime_isolation import (  # noqa: E402
     _unexpected_write_snapshot,
     _validate_protected_state_snapshot,
     _validate_runtime_case,
+)
+from scripts.child_environment import (  # noqa: E402
+    ChildEnvironmentError,
+    build_child_environment,
 )
 from scripts.probe_capabilities import EFFORTS, run_probe  # noqa: E402
 
@@ -169,7 +172,7 @@ def _check_cli(
             text=True,
             encoding="utf-8",
             errors="replace",
-            env={**os.environ, "CODEX_HOME": str(codex_home)},
+            env=build_child_environment(codex_home=codex_home),
             timeout=min(timeout, 30),
             check=False,
         )
@@ -187,28 +190,19 @@ def _check_cli(
     return CheckResult(PASS), version
 
 
-@contextmanager
-def _codex_home_environment(codex_home: Path):
-    previous = os.environ.get("CODEX_HOME")
-    os.environ["CODEX_HOME"] = str(codex_home)
-    try:
-        yield
-    finally:
-        if previous is None:
-            os.environ.pop("CODEX_HOME", None)
-        else:
-            os.environ["CODEX_HOME"] = previous
-
-
 def _check_capability(
     codex_command: str,
     codex_home: Path,
     timeout: int,
 ) -> CheckResult:
     try:
-        with _codex_home_environment(codex_home):
-            payload = run_probe(codex_command, timeout)
-    except (OSError, subprocess.SubprocessError, ValueError):
+        payload = run_probe(codex_command, timeout, codex_home=codex_home)
+    except (
+        ChildEnvironmentError,
+        OSError,
+        subprocess.SubprocessError,
+        ValueError,
+    ):
         return CheckResult(
             REVIEW,
             reason="Luna capability probe failed",
@@ -277,7 +271,10 @@ def _check_selector(
                 codex_home=codex_home,
             ),
             cwd=PROJECT_ROOT,
-            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            env=build_child_environment(
+                codex_home=codex_home,
+                python_no_bytecode=True,
+            ),
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -327,12 +324,18 @@ def _check_selector(
             )
         )
     health = payload.get("health")
+    reason_codes = payload.get("reason_codes")
     if (
         payload.get("diagnostic_schema_version") != 1
         or health not in {"Healthy", "Degraded", "Unavailable", "Misconfigured"}
-        or not isinstance(payload.get("reason_codes"), list)
+        or not isinstance(reason_codes, list)
+        or not reason_codes
+        or any(
+            not isinstance(code, str) or re.fullmatch(r"[A-Z0-9_]+", code) is None
+            for code in reason_codes
+        )
+        or len(reason_codes) != len(set(reason_codes))
     ):
-        reason_codes = payload.get("reason_codes")
         rendered_codes = ",".join(
             code
             for code in reason_codes
@@ -343,6 +346,41 @@ def _check_selector(
                 REVIEW,
                 reason="Selector status is not compatible",
                 evidence=(rendered_codes or "status mismatch",),
+                targeted_review="selector status",
+            ),
+            payload,
+        )
+    reason_set = set(reason_codes)
+    benign_degraded = {"LKG_FALLBACK_ACTIVE", "CAPABILITY_DEGRADED"}
+    selection_initialized = payload.get("selection_initialized")
+    status_compatible = (
+        (
+            health == "Healthy"
+            and (
+                (selection_initialized is True and reason_codes == ["OK"])
+                or (
+                    selection_initialized is False
+                    and reason_codes == ["TODAY_SELECTION_NOT_INITIALIZED"]
+                )
+            )
+        )
+        or (
+            health == "Degraded"
+            and selection_initialized is True
+            and reason_set <= benign_degraded
+        )
+        or (
+            health == "Misconfigured"
+            and "PROJECT_OVERRIDE_PRESENT" in reason_set
+            and reason_set <= {"PROJECT_OVERRIDE_PRESENT", *benign_degraded}
+        )
+    )
+    if not status_compatible:
+        return SelectorObservation(
+            CheckResult(
+                REVIEW,
+                reason="Selector status requires targeted review",
+                evidence=(",".join(reason_codes),),
                 targeted_review="selector status",
             ),
             payload,
@@ -522,11 +560,13 @@ def _check_delegation(
         before_rollouts = _compatibility_rollout_files(codex_home)
         state_dir = codex_home / "sol-luna-v4" / "state"
         state_before = _fingerprint_tree(state_dir)
-        child_environment = {
-            **os.environ,
-            "CODEX_HOME": str(codex_home),
-            "PYTHONDONTWRITEBYTECODE": "1",
-        }
+        child_environment = build_child_environment(
+            codex_home=codex_home,
+            network=True,
+            include_config_environment=True,
+            python_no_bytecode=True,
+            child_cwd=PROJECT_ROOT,
+        )
         codex_args = [
                 codex_command,
                 "exec",
@@ -552,6 +592,13 @@ def _check_delegation(
             check=False,
         )
         state_after = _fingerprint_tree(state_dir)
+    except ChildEnvironmentError:
+        return CheckResult(
+            REVIEW,
+            reason="Child environment configuration is invalid",
+            evidence=("child environment could not be resolved",),
+            targeted_review="child environment configuration",
+        )
     except (OSError, subprocess.TimeoutExpired, HarnessFailure):
         return CheckResult(
             REVIEW,

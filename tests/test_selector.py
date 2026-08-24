@@ -19,6 +19,8 @@ from src.selector import (
     MODELDIAL_API_URL,
     MODELDIAL_SNAPSHOT_URL,
     NO_PROFILE_STATUS,
+    USER_AGENT,
+    _fetch_bytes,
     _validated_modeldial_url,
     SelectionUnavailable,
     SnapshotInvalid,
@@ -374,6 +376,22 @@ class ModelDialFullSnapshotCostTests(unittest.TestCase):
 
 
 class SelectorTests(unittest.TestCase):
+    def test_modeldial_request_uses_current_user_agent(self):
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.__exit__.return_value = None
+        response.geturl.return_value = MODELDIAL_API_URL
+        response.headers.get_content_type.return_value = "application/json"
+        response.read.return_value = b"{}"
+        opener = MagicMock()
+        opener.open.return_value = response
+
+        with patch("src.selector.urllib.request.build_opener", return_value=opener):
+            _fetch_bytes(MODELDIAL_API_URL, expected_type="application/json", timeout=1)
+
+        request = opener.open.call_args.args[0]
+        self.assertEqual(request.get_header("User-agent"), USER_AGENT)
+
     def test_malformed_modeldial_urls_are_snapshot_invalid(self):
         malformed_urls = (
             "https://modeldial.com:abc/api.json",
@@ -817,6 +835,44 @@ class SelectorTests(unittest.TestCase):
             self.assertEqual(path.read_text(encoding="utf-8"), original)
             self.assertNotIn("metadata_schema_version", profile)
             self.assertNotIn("reference_cost_comparison", profile)
+
+    def test_invalid_same_day_profile_is_reselected(self):
+        mutations = (
+            lambda profile: profile.pop("fallback"),
+            lambda profile: profile.update(fallback="not-a-boolean"),
+            lambda profile: profile.update(capability_degraded="not-a-boolean"),
+            lambda profile: profile.update(source_winner_effort="ultra"),
+        )
+        for mutate in mutations:
+            with self.subTest(mutation=mutate), tempfile.TemporaryDirectory() as directory:
+                now = datetime(2026, 8, 13, 9, tzinfo=BJT)
+                invalid = select_snapshot(load_fixture("complete.json"), now=now)
+                mutate(invalid)
+                path = Path(directory) / "daily-profile.json"
+                path.write_text(json.dumps(invalid), encoding="utf-8")
+
+                profile = ensure_daily_profile(
+                    adapt_modeldial_api(load_fixture("api-complete.json")),
+                    state_dir=directory,
+                    now=now + timedelta(hours=1),
+                )
+
+                self.assertIs(type(profile["fallback"]), bool)
+                self.assertIs(type(profile["capability_degraded"]), bool)
+                self.assertIn(profile["source_winner_effort"], EFFORTS)
+                self.assertEqual(json.loads(path.read_text(encoding="utf-8")), profile)
+
+    def test_invalid_same_day_profile_without_source_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            now = datetime(2026, 8, 13, 9, tzinfo=BJT)
+            invalid = select_snapshot(load_fixture("complete.json"), now=now)
+            invalid.pop("fallback")
+            (Path(directory) / "daily-profile.json").write_text(
+                json.dumps(invalid), encoding="utf-8"
+            )
+
+            with self.assertRaisesRegex(SelectionUnavailable, NO_PROFILE_STATUS):
+                ensure_daily_profile(None, state_dir=directory, now=now + timedelta(hours=1))
 
     def test_legacy_lkg_selects_without_cost_suffix(self):
         with tempfile.TemporaryDirectory() as directory:
