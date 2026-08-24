@@ -186,7 +186,12 @@ def validate_target(
             raise UnsafeTarget("CODEX_HOME cannot be inside the project repository")
 
 
-def _target_path(target: Path, relative: str | PurePosixPath) -> Path:
+def _target_path(
+    target: Path,
+    relative: str | PurePosixPath,
+    *,
+    defer_non_directory_ancestor: bool = False,
+) -> Path:
     relative_path = PurePosixPath(str(relative).replace("\\", "/"))
     if relative_path.is_absolute() or ".." in relative_path.parts:
         raise InstallerError("OWNERSHIP_CONFLICT", "owned path escapes CODEX_HOME")
@@ -198,7 +203,7 @@ def _target_path(target: Path, relative: str | PurePosixPath) -> Path:
             "OWNERSHIP_CONFLICT", "CODEX_HOME identity could not be verified"
         ) from exc
     current = target
-    for part in relative_path.parts:
+    for index, part in enumerate(relative_path.parts):
         current = current / part
         try:
             metadata = current.lstat()
@@ -217,6 +222,12 @@ def _target_path(target: Path, relative: str | PurePosixPath) -> Path:
         ):
             raise InstallerError(
                 "OWNERSHIP_CONFLICT", "owned path contains a filesystem alias"
+            )
+        if index < len(relative_path.parts) - 1 and not stat.S_ISDIR(metadata.st_mode):
+            if defer_non_directory_ancestor:
+                break
+            raise InstallerError(
+                "OWNERSHIP_CONFLICT", "owned path parent is not a directory"
             )
     return path
 
@@ -850,12 +861,24 @@ def _effective_operations(
 
 
 def _choose_backup_root(target: Path, now: datetime) -> Path:
-    _target_path(target, "backups/sol-luna-v4")
+    _target_path(
+        target,
+        "backups/sol-luna-v4",
+        defer_non_directory_ancestor=True,
+    )
     stem = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    candidate = _target_path(target, f"backups/sol-luna-v4/{stem}")
+    candidate = _target_path(
+        target,
+        f"backups/sol-luna-v4/{stem}",
+        defer_non_directory_ancestor=True,
+    )
     counter = 2
     while candidate.exists():
-        candidate = _target_path(target, f"backups/sol-luna-v4/{stem}-{counter}")
+        candidate = _target_path(
+            target,
+            f"backups/sol-luna-v4/{stem}-{counter}",
+            defer_non_directory_ancestor=True,
+        )
         counter += 1
     return candidate
 
@@ -863,7 +886,11 @@ def _choose_backup_root(target: Path, now: datetime) -> Path:
 def _create_backup(target: Path, relatives: list[str], root: Path) -> Path:
     target_existed = target.exists()
     try:
-        root = _target_path(target, _backup_relative(target, root))
+        root = _target_path(
+            target,
+            _backup_relative(target, root),
+            defer_non_directory_ancestor=True,
+        )
         root.mkdir(parents=True, exist_ok=False)
         entries = []
         for relative in sorted(set(relatives)):
