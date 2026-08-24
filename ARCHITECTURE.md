@@ -87,6 +87,39 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
   exact rollback, downgrade refusal, and ownership-conflict fail-closed
   behavior are covered by repository lifecycle tests.
 
+## v4.1.1 installation assistance candidate
+
+The unreleased candidate adds an orchestration layer around the existing
+installer without changing installed selector, policy, agent, or config
+payloads:
+
+```text
+conversation bootstrap for missing Python/Git
+  -> read-only check and aggregate blockers
+  -> exact recovery plan + SHA-256 Plan ID
+  -> explicit approval for catalogued system commands
+  -> clean detached exact-source verification
+  -> five ephemeral read-only Luna capability calls
+  -> installer dry-run
+  -> optional explicitly authorized installer apply
+  -> reload and fresh-task compatibility smoke
+```
+
+`scripts/install_assist.py` owns orchestration state only in memory and JSON
+output. It creates no preflight state file and never edits managed runtime
+content. `scripts/install_recovery_catalog.json` is data, not a shell program;
+validated argument vectors are the only executable recovery form. The existing
+`scripts/install.py` remains the only authority for ownership, target writes,
+transaction backup, rollback, migration, and uninstall.
+
+The candidate bumps only installer manifest version from `v4.1.0` to
+`v4.1.1`; the installed payload remains byte-identical. A valid `v4.1.0` to
+`v4.1.1` fake-home upgrade therefore changes only
+`sol-luna-v4/install-manifest.json`. The public `v4.1.0` tag, Release, setup
+contract, assisted-installation anchor, and bilingual default prompt remain
+unchanged until an independently approved release sequence supplies exact
+runtime-source and documentation commits.
+
 ## Explicit non-goals
 
 - No Hook Router, Hook Trust layer, managed-child registry, daemon, background scheduler, database, dashboard, IPC server, plugin framework, or custom orchestration engine.

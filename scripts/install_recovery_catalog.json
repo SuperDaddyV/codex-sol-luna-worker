@@ -1,0 +1,340 @@
+{
+  "actions": [
+    {
+      "action_id": "windows-winget-python-3.14-user",
+      "administrator": "may-prompt",
+      "blocker": "PYTHON_MISSING_OR_UNSUPPORTED",
+      "classification": "approval_required",
+      "commands": [
+        [
+          "winget",
+          "install",
+          "--id",
+          "Python.Python.3.14",
+          "--exact",
+          "--source",
+          "winget",
+          "--scope",
+          "user",
+          "--accept-source-agreements",
+          "--accept-package-agreements"
+        ]
+      ],
+      "distro_ids": [],
+      "instruction": "Install the official Python 3.14 WinGet package for the current user.",
+      "package_manager": "winget",
+      "persistent_changes": [
+        "Installs Python 3.14 for the current user.",
+        "The package may persist a current-user PATH entry."
+      ],
+      "platform": "Windows",
+      "proof": [
+        "py",
+        "-3.14",
+        "-c",
+        "import sys, tomllib; assert sys.version_info >= (3, 11)"
+      ],
+      "rollback": [
+        [
+          "winget",
+          "uninstall",
+          "--id",
+          "Python.Python.3.14",
+          "--exact",
+          "--source",
+          "winget",
+          "--scope",
+          "user"
+        ]
+      ],
+      "rollback_instruction": "Run the displayed WinGet uninstall command.",
+      "scope": "current-user",
+      "source": "https://learn.microsoft.com/windows/dev-environment/python"
+    },
+    {
+      "action_id": "windows-winget-git-user",
+      "administrator": "may-prompt",
+      "blocker": "GIT_MISSING",
+      "classification": "approval_required",
+      "commands": [
+        [
+          "winget",
+          "install",
+          "--id",
+          "Git.Git",
+          "--exact",
+          "--source",
+          "winget",
+          "--scope",
+          "user",
+          "--accept-source-agreements",
+          "--accept-package-agreements"
+        ]
+      ],
+      "distro_ids": [],
+      "instruction": "Install the official Git for Windows WinGet package for the current user.",
+      "package_manager": "winget",
+      "persistent_changes": [
+        "Installs Git for Windows for the current user.",
+        "The package may persist a current-user PATH entry."
+      ],
+      "platform": "Windows",
+      "proof": [
+        "git",
+        "--version"
+      ],
+      "rollback": [
+        [
+          "winget",
+          "uninstall",
+          "--id",
+          "Git.Git",
+          "--exact",
+          "--source",
+          "winget",
+          "--scope",
+          "user"
+        ]
+      ],
+      "rollback_instruction": "Run the displayed WinGet uninstall command.",
+      "scope": "current-user",
+      "source": "https://learn.microsoft.com/windows/package-manager/winget/install"
+    },
+    {
+      "action_id": "macos-homebrew-python",
+      "administrator": "no",
+      "blocker": "PYTHON_MISSING_OR_UNSUPPORTED",
+      "classification": "approval_required",
+      "commands": [
+        [
+          "brew",
+          "install",
+          "python"
+        ]
+      ],
+      "distro_ids": [],
+      "instruction": "Install Homebrew's current supported Python formula.",
+      "package_manager": "brew",
+      "persistent_changes": [
+        "Installs the current Homebrew Python formula in the Homebrew prefix."
+      ],
+      "platform": "Darwin",
+      "proof": [
+        "python3",
+        "-c",
+        "import sys, tomllib; assert sys.version_info >= (3, 11)"
+      ],
+      "rollback": [
+        [
+          "brew",
+          "uninstall",
+          "python"
+        ]
+      ],
+      "rollback_instruction": "Run the displayed Homebrew uninstall command if the formula was newly installed only for this recovery.",
+      "scope": "homebrew-prefix",
+      "source": "https://docs.brew.sh/Language-Runtimes-and-Packages"
+    },
+    {
+      "action_id": "macos-homebrew-git",
+      "administrator": "no",
+      "blocker": "GIT_MISSING",
+      "classification": "approval_required",
+      "commands": [
+        [
+          "brew",
+          "install",
+          "git"
+        ]
+      ],
+      "distro_ids": [],
+      "instruction": "Install Git from the Homebrew core formula repository.",
+      "package_manager": "brew",
+      "persistent_changes": [
+        "Installs the Homebrew Git formula in the Homebrew prefix."
+      ],
+      "platform": "Darwin",
+      "proof": [
+        "git",
+        "--version"
+      ],
+      "rollback": [
+        [
+          "brew",
+          "uninstall",
+          "git"
+        ]
+      ],
+      "rollback_instruction": "Run the displayed Homebrew uninstall command if the formula was newly installed only for this recovery.",
+      "scope": "homebrew-prefix",
+      "source": "https://docs.brew.sh/Manpage"
+    },
+    {
+      "action_id": "ubuntu-apt-git",
+      "administrator": "yes",
+      "blocker": "GIT_MISSING",
+      "classification": "approval_required",
+      "commands": [
+        [
+          "sudo",
+          "apt-get",
+          "update"
+        ],
+        [
+          "sudo",
+          "apt-get",
+          "install",
+          "-y",
+          "git"
+        ]
+      ],
+      "distro_ids": [
+        "ubuntu"
+      ],
+      "instruction": "Refresh APT package metadata and install Ubuntu's Git package.",
+      "package_manager": "apt-get",
+      "persistent_changes": [
+        "Refreshes APT package metadata.",
+        "Installs the system Git package and its dependencies."
+      ],
+      "platform": "Linux",
+      "proof": [
+        "git",
+        "--version"
+      ],
+      "rollback": [
+        [
+          "sudo",
+          "apt-get",
+          "remove",
+          "-y",
+          "git"
+        ]
+      ],
+      "rollback_instruction": "Run the displayed APT remove command; review dependencies before confirming any additional removal.",
+      "scope": "system",
+      "source": "https://documentation.ubuntu.com/ubuntu-for-developers/explanation/use-vcs/"
+    },
+    {
+      "action_id": "debian-apt-git",
+      "administrator": "yes",
+      "blocker": "GIT_MISSING",
+      "classification": "approval_required",
+      "commands": [
+        [
+          "sudo",
+          "apt-get",
+          "update"
+        ],
+        [
+          "sudo",
+          "apt-get",
+          "install",
+          "-y",
+          "git"
+        ]
+      ],
+      "distro_ids": [
+        "debian"
+      ],
+      "instruction": "Refresh APT package metadata and install Debian's Git package.",
+      "package_manager": "apt-get",
+      "persistent_changes": [
+        "Refreshes APT package metadata.",
+        "Installs the system Git package and its dependencies."
+      ],
+      "platform": "Linux",
+      "proof": [
+        "git",
+        "--version"
+      ],
+      "rollback": [
+        [
+          "sudo",
+          "apt-get",
+          "remove",
+          "-y",
+          "git"
+        ]
+      ],
+      "rollback_instruction": "Run the displayed APT remove command; review dependencies before confirming any additional removal.",
+      "scope": "system",
+      "source": "https://www.debian.org/doc/manuals/apt-guide/ch2.en.html"
+    },
+    {
+      "action_id": "ubuntu-python-version-guidance",
+      "administrator": "unknown",
+      "blocker": "PYTHON_MISSING_OR_UNSUPPORTED",
+      "classification": "user_action",
+      "commands": [],
+      "distro_ids": [
+        "ubuntu"
+      ],
+      "instruction": "Use the distribution's official Python guidance and install a supported Python 3.11+ without removing or replacing the system Python; then run the proof command.",
+      "package_manager": "apt-get",
+      "persistent_changes": [
+        "Depends on the distribution release and the user-reviewed installation method."
+      ],
+      "platform": "Linux",
+      "proof": [
+        "python3",
+        "-c",
+        "import sys, tomllib; assert sys.version_info >= (3, 11)"
+      ],
+      "rollback": [],
+      "rollback_instruction": "Use the uninstall route for the exact user-selected distribution package; never remove Ubuntu or Debian's required system Python.",
+      "scope": "user-reviewed",
+      "source": "https://documentation.ubuntu.com/ubuntu-for-developers/howto/python-setup/"
+    },
+    {
+      "action_id": "debian-python-version-guidance",
+      "administrator": "unknown",
+      "blocker": "PYTHON_MISSING_OR_UNSUPPORTED",
+      "classification": "user_action",
+      "commands": [],
+      "distro_ids": [
+        "debian"
+      ],
+      "instruction": "Use Debian's official Python guidance and install a supported Python 3.11+ without removing or replacing the system Python; then run the proof command.",
+      "package_manager": "apt-get",
+      "persistent_changes": [
+        "Depends on the Debian release and the user-reviewed installation method."
+      ],
+      "platform": "Linux",
+      "proof": [
+        "python3",
+        "-c",
+        "import sys, tomllib; assert sys.version_info >= (3, 11)"
+      ],
+      "rollback": [],
+      "rollback_instruction": "Use the uninstall route for the exact user-selected Debian package; never remove Debian's required system Python.",
+      "scope": "user-reviewed",
+      "source": "https://wiki.debian.org/Python"
+    },
+    {
+      "action_id": "official-codex-cli-guidance",
+      "administrator": "unknown",
+      "blocker": "CODEX_CLI_MISSING_OR_UNUSABLE",
+      "classification": "user_action",
+      "commands": [],
+      "distro_ids": [],
+      "instruction": "Open the official Codex CLI installation page, choose the platform-appropriate installation method, sign in interactively, and then run the proof command. The assistant does not execute a download pipeline or alter authentication.",
+      "package_manager": "user-selected",
+      "persistent_changes": [
+        "Depends on the user-selected official Codex CLI installation method.",
+        "Interactive sign-in may persist authentication managed by Codex."
+      ],
+      "platform": "*",
+      "proof": [
+        "codex",
+        "--version"
+      ],
+      "rollback": [],
+      "rollback_instruction": "Use the official uninstall route for the exact user-selected installation method; authentication remains user-controlled.",
+      "scope": "user-reviewed",
+      "source": "https://learn.chatgpt.com/docs/codex/cli"
+    }
+  ],
+  "last_verified": "2026-08-24",
+  "schema": 1
+}

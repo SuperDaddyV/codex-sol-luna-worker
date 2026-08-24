@@ -42,7 +42,7 @@ No Hook Router is required. The selector chooses one of five Luna effort profile
 ## Install with Codex
 
 1. Start a new Codex task with GPT-5.6 Sol.
-2. Review the [assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md) and its pinned [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md).
+2. Review the [assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md) and its pinned [setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md). A [review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is available, but the pinned English contract remains the sole executable authority.
 3. Paste the prompt below.
 4. Let Codex diagnose all prerequisites, apply bounded safe recovery, request approval for any system change, then run the installer's dry-run, transaction backup, installation, and validation.
 5. Reload Codex when appropriate, start a new task, and run the smoke test. An already-open task is not a complete validation of newly loaded global configuration.
@@ -69,6 +69,9 @@ Codex and provide the fresh-task smoke continuation.
 ## Current Stable
 
 `v4.1.0` is the current Stable release and default installation target/path through the immutable assisted Stable entry above.
+
+> [!NOTE]
+> `v4.1.1` installation experience work is an unreleased candidate. It does not change the current `v4.1.0` Stable prompt, tag, Release, or immutable anchors. Do not install the candidate from mutable `master`.
 
 Stable contains:
 
@@ -376,6 +379,7 @@ In a fresh task, request two or three independent bounded read-only checks and a
 ## Technical documentation
 
 - [Codex-executable assisted installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
+- [Review-only Chinese translation of the assisted installation contract](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)
 - [Codex-executable setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)
 - [Architecture](ARCHITECTURE.md)
 - [Runtime validation](RUNTIME_TESTS.md)

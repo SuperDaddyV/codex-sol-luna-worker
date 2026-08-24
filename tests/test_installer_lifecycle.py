@@ -17,6 +17,7 @@ from scripts.install import (
     InstallerError,
     MANIFEST_RELATIVE,
     STABLE_AGENT_FILES,
+    VERSION,
     dry_run_install,
     install,
     rollback,
@@ -273,7 +274,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
             )
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.1.0")
+            self.assertEqual(manifest["version"], VERSION)
             self.assertEqual(len(manifest["owned_files"]), 6)
             self.assertEqual(set(manifest["owned_blocks"]), {"AGENTS.md", "config.toml"})
             self.assertNotIn("installation_id", manifest)
@@ -473,7 +474,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(
                 json.loads(manifest_path.read_text(encoding="utf-8"))["version"],
-                "v4.1.0",
+                VERSION,
             )
             self.assertEqual(
                 {
@@ -560,7 +561,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             manifest = json.loads(
                 (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
             )
-            self.assertEqual(manifest["version"], "v4.1.0")
+            self.assertEqual(manifest["version"], VERSION)
             self.assertEqual(manifest["schema_version"], 1)
             self.assertEqual(manifest["source_commit"], "b" * 40)
             self.assertEqual(
@@ -741,7 +742,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(
                 json.loads(manifest_path.read_text(encoding="utf-8"))["version"],
-                "v4.1.0",
+                VERSION,
             )
 
             upgraded_tree = tree_hash(target)
@@ -762,6 +763,78 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
             self.assertEqual(manifest_path.read_bytes(), rc6_manifest_before)
+
+    def test_v410_to_v411_candidate_upgrade_changes_only_manifest(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            call_install(target)
+
+            manifest_path = target / MANIFEST_RELATIVE
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["version"] = "v4.1.0"
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            v410_manifest_before = manifest_path.read_bytes()
+            before = tree_hash(target)
+
+            dry = dry_run_install(
+                target,
+                project_root=ROOT,
+                generated_at=FIXED_TIME + timedelta(days=1),
+                allow_validation_sandbox=True,
+                source_commit="1" * 40,
+            )
+            self.assertEqual(dry["status"], "DRY_RUN_PASS")
+            self.assertEqual(dry["effective_changes"], 1)
+            self.assertEqual(dry["created"], [])
+            self.assertEqual(dry["modified"], [MANIFEST_RELATIVE.as_posix()])
+            self.assertEqual(dry["removed"], [])
+            self.assertIsNone(dry["backup"])
+            self.assertEqual(tree_hash(target), before)
+
+            upgraded = call_install(
+                target,
+                generated_at=FIXED_TIME + timedelta(days=1),
+                source_commit="1" * 40,
+            )
+            self.assertEqual(upgraded["status"], "UPGRADED")
+            self.assertEqual(upgraded["effective_changes"], 1)
+            self.assertEqual(upgraded["created"], [])
+            self.assertEqual(upgraded["modified"], [MANIFEST_RELATIVE.as_posix()])
+            self.assertEqual(upgraded["removed"], [])
+            backup = Path(upgraded["backup"])
+            self.assertEqual(
+                {
+                    entry["path"]
+                    for entry in json.loads(
+                        (backup / "snapshot.json").read_text(encoding="utf-8")
+                    )["entries"]
+                },
+                {MANIFEST_RELATIVE.as_posix()},
+            )
+            installed = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(installed["version"], VERSION)
+            self.assertEqual(installed["source_commit"], "1" * 40)
+
+            second = call_install(
+                target, generated_at=FIXED_TIME + timedelta(days=2)
+            )
+            self.assertEqual(second["status"], "IDEMPOTENT_PASS")
+            self.assertEqual(second["effective_changes"], 0)
+            self.assertIsNone(second["backup"])
+
+            rolled_back = rollback(
+                target,
+                backup,
+                project_root=ROOT,
+                allow_validation_sandbox=True,
+            )
+            self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
+            self.assertEqual(tree_hash(target), before)
+            self.assertEqual(manifest_path.read_bytes(), v410_manifest_before)
 
     def test_rc6_modified_owned_file_blocks_stable_upgrade_without_changes(self):
         with sandbox() as directory:
@@ -886,7 +959,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 json.loads(
                     (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
                 )["version"],
-                "v4.1.0",
+                VERSION,
             )
             self.assertEqual(
                 (target / "sol-luna-v4" / "selector.py").read_bytes(),
@@ -1003,7 +1076,7 @@ class InstallerLifecycleTests(unittest.TestCase):
                 (target / MANIFEST_RELATIVE).read_text(encoding="utf-8")
             )
             self.assertEqual(manifest["schema_version"], 1)
-            self.assertEqual(manifest["version"], "v4.1.0")
+            self.assertEqual(manifest["version"], VERSION)
             self.assertEqual(
                 (target / "sol-luna-v4" / "selector.py").read_bytes(),
                 selector_before,

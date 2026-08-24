@@ -2,6 +2,10 @@
 
 Assistance contract version: `1`.
 
+The English contract is the only executable authority. The review-only Chinese
+translation is `CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md`; it must identify this
+English contract and must not become a second executable installation source.
+
 This document is the user-facing recovery wrapper for the published `v4.1.0`
 Stable installation. It improves prerequisite diagnosis and recovery; it does
 not change the Stable runtime payload, installer, setup contract, tag, or
@@ -245,3 +249,155 @@ succeed. Do not expose credentials, private configuration, environment dumps,
 personal paths, or unrelated file content in reports. The installer remains the
 sole authority for owned-file merge, backup, rollback, migration, and uninstall
 behavior.
+
+## 11. v4.1.1 deterministic assistance candidate
+
+This section specifies the unreleased `v4.1.1` installation experience
+candidate. It does not replace the immutable `v4.1.0` public entry above and is
+not authority to publish, retag, move a Release, or change the default Stable
+README links. Release preparation must replace the candidate boundary with
+separately pinned runtime-source, assistance-contract, and README commits.
+
+### 11.1 Bootstrap boundary
+
+P3 standalone bootstrap is explicitly out of scope. The deterministic Python
+assistant cannot run when Python is absent, and a repository script cannot run
+before Git and immutable source acquisition are available. Until Python 3.11+
+and Git are usable, Codex follows Sections 3–7 in the conversation and requests
+approval for every package, elevation, or persistent environment change.
+
+After Python, Git, and immutable source acquisition succeed, use
+`scripts/install_assist.py`. The assistant must never claim that it repairs a
+machine with no usable Python by itself.
+
+### 11.2 Deterministic command and state contract
+
+The assistant exposes these commands:
+
+```text
+<PYTHON> scripts/install_assist.py check --codex-home <CODEX_HOME>
+<PYTHON> scripts/install_assist.py plan --codex-home <CODEX_HOME>
+<PYTHON> scripts/install_assist.py recover --codex-home <CODEX_HOME> --approve <PLAN_ID>
+<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit <40HEX>
+<PYTHON> scripts/install_assist.py report --codex-home <CODEX_HOME> --format json
+```
+
+Every result is structured JSON and contains exactly one current phase from:
+
+```text
+CHECKING
+SAFE_RECOVERY
+AWAITING_APPROVAL
+RECHECKING
+CAPABILITY_PRECHECK
+DRY_RUN
+INSTALLING
+RELOAD_REQUIRED
+FRESH_TASK_SMOKE
+COMPLETE
+NEEDS_USER_ACTION
+BLOCKED
+```
+
+No preflight state file is created. `recover` recomputes the live read-only
+snapshot and exact recovery plan, then requires the displayed SHA-256-derived
+`PLAN_ID`. A changed command, source, scope, impact, proof, rollback route, or
+blocker changes the ID and fails closed as `RECOVERY_PLAN_CHANGED`. A
+deterministic recovery action runs at most once and receives one proof check;
+the assistant never repeats a failed package-manager or elevation command.
+
+### 11.3 Environment and permission summary
+
+All commands report a bounded summary containing operating-system family, WSL
+classification, approval policy, sandbox mode, administrator requirement,
+Codex/Python/Git versions, GitHub HTTPS status, and installed Sol/Luna version.
+Approval policy and sandbox mode are caller-supplied display context; the
+assistant does not parse or dump user configuration and never grants itself
+permission.
+
+### 11.4 Recovery catalog
+
+`scripts/install_recovery_catalog.json` is the only command catalog. Each entry
+contains a stable action ID, normalized blocker, platform and package manager,
+classification (`approval_required` or `user_action`), exact argument vector,
+official source, scope, administrator and persistent-change impact, proof, and
+rollback. The implementation accepts only HTTPS sources on its fixed official
+domain allowlist and never executes shell strings, pipelines, redirects,
+command substitution, or an action missing proof or rollback metadata.
+`user_action` entries use an empty argument vector and a bounded instruction;
+only `approval_required` entries are executable.
+
+The initial catalog covers WinGet on Windows, Homebrew on macOS, and APT on
+Ubuntu/Debian. Unsupported distributions, absent package managers, Codex
+authentication, proxy/certificate/firewall policy, and unavailable verified
+guidance return `NEEDS_USER_ACTION`. Codex CLI installation remains guided user
+action because its official installation and sign-in path can require an
+additional runtime or interactive authentication.
+
+### 11.5 Installed-version fast path
+
+Before capability calls or installer execution, classify the ownership
+manifest metadata as absent, current, older, newer, or invalid. After capability
+PASS, the installer dry-run is the sole byte-consistency and ownership check. A
+current installation whose dry-run returns `IDEMPOTENT_PASS` performs zero
+writes and zero backups, but it still requires immutable-source verification
+and a fresh-task smoke before `COMPLETE`. A newer version fails closed as
+`CURRENT_VERSION_NEWER`. Invalid or ownership-conflicting state is `BLOCKED`;
+it is never repaired by editing managed files outside `scripts/install.py`.
+
+### 11.6 Early capability and installer handoff
+
+After hard prerequisites and immutable checkout verification, but before any
+real `CODEX_HOME` dry-run or write, run the five Luna efforts through ephemeral
+Codex executions with user config ignored and sandbox `read-only`. Do not write
+probe state, copy authentication, change approval policy, or widen the sandbox.
+Any unavailable effort, timeout, authentication/account limitation, or
+incomplete evidence stops as `NEEDS_USER_ACTION` before installer execution.
+
+Only `scripts/install.py` may perform ownership checks, target writes,
+transaction backup, rollback, migration, or uninstall. The assistant first
+calls the installer's non-mutating dry-run. `install` without `--apply` stops at
+`DRY_RUN`; `install --apply` may hand off to the transactional installer only
+after the caller explicitly authorizes that mode.
+
+### 11.7 Sanitized support report
+
+`report` is whitelist-only. It may include schema/version, phase, normalized
+reason codes, platform family, WSL boolean, caller-supplied permission labels,
+tool versions, package-manager name, installed project version, strictly
+validated source commit, action IDs and success/failure status. It represents
+the target as `<CODEX_HOME>` and omits real paths, environment variables,
+configuration content, authentication, command stderr/stdout, logs, arbitrary
+URLs, exception text, identifiers, and secrets.
+
+### 11.8 Result cards
+
+Human-facing output derived from the structured result uses exactly one card:
+
+```text
+Installation Complete
+Version: <version>
+Source: <40HEX>
+Repairs: <action IDs or NONE>
+Approved system changes: <action IDs or NONE>
+Backup: <symbolic identifier or NONE>
+Configuration preserved: YES
+Next: installation and fresh-task smoke are complete
+```
+
+```text
+Needs User Action
+Phase: <phase>
+Reason: <one normalized reason code>
+Action: <one bounded action>
+Proof: <one read-only proof>
+Resume: <sanitized SOL_LUNA_ASSIST_RESUME block>
+```
+
+```text
+Blocked
+Phase: <phase>
+Reason: <one normalized reason code>
+Writes performed: NO / ROLLED_BACK
+Next: stop; do not patch managed state or retry automatically
+```

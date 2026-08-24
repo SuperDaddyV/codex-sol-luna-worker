@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Began the `v4.1.1` installation experience candidate without changing the
+  published `v4.1.0` tag, Release, immutable installation anchors, or default
+  Stable README entry.
+- Added a standard-library deterministic installation assistant with explicit
+  check, recovery-plan, exact-plan approval, capability-precheck, installer
+  handoff, installed-version fast path, result-card, and sanitized support-report
+  contracts. The existing transactional installer remains the sole writer and
+  rollback authority.
+- Added a validated official-source recovery catalog for WinGet on Windows,
+  Homebrew on macOS, and APT Git recovery on Ubuntu/Debian. Codex authentication,
+  Linux Python-version selection, unsupported package managers, proxy,
+  certificate, firewall, and organization-policy cases remain guided user
+  actions. P3 standalone bootstrap remains out of scope.
 - Added the documentation-layer `CODEX_SOL_LUNA_INSTALL_ASSIST.md` wrapper at immutable commit `39594139eaeeda705528733fc383333504546fb6`. It aggregates prerequisite diagnosis, permits bounded safe session-only recovery, requires explicit approval for package installation, elevation, or persistent environment changes, and provides a sanitized continuation block for external user actions.
 - Repinned the bilingual default copy-and-paste installation entry to the assisted wrapper while retaining the immutable Stable setup contract, Stable runtime Source Commit `67a72f8accc5d53ef04ff8d64d8838e397ceecda`, transaction and ownership gates, `v4.1.0` tag and Release, and historical RC6 tag and Prerelease unchanged.
 

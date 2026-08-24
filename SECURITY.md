@@ -133,6 +133,22 @@ The natural-language latest-version workflow accepts only published non-draft st
 
 `CODEX_SOL_LUNA_INSTALL_ASSIST.md` and `CODEX_SOL_LUNA_SETUP.md` are client-side automation guidance, not server-side security boundaries. Review both contracts before execution and use the immutable commit-pinned raw assisted-installation URL from the README. Neither contract may widen permissions, replace the installer's transaction, or guess ownership; unknown ownership remains a fail-closed condition.
 
+The unreleased `v4.1.1` installation assistant preserves that boundary. It
+creates no preflight state file, binds approval to a SHA-256 identity covering
+the exact blockers, commands, official sources, scope, impact, proof, and
+rollback route, and executes approved recovery as argument vectors without a
+shell. Its recovery catalog accepts only fixed official HTTPS domains; a
+changed or invalid catalog fails closed. Authentication, proxy, certificate,
+firewall, organization-policy, unsupported Linux Python, and Codex sign-in
+cases remain guided user actions. The five-effort Luna probe is ephemeral,
+ignores user configuration, uses the read-only sandbox, and runs before any
+real `CODEX_HOME` installer dry-run or write. Support reports are generated
+from a fixed whitelist and symbolize the target as `<CODEX_HOME>`. P3
+standalone bootstrap is excluded, so the assistant never claims it can run
+without a usable Python interpreter or immutable source checkout. These
+candidate controls do not change the published `v4.1.0` tag, Release, or
+default immutable installation entry.
+
 ## Reporting
 
 Do not include secrets, credentials, private session transcripts, or personal filesystem paths in a report. For this public repository, use GitHub's private vulnerability reporting channel when enabled.

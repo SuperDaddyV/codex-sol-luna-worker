@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 README_ZH = ROOT / "README.zh-CN.md"
 ASSIST = ROOT / "CODEX_SOL_LUNA_INSTALL_ASSIST.md"
+ASSIST_ZH = ROOT / "CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md"
 SETUP = ROOT / "CODEX_SOL_LUNA_SETUP.md"
 ISSUE_TEMPLATE_DIR = ROOT / ".github" / "ISSUE_TEMPLATE"
 ISSUE_FORMS = {
@@ -27,7 +28,7 @@ ISSUE_FORMS = {
         "privacy_confirmation",
     },
 }
-PUBLIC_DOCS = (README, README_ZH, ASSIST, SETUP, ROOT / "SECURITY.md")
+PUBLIC_DOCS = (README, README_ZH, ASSIST, ASSIST_ZH, SETUP, ROOT / "SECURITY.md")
 LEGACY_DEFAULT_SETUP_COMMIT = "e1967f8fc957904e3f90b0dd6140430f792d9956"
 PINNED_ASSIST_COMMIT = "39594139eaeeda705528733fc383333504546fb6"
 PINNED_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
@@ -73,9 +74,18 @@ def local_markdown_targets(content: str):
 class DocumentationTests(unittest.TestCase):
     def test_bilingual_navigation_and_setup_contract(self):
         self.assertTrue(ASSIST.is_file())
+        self.assertTrue(ASSIST_ZH.is_file())
         self.assertTrue(SETUP.is_file())
         self.assertIn("[简体中文](README.zh-CN.md)", text(README))
         self.assertIn("[English](README.md)", text(README_ZH))
+        self.assertIn(
+            "[review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)",
+            text(README),
+        )
+        self.assertIn(
+            "[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)",
+            text(README_ZH),
+        )
 
     def test_required_badges_and_install_sections(self):
         for path, heading in (
@@ -158,6 +168,10 @@ class DocumentationTests(unittest.TestCase):
             chinese,
         )
         self.assertIn("独立 fresh-task compatibility smoke | CLI、Luna capability", chinese)
+        self.assertIn("`v4.1.1` installation experience work is an unreleased candidate", english)
+        self.assertIn("Do not install the candidate from mutable `master`", english)
+        self.assertIn("`v4.1.1` 安装体验目前仍是未发布候选", chinese)
+        self.assertIn("不得从可变 `master` 安装候选版本", chinese)
 
     def test_setup_preflight_stops_missing_dependencies_before_writes(self):
         content = text(SETUP)
@@ -232,6 +246,118 @@ class DocumentationTests(unittest.TestCase):
             "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/",
             content,
         )
+
+    def test_v411_assistance_candidate_is_deterministic_and_not_public_authority(self):
+        content = text(ASSIST)
+        candidate = content.index("## 11. v4.1.1 deterministic assistance candidate")
+        capability = content.index("### 11.6 Early capability and installer handoff")
+        dry_run = content.index("installer's non-mutating dry-run", capability)
+        self.assertLess(candidate, capability)
+        self.assertLess(capability, dry_run)
+        for phrase in (
+            "P3 standalone bootstrap is explicitly out of scope",
+            "scripts/install_assist.py check",
+            "scripts/install_assist.py plan",
+            "scripts/install_assist.py recover",
+            "scripts/install_assist.py install",
+            "scripts/install_assist.py report",
+            "RECOVERY_PLAN_CHANGED",
+            "scripts/install_recovery_catalog.json",
+            "approval_required",
+            "user_action",
+            "IDEMPOTENT_PASS",
+            "run the five Luna efforts through ephemeral",
+            "Codex executions with user config ignored",
+            "whitelist-only",
+            "Installation Complete",
+            "Needs User Action",
+            "Blocked",
+        ):
+            self.assertIn(phrase, content)
+        for phase in (
+            "CHECKING",
+            "SAFE_RECOVERY",
+            "AWAITING_APPROVAL",
+            "RECHECKING",
+            "CAPABILITY_PRECHECK",
+            "DRY_RUN",
+            "INSTALLING",
+            "RELOAD_REQUIRED",
+            "FRESH_TASK_SMOKE",
+            "COMPLETE",
+            "NEEDS_USER_ACTION",
+            "BLOCKED",
+        ):
+            self.assertIn(phase, content)
+        self.assertIn("does not replace the immutable `v4.1.0` public entry", content)
+        self.assertIn("No preflight state file is created", content)
+
+    def test_chinese_assistance_document_is_review_only_and_covers_same_boundaries(self):
+        content = text(ASSIST_ZH)
+        self.assertIn("本文件只用于中文审阅，不是可执行安装权威", content)
+        self.assertIn("英文 `CODEX_SOL_LUNA_INSTALL_ASSIST.md`", content)
+        self.assertIn("不能执行可变 `master` 上的中文译文", content)
+        self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, content)
+        self.assertIn(PINNED_SETUP_COMMIT, content)
+        for phrase in (
+            "`v4.1.0-rc6` 继续作为不可变的历史",
+            "P3 排除边界",
+            "scripts/install_assist.py check",
+            "RECOVERY_PLAN_CHANGED",
+            "scripts/install_recovery_catalog.json",
+            "IDEMPOTENT_PASS",
+            "Capability 前置门禁",
+            "Installer 唯一写入权威",
+            "脱敏支持报告",
+            "Installation Complete",
+            "Needs User Action",
+            "Blocked",
+            "--dangerously-bypass-approvals-and-sandbox",
+        ):
+            self.assertIn(phrase, content)
+        self.assertNotIn(
+            "raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/master/",
+            content,
+        )
+
+    def test_setup_records_v411_handoff_without_replacing_stable_authority(self):
+        content = text(SETUP)
+        architecture = text(ROOT / "ARCHITECTURE.md")
+        security = text(ROOT / "SECURITY.md")
+        candidate = content.index("## 22. v4.1.1 candidate assistance handoff")
+        self.assertGreater(candidate, content.index("## 21. Final Report"))
+        for phrase in (
+            "Sections 0–21 remain the immutable published `v4.1.0` Stable setup contract",
+            "installer `VERSION = \"v4.1.1\"`",
+            "scripts/install_assist.py",
+            "scripts/install_recovery_catalog.json",
+            "clean detached exact checkout",
+            "runs the five",
+            "ephemeral read-only Luna capability checks",
+            "Without `--apply`, it stops at `DRY_RUN`",
+            "zero-write, zero-backup fast path",
+            "P3 standalone bootstrap remains out of scope",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn(STABLE_RUNTIME_SOURCE_COMMIT, content[:candidate])
+        self.assertIn("Never execute the candidate from mutable `master`", content)
+        for phrase in (
+            "## v4.1.1 installation assistance candidate",
+            "exact recovery plan + SHA-256 Plan ID",
+            "scripts/install_recovery_catalog.json",
+            "installer manifest version from `v4.1.0` to",
+            "bilingual default prompt remain",
+        ):
+            self.assertIn(phrase, architecture)
+        for phrase in (
+            "unreleased `v4.1.1` installation assistant",
+            "executes approved recovery as argument vectors without a",
+            "five-effort Luna probe is ephemeral",
+            "P3",
+            "standalone bootstrap is excluded",
+            "published `v4.1.0` tag, Release",
+        ):
+            self.assertIn(phrase, security)
 
     def test_public_beta_feedback_forms_and_guidance(self):
         self.assertEqual(

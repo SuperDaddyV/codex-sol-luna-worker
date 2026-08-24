@@ -42,7 +42,7 @@ v4 不需要 Hook Router。Daily Selector 按北京时间每天选择一次 Luna
 ## 使用 Codex 安装
 
 1. 使用 GPT-5.6 Sol 新建一个 Codex 任务。
-2. 先审阅[安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)及其固定的[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)。
+2. 可先阅读[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)；实际执行仍以固定的[英文安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)及其固定的[安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)为唯一权威。
 3. 复制下面的提示词。
 4. 由 Codex 一次性诊断全部前置条件、执行有边界的安全修复、为任何系统变更请求确认，然后完成安装器 dry-run、事务备份、安装和验证。
 5. 按需完全重新加载 Codex，再新建任务完成 smoke test。已经打开的旧任务不能作为新全局配置的完整验收依据。
@@ -66,6 +66,9 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 ## 当前 Stable
 
 `v4.1.0` 是当前 Stable 稳定版本，并通过上方 immutable assisted Stable entry 成为默认安装目标／路径。
+
+> [!NOTE]
+> `v4.1.1` 安装体验目前仍是未发布候选，不改变当前 `v4.1.0` Stable 提示词、tag、Release 或 immutable anchors。不得从可变 `master` 安装候选版本。
 
 Stable 包含：
 
@@ -412,6 +415,7 @@ python -m unittest discover -s tests -v
 ## 📚 技术文档
 
 - [Codex 可执行安装协助合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/39594139eaeeda705528733fc383333504546fb6/CODEX_SOL_LUNA_INSTALL_ASSIST.md)
+- [安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)
 - [Codex 可执行安装合同](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/2c912b1e1a0fdbd115eb605517fde9385b633745/CODEX_SOL_LUNA_SETUP.md)
 - [架构说明](ARCHITECTURE.md)
 - [Runtime 验证](RUNTIME_TESTS.md)

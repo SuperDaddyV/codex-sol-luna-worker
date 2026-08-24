@@ -501,3 +501,36 @@ INSTALL_RUNTIME_PASS / BLOCKED
 ```
 
 Do not claim runtime PASS before the fresh-task smoke test. If setup stops before mutation, say so explicitly. If mutation committed but runtime validation is pending, report installation and runtime as separate states.
+
+## 22. v4.1.1 candidate assistance handoff (unreleased)
+
+Sections 0–21 remain the immutable published `v4.1.0` Stable setup contract.
+This section records the integration boundary for the unreleased `v4.1.1`
+installation experience candidate only; it is not an executable public entry
+and contains no substitute for a future exact Source Commit A.
+
+Release preparation for `v4.1.1` must first freeze and validate a runtime
+source commit containing installer `VERSION = "v4.1.1"`,
+`scripts/install_assist.py`, and `scripts/install_recovery_catalog.json`. A
+later documentation commit may then replace this candidate note with exact
+source commands, and a still later README commit may pin that reviewed English
+contract. Never execute the candidate from mutable `master`.
+
+After the conversation-level bootstrap boundary has produced Python 3.11+,
+Git, and a clean detached exact checkout, the future pinned contract may use:
+
+```text
+<PYTHON> scripts/install_assist.py check --codex-home <CODEX_HOME>
+<PYTHON> scripts/install_assist.py plan --codex-home <CODEX_HOME>
+<PYTHON> scripts/install_assist.py recover --codex-home <CODEX_HOME> --approve <PLAN_ID>
+<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit <V4_1_1_SOURCE_COMMIT>
+```
+
+The `install` command verifies the exact clean detached source, runs the five
+ephemeral read-only Luna capability checks, and only then calls the existing
+installer dry-run. Without `--apply`, it stops at `DRY_RUN`. After explicit
+apply authorization, the same command with `--apply` may delegate writes,
+backup, ownership, rollback, migration, and uninstall behavior exclusively to
+`scripts/install.py`. An `IDEMPOTENT_PASS` current installation remains a
+zero-write, zero-backup fast path but still requires a fresh-task compatibility
+smoke. P3 standalone bootstrap remains out of scope.
