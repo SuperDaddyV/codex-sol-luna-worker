@@ -39,6 +39,11 @@ historical release evidence for Receipt reason evidence-gating.
 Stable release and default installation target. No `v4.1.2` tag or Release is
 established by source publication or CI alone.
 
+Candidate Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe`
+passed exact-SHA CI run `32717295801` on Windows, Ubuntu, and macOS. This is
+repository source validation only; it does not establish a real Global install,
+real authentication, runtime acceptance, a tag, or a Release.
+
 The candidate replaces production child-process ambient inheritance with
 purpose-specific allowlists. Local version, selector, proof, and source checks
 receive only cross-platform runtime variables and explicit process settings.

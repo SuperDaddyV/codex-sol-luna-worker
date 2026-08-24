@@ -730,6 +730,11 @@ class DocumentationTests(unittest.TestCase):
 
         self.assertIn("## v4.1.2 (unreleased candidate)", changelog)
         self.assertIn("## v4.1.2 candidate boundary", security)
+        candidate_evidence = changelog + "\n" + security
+        self.assertIn(
+            "551520c2435aca94d60132f292edbd53cc975cbe", candidate_evidence
+        )
+        self.assertIn("32717295801", candidate_evidence)
         self.assertIn(
             "`v4.1.1` is the current Stable release and default installation target.",
             security,

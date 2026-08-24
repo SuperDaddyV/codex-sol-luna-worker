@@ -19,7 +19,11 @@
   algorithm.
 - Keeps the published `v4.1.1` tag, Release, immutable setup contracts, and
   bilingual default installation entry unchanged while this candidate remains
-  unreleased. Candidate Source Commit A and exact-SHA CI evidence are pending.
+  unreleased. Candidate Source Commit A
+  `551520c2435aca94d60132f292edbd53cc975cbe` passed exact-SHA CI run
+  `32717295801` on Windows, Ubuntu, and macOS. This is repository source
+  validation only; it does not establish a tag, Release, real Global install,
+  or runtime acceptance.
 
 ## v4.1.1 (published Stable release)
 
