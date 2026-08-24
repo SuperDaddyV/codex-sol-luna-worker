@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## v4.1.1 (Stable release target)
 
-- Began the `v4.1.1` installation experience candidate without changing the
-  published `v4.1.0` tag, Release, immutable installation anchors, or default
-  Stable README entry.
+- Added Stable Source Commit A2
+  `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; 332 local tests and exact-SHA CI
+  passed on Windows, Ubuntu, and macOS for both the source branch run and the
+  exact `master` run.
 - Added a standard-library deterministic installation assistant with explicit
   check, recovery-plan, exact-plan approval, capability-precheck, installer
   handoff, installed-version fast path, result-card, and sanitized support-report
@@ -15,13 +16,25 @@
   Linux Python-version selection, unsupported package managers, proxy,
   certificate, firewall, and organization-policy cases remain guided user
   actions. P3 standalone bootstrap remains out of scope.
-- Added the documentation-layer `CODEX_SOL_LUNA_INSTALL_ASSIST.md` wrapper at immutable commit `39594139eaeeda705528733fc383333504546fb6`. It aggregates prerequisite diagnosis, permits bounded safe session-only recovery, requires explicit approval for package installation, elevation, or persistent environment changes, and provides a sanitized continuation block for external user actions.
-- Repinned the bilingual default copy-and-paste installation entry to the assisted wrapper while retaining the immutable Stable setup contract, Stable runtime Source Commit `67a72f8accc5d53ef04ff8d64d8838e397ceecda`, transaction and ownership gates, `v4.1.0` tag and Release, and historical RC6 tag and Prerelease unchanged.
-- Added an explicit post-reload `SELECTOR_INITIALIZATION` gate to the unreleased
+- Advanced only the installer ownership-manifest version from `v4.1.0` to
+  `v4.1.1`; selector, policy, agents, config, and selector state are
+  byte-preserved by the fake-home lifecycle gate.
+- Added an explicit post-reload `SELECTOR_INITIALIZATION` gate to the Stable
   assistant. Both applied and same-version idempotent paths now require the
   canonical `--ensure-daily --print-selection` role/effort proof before a
   separate fresh-task compatibility smoke. The smoke remains read-only and
   never initializes or retries Daily selection.
+- Recorded the independent fresh-task compatibility smoke as a one-run `PASS`:
+  exit `0` after about 144.2 seconds, with `CLI`, `Luna capability`, `Selector`,
+  `Delegation`, `Protected state`, `Runtime contract`, and final
+  `Compatibility` all explicit `PASS`. No real Global `v4.1.1` installer apply
+  was performed.
+- Prepared the reviewed Stable setup and evidence contract around immutable
+  Source Commit A2. A later immutable assisted-contract commit pins this setup
+  commit, and a still later bilingual README commit pins both layers; no commit
+  self-references its own SHA.
+- Preserved the published `v4.1.0` Stable tag and Release and the annotated
+  `v4.1.0-rc6` tag and historical Prerelease unchanged.
 
 ## v4.1.0 (published Stable release)
 

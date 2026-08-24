@@ -1,17 +1,18 @@
-# v4.1.0 Stable Architecture Note
+# v4.1.1 Stable Architecture Note
 
-`v4.1.0` is the current Stable release and default installation target.
-Stable runtime Source Commit A is
-`67a72f8accc5d53ef04ff8d64d8838e397ceecda`; exact-SHA source CI passed on
+`v4.1.1` is the current Stable release and default installation target.
+Stable runtime Source Commit A2 is
+`ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; exact-SHA source CI passed on
 Windows, Ubuntu, and macOS. The reviewed Stable setup contract is
 `CODEX_SOL_LUNA_SETUP.md`; public installation entries pin it by an exact
 immutable documentation commit, which is distinct from the runtime source.
+`v4.1.0` remains the previous immutable Stable release.
 `v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public
 Beta, and `v4.1.0-rc5` is an older historical Preview.
 
-Status: `v4.1.0 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
+Status: `v4.1.1 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
 
-The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before publication. Stable preserves that accepted selector, policy, agent, and config payload byte-for-byte and advances only the installed manifest version. An independent pre-publication compatibility smoke passed all six checks against the unchanged installed product runtime. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
+The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before publication. `v4.1.1` preserves that accepted selector, policy, agent, and config payload byte-for-byte and advances only the installed manifest version from `v4.1.0`. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke passed all six component checks and final Compatibility against the unchanged installed product runtime. No real Global `v4.1.1` installer apply was performed. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
 
 ## Flow
 
@@ -76,7 +77,7 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
   writer-settle/fail-closed evidence. The harness is tooling only and does not
   modify product runtime.
 
-## Stable release delta
+## Historical v4.1.0 Stable release delta
 
 - The installer payload moves from `v4.1.0-rc6` to `v4.1.0` with manifest
   schema `1` unchanged.
@@ -87,9 +88,9 @@ The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contra
   exact rollback, downgrade refusal, and ownership-conflict fail-closed
   behavior are covered by repository lifecycle tests.
 
-## v4.1.1 installation assistance candidate
+## v4.1.1 Stable installation assistance
 
-The unreleased candidate adds an orchestration layer around the existing
+The Stable installation assistant adds an orchestration layer around the existing
 installer without changing installed selector, policy, agent, or config
 payloads:
 
@@ -121,13 +122,15 @@ its matching effort before the flow opens a separate fresh task. The
 compatibility smoke remains read-only and status-only; it never initializes
 Daily selection or retries a failed initialization.
 
-The candidate bumps only installer manifest version from `v4.1.0` to
+The Stable source bumps only installer manifest version from `v4.1.0` to
 `v4.1.1`; the installed payload remains byte-identical. A valid `v4.1.0` to
 `v4.1.1` fake-home upgrade therefore changes only
-`sol-luna-v4/install-manifest.json`. The public `v4.1.0` tag, Release, setup
-contract, assisted-installation anchor, and bilingual default prompt remain
-unchanged until an independently approved release sequence supplies exact
-runtime-source and documentation commits.
+`sol-luna-v4/install-manifest.json`. Source Commit A2 passed 332 local tests and
+exact-SHA CI on Windows, Ubuntu, and macOS. After explicit Daily selection
+initialization, the independent fresh-task compatibility smoke ran once for
+about 144.2 seconds and passed `CLI`, `Luna capability`, `Selector`,
+`Delegation`, `Protected state`, `Runtime contract`, and final `Compatibility`.
+No real Global `v4.1.1` installer apply was performed.
 
 ## Explicit non-goals
 
@@ -138,14 +141,15 @@ runtime-source and documentation commits.
 
 ## Stable runtime evidence boundary
 
-Stable preserves the RC6 selector behavior, including malformed URL parsing,
+`v4.1.1` preserves the RC6 selector behavior, including malformed URL parsing,
 hostname, and port `ValueError` normalization. The installer payload version
-moves to `v4.1.0`, but an RC6→Stable apply changes only the ownership manifest.
-The compatibility smoke and acceptance harness are tooling only and do not
-modify product runtime.
+moves from `v4.1.0` to `v4.1.1`, but a `v4.1.0`→`v4.1.1` apply changes only the
+ownership manifest. The installation assistant, compatibility smoke, and
+acceptance harness are tooling only and do not modify product runtime by
+themselves.
 `CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, this architecture note, and
 `SECURITY.md` form the acceptance contract and may be updated as that boundary
-evolves. `RC6_TO_STABLE_INSTALLED_BEHAVIOR_CHANGED = NO`;
+evolves. `V410_TO_V411_INSTALLED_BEHAVIOR_CHANGED = NO`;
 `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
 The historical RC6 acceptance harness builds RC6 Source Commit A under a unique owned
@@ -224,19 +228,20 @@ identity were unchanged, observed unknown paths were zero, and acceptance
 residuals were zero. This is not a claim of real-runtime validation across all
 CI platforms, clients, accounts, or users.
 
-Stable Source Commit A passed repository validation and exact-SHA CI on
-Windows, Ubuntu, and macOS. Its RC6→Stable lifecycle coverage proves that the
-installed behavior is unchanged apart from manifest version/source metadata.
-The independent fresh-task compatibility smoke passed CLI, Luna capability,
-Selector, Delegation, Protected state, Runtime contract, and final
-Compatibility checks. It did not perform a real Global Stable apply and does
-not widen the historical RC6 runtime-evidence boundary.
+Stable Source Commit A2 passed repository validation and exact-SHA CI on
+Windows, Ubuntu, and macOS. Its `v4.1.0`→`v4.1.1` lifecycle coverage proves that
+the installed behavior is unchanged apart from manifest version/source
+metadata. After explicit Daily selection initialization, the independent
+fresh-task compatibility smoke ran once for about 144.2 seconds and passed CLI,
+Luna capability, Selector, Delegation, Protected state, Runtime contract, and
+final Compatibility checks. It did not perform a real Global `v4.1.1` apply
+and does not widen the historical RC6 runtime-evidence boundary.
 
 The published RC1 passed its recorded real global upgrade and fresh-session Global Runtime G1-G7 for discovery, selector plus explicit Luna, automatic delegation, native leaf, native parallel execution, Sol acceptance, and legacy absence in one Codex Desktop/App Server environment. The published RC2 recorded `FRESH_REPO_CONTEXT_DELEGATION_PASS`. The published RC3 prerelease passed its recorded real RC1→RC3 Global upgrade, installer idempotency and rollback-readiness checks, plus fresh-session Sol-only and delegated Receipt cases with parent-visible child evidence. The published RC4 prerelease passed its recorded real RC3→RC4 Global upgrade and Runtime Cases A/B/C/D: reasoning-only, three-child delegated parallel execution, the no-independent-work regression, and the controlled genuine-unavailability evidence gate. RC4 changed only Receipt reason evidence-gating; the architecture flow and authority boundaries above remain unchanged.
 
 ## Compatibility boundary
 
-`v4.1.0` is validated only against the documented Codex environments and makes no compatibility promise for future Codex versions. RC3, RC4, and RC6 recorded runtime results apply only to the actual Codex environments in which they were observed. No record claims real runtime validation for every operating system, client, account, or user. Three-platform CI is source validation, not three-platform real Codex runtime validation. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
+`v4.1.1` is validated only against the documented Codex environments and makes no compatibility promise for future Codex versions. RC3, RC4, and RC6 recorded runtime results apply only to the actual Codex environments in which they were observed. No record claims real runtime validation for every operating system, client, account, or user. Three-platform CI is source validation, not three-platform real Codex runtime validation. Legacy audit bundles, migration backups, and trusted Hook metadata are non-runtime residual evidence, not current architecture dependencies.
 
 ## Official references
 

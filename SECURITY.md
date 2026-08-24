@@ -2,15 +2,16 @@
 
 ## Release boundary
 
-`v4.1.0` is the current Stable release and default installation target.
-Stable runtime Source Commit A is
-`67a72f8accc5d53ef04ff8d64d8838e397ceecda`; exact-SHA source CI passed on
-Windows, Ubuntu, and macOS. The default documentation-layer recovery wrapper is
-`CODEX_SOL_LUNA_INSTALL_ASSIST.md` at immutable commit
-`39594139eaeeda705528733fc383333504546fb6`. It pins the reviewed Stable setup
-contract `CODEX_SOL_LUNA_SETUP.md` at immutable documentation commit
-`2c912b1e1a0fdbd115eb605517fde9385b633745`; both anchors are distinct from the
-runtime source.
+`v4.1.1` is the current Stable release and default installation target.
+Stable runtime Source Commit A2 is
+`ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; exact-SHA source CI passed on
+Windows, Ubuntu, and macOS. The final bilingual README pins the reviewed
+`CODEX_SOL_LUNA_INSTALL_ASSIST.md` contract through one exact immutable
+documentation commit. That contract pins this reviewed
+`CODEX_SOL_LUNA_SETUP.md` through an earlier exact immutable documentation
+commit. Neither documentation commit is the runtime source or is passed to the
+installer; no commit is required to self-reference its own SHA.
+`v4.1.0` remains the previous immutable Stable release.
 `v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public
 Beta, and `v4.1.0-rc5` is an older historical Preview. The documented-environment RC5 O1-O10 record remains
 bounded historical evidence; RC5 Final O4/O9 re-certification was not obtained
@@ -23,10 +24,12 @@ paths were zero, and owned acceptance residuals were zero. These facts are
 environment- and scenario-bounded evidence, not a security guarantee or
 universal compatibility claim. Stable preserves the accepted RC6 product
 payload byte-for-byte and advances only installed manifest version/source
-metadata; an independent pre-publication compatibility smoke passed all six
-checks against that unchanged installed runtime. Stable publication is
-independently established only by the immutable `v4.1.0` tag and a non-draft,
-non-prerelease GitHub Release. The immutable RC6 tag and historical Prerelease
+metadata; after explicit Daily selection initialization, an independent
+one-run pre-publication compatibility smoke passed all six component checks and
+final Compatibility against that unchanged installed runtime. No real Global
+`v4.1.1` installer apply was performed. Stable publication is independently
+established only by the immutable `v4.1.1` tag and a non-draft, non-prerelease
+GitHub Release. The immutable `v4.1.0` Stable and RC6 historical Prerelease
 remain unchanged. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
@@ -44,14 +47,15 @@ historical release evidence for Receipt reason evidence-gating.
 
 ## Runtime acceptance harness safety
 
-Stable preserves the RC6 selector behavior, including normalization of
+`v4.1.1` preserves the RC6 selector behavior, including normalization of
 malformed URL parsing, hostname, and port `ValueError` cases to
-`SnapshotInvalid`. The installer payload version moves to `v4.1.0`, but an
-RC6→Stable apply changes only the ownership manifest.
-The compatibility smoke and acceptance harness are tooling only and do not
-modify product runtime. The mutable acceptance contract is limited to
+`SnapshotInvalid`. The installer payload version moves from `v4.1.0` to
+`v4.1.1`, but a `v4.1.0`→`v4.1.1` apply changes only the ownership manifest.
+The installation assistant, compatibility smoke, and acceptance harness are
+tooling only and do not modify product runtime by themselves. The mutable
+acceptance contract is limited to
 `CODEX_SOL_LUNA_SETUP.md`, `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and this file.
-`RC6_TO_STABLE_INSTALLED_BEHAVIOR_CHANGED = NO`;
+`V410_TO_V411_INSTALLED_BEHAVIOR_CHANGED = NO`;
 `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
 `scripts/accept_rc5_runtime_isolation.py` requires an explicit real
@@ -117,7 +121,7 @@ O1-O10, Final O4/O9, and Runtime Cases A/B/C/D gates.
 
 ## Installation safety
 
-`scripts/install.py --dry-run` executes the same payload, ownership, and effective-operation preflight as apply but performs no writable probe, backup, managed-file mutation, or manifest mutation. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. Stable accepts only an optional exact 40-hex `--source-commit`; malformed input fails before backup, write, or probe. A same-version idempotent run may preserve an existing valid SHA, while a version upgrade without the option never inherits an older source SHA. RC6→Stable lifecycle tests require only the ownership manifest to change and verify zero-write dry-run, backup, idempotency, exact rollback, downgrade refusal, and ownership conflict fail-closed behavior.
+`scripts/install.py --dry-run` executes the same payload, ownership, and effective-operation preflight as apply but performs no writable probe, backup, managed-file mutation, or manifest mutation. Mutating modes require an explicit `--codex-home`, fail closed on unsafe merges or ownership conflicts, and create and verify a centralized backup before writes. Stable accepts only an optional exact 40-hex `--source-commit`; malformed input fails before backup, write, or probe. A same-version idempotent run may preserve an existing valid SHA, while a version upgrade without the option never inherits an older source SHA. `v4.1.0`→`v4.1.1` lifecycle tests require only the ownership manifest to change and verify zero-write dry-run, backup, idempotency, exact rollback, downgrade refusal, and ownership conflict fail-closed behavior.
 
 The assisted installation wrapper aggregates independent read-only prerequisite
 failures and permits only bounded no-write or current-session recovery without
@@ -133,7 +137,7 @@ The natural-language latest-version workflow accepts only published non-draft st
 
 `CODEX_SOL_LUNA_INSTALL_ASSIST.md` and `CODEX_SOL_LUNA_SETUP.md` are client-side automation guidance, not server-side security boundaries. Review both contracts before execution and use the immutable commit-pinned raw assisted-installation URL from the README. Neither contract may widen permissions, replace the installer's transaction, or guess ownership; unknown ownership remains a fail-closed condition.
 
-The unreleased `v4.1.1` installation assistant preserves that boundary. It
+The `v4.1.1` Stable installation assistant preserves that boundary. It
 creates no preflight state file, binds approval to a SHA-256 identity covering
 the exact blockers, commands, official sources, scope, impact, proof, and
 rollback route, and executes approved recovery as argument vectors without a
@@ -146,10 +150,9 @@ real `CODEX_HOME` installer dry-run or write. Support reports are generated
 from a fixed whitelist and symbolize the target as `<CODEX_HOME>`. P3
 standalone bootstrap is excluded, so the assistant never claims it can run
 without a usable Python interpreter or immutable source checkout. These
-candidate controls do not change the published `v4.1.0` tag, Release, or
-default immutable installation entry.
+controls do not change the installed selector, policy, agents, or config.
 
-The candidate adds an explicit post-reload `SELECTOR_INITIALIZATION` handoff.
+The Stable assistant adds an explicit post-reload `SELECTOR_INITIALIZATION` handoff.
 The assistant does not perform that write implicitly: the displayed canonical
 `--ensure-daily --print-selection` command invokes the installed selector's
 normal managed-state transaction and must return an allowed role and matching

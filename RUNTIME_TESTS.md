@@ -1,30 +1,31 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.0 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; RC6 and RC5 remain historical Prereleases.
+Status: `v4.1.1 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.0` is the previous Stable, while RC6 and RC5 remain historical Prereleases.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.0 current Stable release — promotion evidence
+## v4.1.1 current Stable release — promotion evidence
 
-Stable Source Commit A is
-`67a72f8accc5d53ef04ff8d64d8838e397ceecda`; its exact-SHA CI passed on
-Windows, Ubuntu, and macOS. The installer payload is `v4.1.0` with manifest
+Stable Source Commit A2 is
+`ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; its exact-SHA CI passed on
+Windows, Ubuntu, and macOS. The installer payload is `v4.1.1` with manifest
 schema `1`.
 
-- RC6 -> Stable fake-home lifecycle coverage changes only
+- `v4.1.0` -> `v4.1.1` fake-home lifecycle coverage changes only
   `sol-luna-v4/install-manifest.json` and byte-preserves the selector, Global
   policy, five Luna agents, config, Daily Profile, and LKG.
 - Local coverage verifies dry-run zero writes, transaction backup,
   second-apply idempotency, exact rollback, downgrade refusal, and ownership
   conflict fail-closed behavior.
-- An independent pre-publication fresh-task compatibility smoke passed `CLI`,
-  `Luna capability`, `Selector`, `Delegation`, `Protected state`, `Runtime
-  contract`, and final `Compatibility` checks against the unchanged installed
-  product runtime.
-- No real Global Stable apply was performed. The Stable promotion reuses the
-  separately accepted RC6 product payload and changes only installed manifest
+- After explicit Daily selection initialization, an independent one-run
+  pre-publication fresh-task compatibility smoke exited `0` after about 144.2
+  seconds and passed `CLI`, `Luna capability`, `Selector`, `Delegation`,
+  `Protected state`, `Runtime contract`, and final `Compatibility` checks
+  against the unchanged installed product runtime.
+- No real Global `v4.1.1` apply was performed. The Stable promotion reuses the
+  separately accepted product payload and changes only installed manifest
   version/source metadata.
-- `RC6_TO_STABLE_INSTALLED_BEHAVIOR_CHANGED = NO`;
+- `V410_TO_V411_INSTALLED_BEHAVIOR_CHANGED = NO`;
   `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
 This promotion evidence does not broaden RC6's recorded runtime scope or imply
@@ -32,10 +33,10 @@ real-runtime validation on all three CI platforms, every Codex client, every
 account, or every user environment. Stable publication remains a separate
 immutable tag and non-draft, non-prerelease GitHub Release fact.
 
-`STABLE_SOURCE_COMMIT_CREATED = YES`;
-`STABLE_SOURCE_SHA = 67a72f8accc5d53ef04ff8d64d8838e397ceecda`;
-`STABLE_EXACT_SHA_CI = PASS`;
-`STABLE_FRESH_TASK_COMPATIBILITY = PASS`.
+`V411_SOURCE_COMMIT_CREATED = YES`;
+`V411_SOURCE_SHA = ca8e9e4caf5564ffe8d0a11fe376047594f8a748`;
+`V411_EXACT_SHA_CI = PASS`;
+`V411_FRESH_TASK_COMPATIBILITY = PASS`.
 
 ## v4.1.0-rc6 historical Preview — recorded fresh-task runtime acceptance
 
