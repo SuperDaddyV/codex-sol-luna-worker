@@ -25,7 +25,7 @@ EFFORTS = ("low", "medium", "high", "xhigh", "max")
 METADATA_SCHEMA_VERSION = 1
 STATUS_SCHEMA_VERSION = 1
 REFERENCE_COST_METRIC = "modeldial_estimated_reference_cost_usd"
-USER_AGENT = "codex-sol-luna-worker/4.1.1"
+USER_AGENT = "codex-sol-luna-worker/4.1.2"
 ROLE_BY_EFFORT = {effort: f"luna_{effort}" for effort in EFFORTS}
 BJT = timezone(timedelta(hours=8), name="BJT")
 UTC = timezone.utc

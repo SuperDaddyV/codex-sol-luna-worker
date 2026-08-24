@@ -1,5 +1,26 @@
 # Changelog
 
+## v4.1.2 (unreleased candidate)
+
+- Rejects filesystem aliases inside installer-owned paths while preserving the
+  established cross-platform `BACKUP_FAILED` result when an ordinary file
+  blocks backup creation.
+- Adds one reusable least-privilege child-environment builder for production
+  Codex, Python, Git, and approved package-manager subprocesses. Unrelated
+  ambient variables are excluded; explicit runtime, authentication, workload
+  identity, proxy, certificate, and `CODEX_HOME` requirements remain available
+  only to the child purposes that need them.
+- Preserves selected custom-provider and enabled MCP environment names declared
+  by `CODEX_HOME/config.toml`. Invalid configuration, provider `auth.command`,
+  unsafe external SQLite homes, and configuration aliases fail closed instead
+  of restoring full ambient inheritance.
+- Tightens same-day Daily Profile reuse and compatibility-smoke selector status
+  reason-code validation without changing the five Luna efforts or selection
+  algorithm.
+- Keeps the published `v4.1.1` tag, Release, immutable setup contracts, and
+  bilingual default installation entry unchanged while this candidate remains
+  unreleased. Candidate Source Commit A and exact-SHA CI evidence are pending.
+
 ## v4.1.1 (published Stable release)
 
 - Added Stable Source Commit A2

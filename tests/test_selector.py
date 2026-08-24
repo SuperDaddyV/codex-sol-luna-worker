@@ -377,6 +377,7 @@ class ModelDialFullSnapshotCostTests(unittest.TestCase):
 
 class SelectorTests(unittest.TestCase):
     def test_modeldial_request_uses_current_user_agent(self):
+        self.assertEqual(USER_AGENT, "codex-sol-luna-worker/4.1.2")
         response = MagicMock()
         response.__enter__.return_value = response
         response.__exit__.return_value = None

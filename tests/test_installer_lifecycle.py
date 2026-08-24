@@ -764,20 +764,34 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(tree_hash(target), before)
             self.assertEqual(manifest_path.read_bytes(), rc6_manifest_before)
 
-    def test_v410_to_v411_candidate_upgrade_changes_only_manifest(self):
+    def test_v411_to_v412_candidate_upgrades_selector_and_manifest(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
             call_install(target)
 
             manifest_path = target / MANIFEST_RELATIVE
+            selector_relative = "sol-luna-v4/selector.py"
+            selector_path = target / selector_relative
+            v412_selector = selector_path.read_bytes()
+            v411_selector = v412_selector.replace(
+                b"codex-sol-luna-worker/4.1.2",
+                b"codex-sol-luna-worker/4.1.1",
+            )
+            self.assertNotEqual(v411_selector, v412_selector)
+            selector_path.write_bytes(v411_selector)
+
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["version"] = "v4.1.0"
+            manifest["version"] = "v4.1.1"
+            manifest["source_commit"] = "ca8e9e4caf5564ffe8d0a11fe376047594f8a748"
+            manifest["owned_files"][selector_relative] = hashlib.sha256(
+                v411_selector
+            ).hexdigest()
             manifest_path.write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            v410_manifest_before = manifest_path.read_bytes()
+            v411_manifest_before = manifest_path.read_bytes()
             before = tree_hash(target)
 
             dry = dry_run_install(
@@ -785,12 +799,15 @@ class InstallerLifecycleTests(unittest.TestCase):
                 project_root=ROOT,
                 generated_at=FIXED_TIME + timedelta(days=1),
                 allow_validation_sandbox=True,
-                source_commit="1" * 40,
+                source_commit="2" * 40,
             )
             self.assertEqual(dry["status"], "DRY_RUN_PASS")
-            self.assertEqual(dry["effective_changes"], 1)
+            self.assertEqual(dry["effective_changes"], 2)
             self.assertEqual(dry["created"], [])
-            self.assertEqual(dry["modified"], [MANIFEST_RELATIVE.as_posix()])
+            self.assertEqual(
+                set(dry["modified"]),
+                {MANIFEST_RELATIVE.as_posix(), selector_relative},
+            )
             self.assertEqual(dry["removed"], [])
             self.assertIsNone(dry["backup"])
             self.assertEqual(tree_hash(target), before)
@@ -798,12 +815,15 @@ class InstallerLifecycleTests(unittest.TestCase):
             upgraded = call_install(
                 target,
                 generated_at=FIXED_TIME + timedelta(days=1),
-                source_commit="1" * 40,
+                source_commit="2" * 40,
             )
             self.assertEqual(upgraded["status"], "UPGRADED")
-            self.assertEqual(upgraded["effective_changes"], 1)
+            self.assertEqual(upgraded["effective_changes"], 2)
             self.assertEqual(upgraded["created"], [])
-            self.assertEqual(upgraded["modified"], [MANIFEST_RELATIVE.as_posix()])
+            self.assertEqual(
+                set(upgraded["modified"]),
+                {MANIFEST_RELATIVE.as_posix(), selector_relative},
+            )
             self.assertEqual(upgraded["removed"], [])
             backup = Path(upgraded["backup"])
             self.assertEqual(
@@ -813,11 +833,12 @@ class InstallerLifecycleTests(unittest.TestCase):
                         (backup / "snapshot.json").read_text(encoding="utf-8")
                     )["entries"]
                 },
-                {MANIFEST_RELATIVE.as_posix()},
+                {MANIFEST_RELATIVE.as_posix(), selector_relative},
             )
             installed = json.loads(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(installed["version"], VERSION)
-            self.assertEqual(installed["source_commit"], "1" * 40)
+            self.assertEqual(installed["source_commit"], "2" * 40)
+            self.assertEqual(selector_path.read_bytes(), v412_selector)
 
             second = call_install(
                 target, generated_at=FIXED_TIME + timedelta(days=2)
@@ -834,7 +855,8 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
-            self.assertEqual(manifest_path.read_bytes(), v410_manifest_before)
+            self.assertEqual(manifest_path.read_bytes(), v411_manifest_before)
+            self.assertEqual(selector_path.read_bytes(), v411_selector)
 
     def test_rc6_modified_owned_file_blocks_stable_upgrade_without_changes(self):
         with sandbox() as directory:

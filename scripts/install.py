@@ -28,7 +28,7 @@ from scripts.child_environment import build_child_environment  # noqa: E402
 
 
 SUPPORTED_PLATFORMS = {"Windows", "Linux", "Darwin"}
-VERSION = "v4.1.1"
+VERSION = "v4.1.2"
 MANIFEST_RELATIVE = PurePosixPath("sol-luna-v4/install-manifest.json")
 LEGACY_MANIFEST_RELATIVE = PurePosixPath("sol-luna-router/install-manifest.json")
 LEGACY_HOOKS_RELATIVE = ".".join(("hooks", "json"))

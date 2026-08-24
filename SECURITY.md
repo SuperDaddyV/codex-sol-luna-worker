@@ -33,6 +33,28 @@ GitHub Release. The immutable `v4.1.0` Stable and RC6 historical Prerelease
 remain unchanged. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
+## v4.1.2 candidate boundary
+
+`v4.1.2` is an unreleased candidate on `master`; `v4.1.1` remains the current
+Stable release and default installation target. No `v4.1.2` tag or Release is
+established by source publication or CI alone.
+
+The candidate replaces production child-process ambient inheritance with
+purpose-specific allowlists. Local version, selector, proof, and source checks
+receive only cross-platform runtime variables and explicit process settings.
+Codex network children additionally receive the supported authentication,
+workload identity, proxy, and CA-certificate variables they require. Selected
+custom-provider and enabled MCP environment names are extracted by name from
+the explicit `CODEX_HOME/config.toml`; their values are never printed or
+recorded. Invalid or aliased configuration, provider `auth.command`, and an
+external Codex SQLite home fail closed rather than falling back to the full
+parent environment.
+
+Installer-owned path validation also rejects symlinks, Windows reparse points,
+mount points, and cross-device aliases before managed writes. An ordinary file
+that blocks the backup root remains a backup-creation failure, preserving the
+same public reason code on Windows, Linux, and macOS.
+
 ## Data and network behavior
 
 - Project development state is repo-local under ignored `.var/`. Global runtime state uses an explicit `<CODEX_HOME>/sol-luna-v4/state` root and never depends on the current working directory.

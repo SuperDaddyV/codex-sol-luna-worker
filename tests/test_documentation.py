@@ -714,6 +714,31 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("For this public repository", security)
         self.assertNotIn("For a future public repository", security)
 
+    def test_v412_candidate_keeps_v411_public_installation_immutable(self):
+        changelog = text(ROOT / "CHANGELOG.md")
+        security = text(ROOT / "SECURITY.md")
+        public_installation = "\n".join(
+            text(path)
+            for path in (
+                README,
+                README_ZH,
+                SETUP,
+                ASSIST,
+                ASSIST_ZH,
+            )
+        )
+
+        self.assertIn("## v4.1.2 (unreleased candidate)", changelog)
+        self.assertIn("## v4.1.2 candidate boundary", security)
+        self.assertIn(
+            "`v4.1.1` is the current Stable release and default installation target.",
+            security,
+        )
+        self.assertNotIn("releases/tag/v4.1.2", public_installation)
+        self.assertNotIn("img.shields.io/badge/stable-v4.1.2", public_installation)
+        self.assertIn("releases/tag/v4.1.1", public_installation)
+        self.assertIn("img.shields.io/badge/stable-v4.1.1", public_installation)
+
     def test_stable_setup_contract_pins_runtime_source_without_self_reference(self):
         architecture = text(ROOT / "ARCHITECTURE.md")
         security = text(ROOT / "SECURITY.md")
