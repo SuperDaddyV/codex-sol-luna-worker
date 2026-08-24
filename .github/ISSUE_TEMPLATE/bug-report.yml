@@ -1,11 +1,11 @@
 name: Bug report
-description: Report a reproducible problem in the public beta
+description: Report a reproducible problem in the current Stable release
 title: "[Bug]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for helping test the `v4.1.0-rc4` public beta.
+        Thank you for helping improve the current Stable release.
 
         Use this form for install, upgrade, selector, Luna delegation, Receipt classification, rollback, uninstall, or another deterministic runtime problem.
 
@@ -73,7 +73,7 @@ body:
     attributes:
       label: Project version
       description: Enter the actual release, tag, or commit under test. The placeholder is only an example.
-      placeholder: v4.1.0-rc4
+      placeholder: v4.1.1
     validations:
       required: true
 

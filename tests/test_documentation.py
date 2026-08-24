@@ -398,7 +398,7 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, security)
 
-    def test_public_beta_feedback_forms_and_guidance(self):
+    def test_stable_feedback_forms_and_guidance(self):
         self.assertEqual(
             text(ISSUE_TEMPLATE_DIR / "config.yml").strip(),
             "blank_issues_enabled: false",
@@ -421,6 +421,10 @@ class DocumentationTests(unittest.TestCase):
                 self.assertEqual(len(labels), len(set(labels)))
                 self.assertNotIn("labels:", content)
                 self.assertNotIn("contact_links:", content)
+                self.assertIn("current Stable release", content)
+                self.assertNotIn("public beta", content.lower())
+                self.assertNotIn("public-beta", content.lower())
+                self.assertNotIn("v4.1.0-rc4", content)
 
         bug = text(ISSUE_TEMPLATE_DIR / "bug-report.yml")
         for phrase in (
@@ -430,7 +434,7 @@ class DocumentationTests(unittest.TestCase):
             "unless specifically requested during later troubleshooting",
         ):
             self.assertIn(phrase, bug)
-        self.assertIn("placeholder: v4.1.0-rc4", bug)
+        self.assertIn("placeholder: v4.1.1", bug)
         self.assertIn("`Sol/Luna: Sol-only · no independent bounded work`", bug)
         self.assertIn("`Sol/Luna: delegated · luna_max ×2 · parallel`", bug)
         self.assertIn("`No Receipt`", bug)

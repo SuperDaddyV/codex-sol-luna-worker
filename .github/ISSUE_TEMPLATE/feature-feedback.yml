@@ -1,11 +1,11 @@
 name: Feature request / feedback
-description: Suggest a focused improvement for the public beta
+description: Suggest a focused improvement for the current Stable release
 title: "[Feature request / feedback]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Feature feedback is welcome for the `v4.1.0-rc4` public beta.
+        Feature feedback is welcome for the current Stable release.
 
         **Non-guarantee notice.** Feature feedback does not guarantee implementation, roadmap inclusion, compatibility, support, or a delivery timeline. Suggestions remain subject to project scope, evidence, review, and Sol-owned acceptance.
 

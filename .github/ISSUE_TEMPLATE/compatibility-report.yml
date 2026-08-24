@@ -1,5 +1,5 @@
 name: Compatibility report
-description: Report public-beta compatibility, including a successful run
+description: Report compatibility with the current Stable release, including a successful run
 title: "[Compatibility]: "
 body:
   - type: markdown
@@ -52,14 +52,14 @@ body:
     attributes:
       label: From version
       description: Optional. For an upgrade, enter the version you upgraded from.
-      placeholder: v4.0.0 / v4.1.0-rc3 / Unknown
+      placeholder: v4.1.0 / v4.1.0-rc6 / Unknown
 
   - type: input
     id: installed_version
     attributes:
       label: Installed version
       description: Enter the version actually installed or tested.
-      placeholder: v4.1.0-rc4
+      placeholder: v4.1.1
     validations:
       required: true
 
@@ -144,7 +144,7 @@ body:
     id: overall_result
     attributes:
       label: Overall result
-      description: Summarize what worked, what did not, and whether you would run this public beta again in this environment.
+      description: Summarize what worked, what did not, and whether you would run this Stable release again in this environment.
       placeholder: Works normally on my environment
     validations:
       required: true
