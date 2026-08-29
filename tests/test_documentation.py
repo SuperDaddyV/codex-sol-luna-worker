@@ -71,6 +71,7 @@ V413_RUNTIME_SOURCE_COMMIT = "71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4"
 V413_EXACT_CI_RUN = "33253340074"
 V413_MASTER_EVIDENCE_COMMIT = "bafc41b50269a0b65aba64594e850f6171a714ac"
 V413_MASTER_CI_RUN = "33253429974"
+V413_SETUP_CONTRACT_COMMIT = "5c29abc9aed340f4a7c45c22a0f8b36242b920bb"
 V412_BASELINE_RUNTIME_SOURCE_COMMIT = (
     "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 )
@@ -208,12 +209,12 @@ class DocumentationTests(unittest.TestCase):
             for historical in ("RC3", "RC4", "RC5", "RC6"):
                 self.assertNotIn(historical, content)
         assist = text(ASSIST)
-        self.assertIn(V412_RUNTIME_SOURCE_COMMIT, assist)
+        self.assertIn(V413_RUNTIME_SOURCE_COMMIT, assist)
         self.assertEqual(
             SETUP_RAW_PATTERN.findall(assist),
-            [PINNED_SETUP_COMMIT],
+            [V413_SETUP_CONTRACT_COMMIT],
         )
-        self.assertIn(V412_RUNTIME_SOURCE_COMMIT, text(SETUP))
+        self.assertIn(V413_RUNTIME_SOURCE_COMMIT, text(SETUP))
         self.assertIn("single prompt", english)
         self.assertIn("只粘贴下面这一个提示词", chinese)
         for stale in (
@@ -253,14 +254,14 @@ class DocumentationTests(unittest.TestCase):
         content = text(ASSIST)
         setup_url = (
             "https://raw.githubusercontent.com/SuperDaddyV/"
-            f"codex-sol-luna-worker/{V412_SETUP_CONTRACT_COMMIT}/"
+            f"codex-sol-luna-worker/{V413_SETUP_CONTRACT_COMMIT}/"
             "CODEX_SOL_LUNA_SETUP.md"
         )
 
         for identity in (
-            "Stable release: `v4.1.2`",
-            V412_RUNTIME_SOURCE_COMMIT,
-            V412_SETUP_CONTRACT_COMMIT,
+            "Stable release: `v4.1.3`",
+            V413_RUNTIME_SOURCE_COMMIT,
+            V413_SETUP_CONTRACT_COMMIT,
             setup_url,
             "`v4.1.0-rc6` remains an immutable historical",
         ):
@@ -299,9 +300,9 @@ class DocumentationTests(unittest.TestCase):
             content,
         )
 
-    def test_v412_stable_assistance_is_deterministic_and_bounded(self):
+    def test_v413_stable_assistance_is_deterministic_and_bounded(self):
         content = text(ASSIST)
-        stable = content.index("## 11. v4.1.2 deterministic Stable assistance")
+        stable = content.index("## 11. v4.1.3 deterministic Stable assistance")
         capability = content.index("### 11.6 Early capability and installer handoff")
         dry_run = content.index("installer's non-mutating dry-run", capability)
         self.assertLess(stable, capability)
@@ -352,12 +353,12 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("DAILY_SELECTION_PROOF_REQUIRED", content)
         self.assertIn("--ensure-daily --print-selection", content)
         self.assertIn("The smoke remains status-only", content)
-        self.assertNotIn("unreleased `v4.1.2`", content)
+        self.assertNotIn("unreleased `v4.1.3`", content)
         self.assertNotIn("assistance candidate", content)
         self.assertNotIn(PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT, content)
         self.assertNotIn(PREVIOUS_STABLE_SETUP_COMMIT, content)
         self.assertEqual(
-            content.count(f"--source-commit {V412_RUNTIME_SOURCE_COMMIT}"), 2
+            content.count(f"--source-commit {V413_RUNTIME_SOURCE_COMMIT}"), 2
         )
 
     def test_chinese_assistance_document_is_review_only_and_covers_same_boundaries(self):
@@ -365,8 +366,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("本文件只用于中文审阅，不是可执行安装权威", content)
         self.assertIn("英文 `CODEX_SOL_LUNA_INSTALL_ASSIST.md`", content)
         self.assertIn("不能执行可变 `master` 上的中文译文", content)
-        self.assertIn(V412_RUNTIME_SOURCE_COMMIT, content)
-        self.assertIn(V412_SETUP_CONTRACT_COMMIT, content)
+        self.assertIn(V413_RUNTIME_SOURCE_COMMIT, content)
+        self.assertIn(V413_SETUP_CONTRACT_COMMIT, content)
         for phrase in (
             "`v4.1.0-rc6` 继续作为",
             "不可变的历史 Prerelease",
@@ -760,7 +761,7 @@ class DocumentationTests(unittest.TestCase):
         )
         self.assertIn("releases/tag/v4.1.2", public_installation)
         self.assertIn("img.shields.io/badge/stable-v4.1.2", public_installation)
-        self.assertIn("Stable release: `v4.1.2`", text(ASSIST))
+        self.assertIn("Stable release: `v4.1.3`", text(ASSIST))
         self.assertNotIn("releases/tag/v4.1.1", text(README) + text(README_ZH))
         self.assertNotIn("img.shields.io/badge/stable-v4.1.1", public_installation)
         stable_public_claims = "\n".join(
@@ -932,7 +933,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertEqual(SETUP_RAW_PATTERN.findall(chinese), [])
         self.assertEqual(
             SETUP_RAW_PATTERN.findall(text(ASSIST)),
-            [V412_SETUP_CONTRACT_COMMIT],
+            [V413_SETUP_CONTRACT_COMMIT],
         )
 
     def test_all_local_documentation_links_exist(self):

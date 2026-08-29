@@ -1,12 +1,12 @@
-# Sol/Luna v4.1.2 Assisted Installation Contract
+# Sol/Luna v4.1.3 Assisted Installation Contract
 
-Assistance contract version: `3`.
+Assistance contract version: `4`.
 
 The English contract is the only executable authority. The review-only Chinese
 translation is `CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md`; it must identify this
 English contract and must not become a second executable installation source.
 
-This document is the user-facing recovery wrapper for the reviewed `v4.1.2`
+This document is the user-facing recovery wrapper for the reviewed `v4.1.3`
 Stable installation. It improves prerequisite diagnosis and bounded recovery;
 it does not change the Stable runtime payload or installer and does not itself
 create, move, or rewrite a tag or Release.
@@ -15,17 +15,17 @@ create, move, or rewrite a tag or Release.
 
 Use only these reviewed identities:
 
-- Stable release: `v4.1.2`;
+- Stable release: `v4.1.3`;
 - Stable runtime Source Commit A:
-  `551520c2435aca94d60132f292edbd53cc975cbe`;
+  `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`;
 - Stable setup contract documentation commit:
-  `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`;
+  `5c29abc9aed340f4a7c45c22a0f8b36242b920bb`;
 - Stable setup contract:
-  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md`.
+  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md`.
 
 Never substitute mutable `master`, another branch, `target_commitish`, an
-archive, or a different Release. `v4.1.1` remains the previous immutable
-Stable release, and `v4.1.0` remains an older immutable Stable release.
+archive, or a different Release. `v4.1.2` remains the previous immutable
+Stable release, and `v4.1.1` and `v4.1.0` remain older immutable Stable releases.
 `v4.1.0-rc6` remains an immutable historical Prerelease / Preview /
 Public Beta. Do not move or rewrite any tag or Release.
 
@@ -77,8 +77,8 @@ Display this summary before any recovery action:
 
 ```text
 Sol/Luna Assisted Installation
-Target: v4.1.2
-Runtime source: 551520c2435aca94d60132f292edbd53cc975cbe
+Target: v4.1.3
+Runtime source: 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 Codex CLI: PASS <version> / MISSING_OR_UNUSABLE
 Python: PASS <version> / MISSING_OR_UNSUPPORTED
 Git: PASS <version> / MISSING
@@ -169,7 +169,7 @@ a preflight state file before `Ready: YES`.
 
 ```text
 SOL_LUNA_ASSIST_RESUME
-Target: v4.1.2
+Target: v4.1.3
 Phase: PREREQUISITE_RECHECK / SELECTOR_INITIALIZATION / FRESH_TASK_SMOKE
 Completed checks: <names only>
 Pending blocker: <one reason code>
@@ -201,7 +201,7 @@ Only after the prerequisite summary reports `Ready: YES`:
 
 1. read the pinned Stable setup contract in full;
 2. execute it exactly against Stable runtime source commit
-   `551520c2435aca94d60132f292edbd53cc975cbe`;
+   `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`;
 3. preserve its capability, immutable-source, ownership, dry-run, transaction,
    backup, apply, validation, and fresh-task gates.
 
@@ -263,10 +263,10 @@ personal paths, or unrelated file content in reports. The installer remains the
 sole authority for owned-file merge, backup, rollback, migration, and uninstall
 behavior.
 
-## 11. v4.1.2 deterministic Stable assistance
+## 11. v4.1.3 deterministic Stable assistance
 
 This section specifies the deterministic installation experience for the
-reviewed `v4.1.2` Stable target. It is subordinate to the exact setup contract
+reviewed `v4.1.3` Stable target. It is subordinate to the exact setup contract
 and Source Commit A above and is not authority to publish, retag, or move a
 Release. The bilingual README must pin this English contract through a separate
 exact immutable documentation commit; that commit is not the runtime source.
@@ -291,8 +291,8 @@ The assistant exposes these commands:
 <PYTHON> scripts/install_assist.py check --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py plan --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py recover --codex-home <CODEX_HOME> --approve <PLAN_ID>
-<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
-<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
+<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
+<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 <PYTHON> scripts/install_assist.py report --codex-home <CODEX_HOME> --format json
 ```
 

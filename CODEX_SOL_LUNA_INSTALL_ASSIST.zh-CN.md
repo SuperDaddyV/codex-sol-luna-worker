@@ -6,22 +6,22 @@
 > 还必须固定到该英文文件的
 > exact commit，不能执行可变 `master` 上的中文译文。
 
-中文审阅版版本：`3`。
+中文审阅版版本：`4`。
 
 ## 1．当前 Stable 的不可变目标
 
-当前 Stable 目标为 `v4.1.2`：
+当前 Stable 目标为 `v4.1.3`：
 
 - Stable runtime Source Commit A：
-  `551520c2435aca94d60132f292edbd53cc975cbe`；
+  `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`；
 - Stable setup contract documentation commit：
-  `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`；
+  `5c29abc9aed340f4a7c45c22a0f8b36242b920bb`；
 - Stable setup contract：
-  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md`。
+  `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md`。
 
 不得替换为 `master`、其他分支、`target_commitish`、归档文件或其他
-Release。`v4.1.1` 继续作为上一版不可变 Stable，`v4.1.0` 继续作为更早的
-不可变 Stable，`v4.1.0-rc6` 继续作为
+Release。`v4.1.2` 继续作为上一版不可变 Stable，`v4.1.1` 和 `v4.1.0`
+继续作为更早的不可变 Stable，`v4.1.0-rc6` 继续作为
 不可变的历史 Prerelease／Preview／Public Beta；不移动、不改写任何 tag 或
 Release。
 
@@ -153,7 +153,7 @@ Next proof: <one read-only proof or user action>
   `scripts/install_assist.py` 接管；
 - 不得宣传脚本能独立修复「完全没有 Python／Git」的机器。
 
-## 8．`v4.1.2` 确定性 Stable 安装助手
+## 8．`v4.1.3` 确定性 Stable 安装助手
 
 以下命令只供审阅；实际执行必须以 README 通过 exact commit 固定的英文合同
 为准：
@@ -162,8 +162,8 @@ Next proof: <one read-only proof or user action>
 <PYTHON> scripts/install_assist.py check --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py plan --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py recover --codex-home <CODEX_HOME> --approve <PLAN_ID>
-<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
-<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
+<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
+<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 <PYTHON> scripts/install_assist.py report --codex-home <CODEX_HOME> --format json
 ```
 
