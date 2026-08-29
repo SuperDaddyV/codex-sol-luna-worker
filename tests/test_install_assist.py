@@ -447,7 +447,7 @@ class SnapshotAndReportTests(unittest.TestCase):
             for version, expected in (
                 (VERSION, "CURRENT"),
                 ("v4.1.0", "OLDER"),
-                ("v4.1.4", "NEWER"),
+                ("v4.1.5", "NEWER"),
                 ("not-semver", "INVALID"),
             ):
                 with self.subTest(version=version):

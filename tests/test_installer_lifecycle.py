@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+import scripts.install as installer_module
 from scripts.install import (
     AGENTS_BEGIN,
     AGENTS_END,
@@ -764,7 +765,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(tree_hash(target), before)
             self.assertEqual(manifest_path.read_bytes(), rc6_manifest_before)
 
-    def test_v412_to_v413_candidate_upgrades_selector_and_manifest(self):
+    def test_v413_to_v414_candidate_upgrades_selector_and_manifest(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -773,25 +774,25 @@ class InstallerLifecycleTests(unittest.TestCase):
             manifest_path = target / MANIFEST_RELATIVE
             selector_relative = "sol-luna-v4/selector.py"
             selector_path = target / selector_relative
-            v413_selector = selector_path.read_bytes()
-            v412_selector = v413_selector.replace(
+            v414_selector = selector_path.read_bytes()
+            v413_selector = v414_selector.replace(
+                b"codex-sol-luna-worker/4.1.4",
                 b"codex-sol-luna-worker/4.1.3",
-                b"codex-sol-luna-worker/4.1.2",
             )
-            self.assertNotEqual(v412_selector, v413_selector)
-            selector_path.write_bytes(v412_selector)
+            self.assertNotEqual(v413_selector, v414_selector)
+            selector_path.write_bytes(v413_selector)
 
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["version"] = "v4.1.2"
-            manifest["source_commit"] = "551520c2435aca94d60132f292edbd53cc975cbe"
+            manifest["version"] = "v4.1.3"
+            manifest["source_commit"] = "71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4"
             manifest["owned_files"][selector_relative] = hashlib.sha256(
-                v412_selector
+                v413_selector
             ).hexdigest()
             manifest_path.write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            v412_manifest_before = manifest_path.read_bytes()
+            v413_manifest_before = manifest_path.read_bytes()
             before = tree_hash(target)
 
             dry = dry_run_install(
@@ -838,7 +839,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             installed = json.loads(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(installed["version"], VERSION)
             self.assertEqual(installed["source_commit"], "2" * 40)
-            self.assertEqual(selector_path.read_bytes(), v413_selector)
+            self.assertEqual(selector_path.read_bytes(), v414_selector)
 
             second = call_install(
                 target, generated_at=FIXED_TIME + timedelta(days=2)
@@ -855,10 +856,10 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
-            self.assertEqual(manifest_path.read_bytes(), v412_manifest_before)
-            self.assertEqual(selector_path.read_bytes(), v412_selector)
+            self.assertEqual(manifest_path.read_bytes(), v413_manifest_before)
+            self.assertEqual(selector_path.read_bytes(), v413_selector)
 
-    def test_v412_modified_selector_blocks_v413_upgrade_without_changes(self):
+    def test_v413_modified_selector_blocks_v414_upgrade_without_changes(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -867,23 +868,23 @@ class InstallerLifecycleTests(unittest.TestCase):
             manifest_path = target / MANIFEST_RELATIVE
             selector_relative = "sol-luna-v4/selector.py"
             selector_path = target / selector_relative
-            v412_selector = selector_path.read_bytes().replace(
+            v413_selector = selector_path.read_bytes().replace(
+                b"codex-sol-luna-worker/4.1.4",
                 b"codex-sol-luna-worker/4.1.3",
-                b"codex-sol-luna-worker/4.1.2",
             )
-            selector_path.write_bytes(v412_selector)
+            selector_path.write_bytes(v413_selector)
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["version"] = "v4.1.2"
-            manifest["source_commit"] = "551520c2435aca94d60132f292edbd53cc975cbe"
+            manifest["version"] = "v4.1.3"
+            manifest["source_commit"] = "71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4"
             manifest["owned_files"][selector_relative] = hashlib.sha256(
-                v412_selector
+                v413_selector
             ).hexdigest()
             manifest_path.write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
 
-            selector_path.write_bytes(v412_selector + b"\n# user change\n")
+            selector_path.write_bytes(v413_selector + b"\n# user change\n")
             before = tree_hash(target)
             for action in ("dry-run", "apply"):
                 with self.subTest(action=action):
@@ -1517,6 +1518,50 @@ class InstallerLifecycleTests(unittest.TestCase):
                 uninstall(target, project_root=ROOT, allow_validation_sandbox=True)
             self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
             self.assertTrue((target / "agents" / "luna-low.toml").is_file())
+
+    def test_uninstall_backup_verification_failure_preserves_exact_tree(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            call_install(target)
+            before = tree_hash(target)
+
+            with patch(
+                "scripts.install._verify_backup",
+                side_effect=InstallerError("BACKUP_FAILED", "forced verification failure"),
+            ):
+                with self.assertRaises(InstallerError) as raised:
+                    uninstall(target, project_root=ROOT, allow_validation_sandbox=True)
+
+            self.assertEqual(raised.exception.reason_code, "BACKUP_FAILED")
+            self.assertEqual(tree_hash(target), before)
+
+    def test_uninstall_installer_error_after_partial_apply_rolls_back_exact_tree(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            call_install(target)
+            before = tree_hash(target)
+            original_apply_operations = installer_module._apply_operations
+            failed = False
+
+            def fail_after_first_operation(target, operations):
+                nonlocal failed
+                first = sorted(operations)[0]
+                original_apply_operations(target, {first: operations[first]})
+                failed = True
+                raise InstallerError("OWNERSHIP_CONFLICT", "forced uninstall failure")
+
+            with patch(
+                "scripts.install._apply_operations",
+                side_effect=fail_after_first_operation,
+            ):
+                with self.assertRaises(InstallerError) as raised:
+                    uninstall(target, project_root=ROOT, allow_validation_sandbox=True)
+
+            self.assertTrue(failed)
+            self.assertEqual(raised.exception.reason_code, "OWNERSHIP_CONFLICT")
+            self.assertEqual(tree_hash(target), before)
 
     def test_cli_apply_and_second_run_use_validation_sandbox_only(self):
         with sandbox() as directory:

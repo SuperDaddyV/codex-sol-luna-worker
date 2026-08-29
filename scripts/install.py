@@ -28,7 +28,7 @@ from scripts.child_environment import build_child_environment  # noqa: E402
 
 
 SUPPORTED_PLATFORMS = {"Windows", "Linux", "Darwin"}
-VERSION = "v4.1.3"
+VERSION = "v4.1.4"
 MANIFEST_RELATIVE = PurePosixPath("sol-luna-v4/install-manifest.json")
 LEGACY_MANIFEST_RELATIVE = PurePosixPath("sol-luna-router/install-manifest.json")
 LEGACY_HOOKS_RELATIVE = ".".join(("hooks", "json"))
@@ -1543,16 +1543,22 @@ def uninstall(
     effective = _effective_operations(target, operations)
     now = generated_at or _utc_now()
     backup_root = _choose_backup_root(target, now)
-    _create_backup(target, list(effective), backup_root)
+    _create_backup(target, sorted(effective), backup_root)
     try:
+        _verify_backup(backup_root, sorted(effective))
         _apply_operations(target, effective)
-    except (OSError, PermissionError) as exc:
-        rollback(
-            target,
-            backup_root,
-            project_root=project_root,
-            allow_validation_sandbox=allow_validation_sandbox,
-        )
+    except Exception as exc:
+        try:
+            rollback(
+                target,
+                backup_root,
+                project_root=project_root,
+                allow_validation_sandbox=allow_validation_sandbox,
+            )
+        except InstallerError:
+            pass
+        if isinstance(exc, InstallerError):
+            raise
         raise InstallerError("APPLY_FAILED", "uninstall failed") from exc
     shutil.rmtree(backup_root)
     _remove_empty_parents(backup_root, target)
