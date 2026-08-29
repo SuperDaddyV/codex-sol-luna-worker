@@ -45,9 +45,10 @@ PREVIOUS_STABLE_SETUP_COMMIT = "2c912b1e1a0fdbd115eb605517fde9385b633745"
 PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT = "67a72f8accc5d53ef04ff8d64d8838e397ceecda"
 V411_ASSIST_CONTRACT_COMMIT = "17eb1d370929e884f91c5f1920a2e0868ce4a421"
 V411_SETUP_CONTRACT_COMMIT = "d4a044a04df509285ef38c6afc28b5a68a48a0f9"
-PINNED_ASSIST_COMMIT = "a130c676fa5924e44034dc8c27f3dc0abfc3bcad"
-PINNED_SETUP_COMMIT = "4b2a6004fb92b6661166cb73e656cc2888b0a2ef"
-V412_SETUP_CONTRACT_COMMIT = PINNED_SETUP_COMMIT
+V412_ASSIST_CONTRACT_COMMIT = "a130c676fa5924e44034dc8c27f3dc0abfc3bcad"
+V412_SETUP_CONTRACT_COMMIT = "4b2a6004fb92b6661166cb73e656cc2888b0a2ef"
+PINNED_ASSIST_COMMIT = "23eeba1a5fb21e0483f4140aeca18b483f3e85bf"
+PINNED_SETUP_COMMIT = "5c29abc9aed340f4a7c45c22a0f8b36242b920bb"
 PINNED_ASSIST_BLOB_URL = (
     "https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/"
     f"{PINNED_ASSIST_COMMIT}/CODEX_SOL_LUNA_INSTALL_ASSIST.md"
@@ -71,7 +72,7 @@ V413_RUNTIME_SOURCE_COMMIT = "71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4"
 V413_EXACT_CI_RUN = "33253340074"
 V413_MASTER_EVIDENCE_COMMIT = "bafc41b50269a0b65aba64594e850f6171a714ac"
 V413_MASTER_CI_RUN = "33253429974"
-V413_SETUP_CONTRACT_COMMIT = "5c29abc9aed340f4a7c45c22a0f8b36242b920bb"
+V413_SETUP_CONTRACT_COMMIT = PINNED_SETUP_COMMIT
 V412_BASELINE_RUNTIME_SOURCE_COMMIT = (
     "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 )
@@ -150,8 +151,8 @@ class DocumentationTests(unittest.TestCase):
         ):
             content = text(path)
             self.assertIn("actions/workflows/validate.yml/badge.svg", content)
-            self.assertIn("releases/tag/v4.1.2", content)
-            self.assertIn("img.shields.io/badge/stable-v4.1.2", content)
+            self.assertIn("releases/tag/v4.1.3", content)
+            self.assertIn("img.shields.io/badge/stable-v4.1.3", content)
             self.assertIn("github/license", content)
             self.assertEqual(
                 re.findall(r"(?m)^## (.+)$", content),
@@ -188,7 +189,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("仅安装 Codex Desktop 还不够", chinese)
         self.assertIn("用于不可变精确 commit checkout 的 Git", chinese)
 
-    def test_readme_uses_single_v412_immutable_installation_entry(self):
+    def test_readme_uses_single_v413_immutable_installation_entry(self):
         english = text(README)
         chinese = text(README_ZH)
         for content in (english, chinese):
@@ -205,7 +206,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
             self.assertIn(PINNED_ASSIST_COMMIT, content)
             self.assertIn(PINNED_SETUP_COMMIT, content)
-            self.assertIn(V412_RUNTIME_SOURCE_COMMIT, content)
+            self.assertIn(V413_RUNTIME_SOURCE_COMMIT, content)
             for historical in ("RC3", "RC4", "RC5", "RC6"):
                 self.assertNotIn(historical, content)
         assist = text(ASSIST)
@@ -432,7 +433,7 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, architecture + content)
         for phrase in (
-            "v4.1.3 unreleased candidate security delta",
+            "v4.1.3 Stable boundary",
             "executes approved recovery as argument vectors without a",
             "five-effort Luna probe is ephemeral",
             "P3",
@@ -544,8 +545,8 @@ class DocumentationTests(unittest.TestCase):
                 )
             self.assertIn("CODEX_HOME", content)
             self.assertIn(whole_warning, content)
-        self.assertIn("v4.1.2", english)
-        self.assertIn("v4.1.2", chinese)
+        self.assertIn("v4.1.3", english)
+        self.assertIn("v4.1.3", chinese)
         self.assertIn("[Bug Report]", english)
         self.assertIn("[Compatibility Report]", chinese)
 
@@ -577,8 +578,8 @@ class DocumentationTests(unittest.TestCase):
             self.assertEqual(content.count(default_assist_url), 1)
             self.assertIn(PINNED_ASSIST_COMMIT, content)
             self.assertIn(PINNED_SETUP_COMMIT, content)
-            self.assertIn("releases/tag/v4.1.2", content)
-            self.assertIn("img.shields.io/badge/stable-v4.1.2", content)
+            self.assertIn("releases/tag/v4.1.3", content)
+            self.assertIn("img.shields.io/badge/stable-v4.1.3", content)
             self.assertNotIn("historical_preview", content)
             self.assertNotIn(LEGACY_DEFAULT_SETUP_COMMIT, content)
             self.assertNotRegex(content, r"\bRC[3-6]\b")
@@ -651,8 +652,8 @@ class DocumentationTests(unittest.TestCase):
         )
         self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
         self.assertIn("Global Runtime G1-G7", combined)
-        self.assertIn("v4.1.2 Stable", text(README))
-        self.assertIn("v4.1.2 Stable", text(README_ZH))
+        self.assertIn("v4.1.3 Stable", text(README))
+        self.assertIn("v4.1.3 Stable", text(README_ZH))
         self.assertNotRegex(combined, r"v4\.1\.0-rc3[^\n]*(?:—|is|是)\s*STABLE")
         self.assertNotIn(
             "RC2 repository-context delegation validation remains pending", combined
@@ -660,7 +661,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn("RC3 Receipt runtime acceptance has not run", combined)
         runtime = text(ROOT / "RUNTIME_TESTS.md")
         self.assertIn(
-            "v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
+            "v4.1.3 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
             runtime,
         )
         self.assertIn(
@@ -711,7 +712,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("For this public repository", security)
         self.assertNotIn("For a future public repository", security)
 
-    def test_v412_stable_publication_uses_v412_immutable_installation_chain(self):
+    def test_v413_stable_publication_uses_v413_immutable_installation_chain(self):
         changelog = text(ROOT / "CHANGELOG.md")
         security = text(ROOT / "SECURITY.md")
         public_installation = "\n".join(
@@ -725,8 +726,8 @@ class DocumentationTests(unittest.TestCase):
             )
         )
 
-        self.assertIn("## v4.1.2 (published Stable release)", changelog)
-        self.assertIn("## v4.1.2 Stable boundary", security)
+        self.assertIn("## v4.1.3 (published Stable release)", changelog)
+        self.assertIn("## v4.1.3 Stable boundary", security)
         stable_docs = (
             changelog,
             security,
@@ -735,42 +736,35 @@ class DocumentationTests(unittest.TestCase):
         )
         stable_evidence = "\n".join(stable_docs)
         for value in (
-            V412_RUNTIME_SOURCE_COMMIT,
-            V412_EXACT_CI_RUN,
-            V412_MASTER_EVIDENCE_COMMIT,
-            V412_MASTER_CI_RUN,
-            V412_BASELINE_RUNTIME_SOURCE_COMMIT,
-            "357",
-            "DRY_RUN_PASS",
-            "UPGRADED",
-            "CURRENT_INSTALLATION_PASS",
-            "configuration_preserved true",
-            "effective_changes 2",
-            "effective_changes 0",
-            "backup NONE",
-            "169.4",
-            "codex-cli 0.146.0",
-            "V412_PUBLIC_RELEASE = STABLE",
+            V413_RUNTIME_SOURCE_COMMIT,
+            V413_EXACT_CI_RUN,
+            V413_MASTER_EVIDENCE_COMMIT,
+            V413_MASTER_CI_RUN,
+            "363",
+            "V413_FAKE_HOME_LIFECYCLE = PASS",
+            "V413_REAL_GLOBAL_APPLY = NOT_RUN",
+            "V413_FRESH_TASK_COMPATIBILITY = NOT_RUN",
+            "V413_PUBLIC_RELEASE = STABLE",
             PINNED_SETUP_COMMIT,
             PINNED_ASSIST_COMMIT,
         ):
             self.assertIn(value, stable_evidence)
         self.assertIn(
-            "`v4.1.2` is the current Stable release and default installation target.",
+            "`v4.1.3` is the current Stable release and default installation target.",
             security,
         )
-        self.assertIn("releases/tag/v4.1.2", public_installation)
-        self.assertIn("img.shields.io/badge/stable-v4.1.2", public_installation)
+        self.assertIn("releases/tag/v4.1.3", public_installation)
+        self.assertIn("img.shields.io/badge/stable-v4.1.3", public_installation)
         self.assertIn("Stable release: `v4.1.3`", text(ASSIST))
-        self.assertNotIn("releases/tag/v4.1.1", text(README) + text(README_ZH))
-        self.assertNotIn("img.shields.io/badge/stable-v4.1.1", public_installation)
+        self.assertNotIn("releases/tag/v4.1.2", text(README) + text(README_ZH))
+        self.assertNotIn("img.shields.io/badge/stable-v4.1.2", public_installation)
         stable_public_claims = "\n".join(
             (text(README), text(README_ZH), text(ROOT / "RUNTIME_TESTS.md"))
         ).lower()
         for unresolved in (
-            "unreleased `v4.1.2`",
-            "v4.1.2 candidate",
-            "v4.1.2 not_established",
+            "unreleased `v4.1.3`",
+            "v4.1.3 candidate",
+            "v4.1.3 not_established",
         ):
             self.assertNotIn(unresolved, stable_public_claims)
 
@@ -798,15 +792,15 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, security)
         for number in range(1, 11):
             self.assertRegex(setup, rf"(?m)^- O{number} .* — `PASS`[;.]$")
-        self.assertIn("v4.1.2 (published Stable release)", changelog)
+        self.assertIn("v4.1.3 (published Stable release)", changelog)
         self.assertIn("Source Commit A", changelog)
         for content in (architecture, security):
             self.assertIn(
-                "`v4.1.2` is the current Stable release and default installation target.",
+                "`v4.1.3` is the current Stable release and default installation target.",
                 content,
             )
         self.assertIn(
-            "v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
+            "v4.1.3 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
             architecture,
         )
         self.assertIn("Contract version: `v4.1.3`", setup)
@@ -830,11 +824,11 @@ class DocumentationTests(unittest.TestCase):
         )
         self.assertNotRegex(readmes, r"\bRC[3-6]\b")
         self.assertIn(
-            "Install the pinned v4.1.2 Stable target",
+            "Install the pinned v4.1.3 Stable target",
             text(README),
         )
         self.assertIn(
-            "安装固定的 v4.1.2 Stable 目标",
+            "安装固定的 v4.1.3 Stable 目标",
             text(README_ZH),
         )
         self.assertIn(f"checkout --detach {V413_RUNTIME_SOURCE_COMMIT}", setup)
@@ -1031,7 +1025,7 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, content)
         self.assertNotIn("--validation-sandbox --codex-home <CODEX_HOME>", content)
 
-    def test_v413_candidate_boundary_is_explicit_and_unpublished(self):
+    def test_v413_stable_boundary_is_explicit_and_published(self):
         architecture = text(ROOT / "ARCHITECTURE.md")
         changelog = text(ROOT / "CHANGELOG.md")
         security = text(ROOT / "SECURITY.md")
@@ -1039,15 +1033,18 @@ class DocumentationTests(unittest.TestCase):
         setup = text(SETUP)
         combined = "\n".join((architecture, changelog, security, runtime, setup))
 
-        self.assertIn("v4.1.3 — UNRELEASED CANDIDATE", architecture)
-        self.assertIn("## v4.1.3 (unreleased candidate)", changelog)
-        self.assertIn("## v4.1.3 unreleased candidate security delta", security)
+        self.assertIn(
+            "v4.1.3 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
+            architecture,
+        )
+        self.assertIn("## v4.1.3 (published Stable release)", changelog)
+        self.assertIn("## v4.1.3 Stable boundary", security)
         self.assertIn("schemas `1.0` and `1.1`", combined)
         self.assertIn("`rankings` backend axis", architecture)
         self.assertIn("`overallRankings`, `overallBatch`", architecture)
         self.assertIn("v4.1.2-to-v4.1.3", changelog)
         self.assertIn(
-            "v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
+            "v4.1.2 — PREVIOUS IMMUTABLE STABLE",
             architecture,
         )
         self.assertIn("Setup and Assisted", architecture)
@@ -1058,8 +1055,9 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("363", combined)
         self.assertIn("No real Global v4.1.3 installer apply", security)
         self.assertIn("Contract version: `v4.1.3`", setup)
-        self.assertIn("V413_PUBLIC_RELEASE = NOT_ESTABLISHED", runtime)
-        self.assertNotIn("v4.1.3 (published Stable release)", combined)
+        self.assertIn("V413_PUBLIC_RELEASE = STABLE", runtime)
+        self.assertNotIn("v4.1.3 — UNRELEASED CANDIDATE", combined)
+        self.assertNotIn("## v4.1.3 (unreleased candidate)", combined)
 
 
 if __name__ == "__main__":

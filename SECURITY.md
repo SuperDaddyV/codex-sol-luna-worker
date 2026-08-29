@@ -2,18 +2,22 @@
 
 ## Release boundary
 
-`v4.1.2` is the current Stable release and default installation target.
+`v4.1.3` is the current Stable release and default installation target.
 Stable runtime Source Commit A is
-`551520c2435aca94d60132f292edbd53cc975cbe`; exact-SHA source CI run
-`32717295801` passed on Windows, Ubuntu, and macOS with `357` tests all
+`71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`; exact-SHA source CI run
+`33253340074` passed on Windows, Ubuntu, and macOS with `363` tests all
 `PASS`. The final bilingual README pins the reviewed
 `CODEX_SOL_LUNA_INSTALL_ASSIST.md` contract at immutable documentation Commit
-`a130c676fa5924e44034dc8c27f3dc0abfc3bcad`. That contract pins this reviewed
+`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`. That contract pins this reviewed
 `CODEX_SOL_LUNA_SETUP.md` at immutable documentation Commit
-`4b2a6004fb92b6661166cb73e656cc2888b0a2ef`. Neither documentation commit is
+`5c29abc9aed340f4a7c45c22a0f8b36242b920bb`. Neither documentation commit is
 the runtime source or is passed to the installer; no commit is required to
 self-reference its own SHA.
-`v4.1.1` remains the previous immutable Stable release, with historical runtime
+`v4.1.2` remains the previous immutable Stable release, with historical runtime
+Source Commit `551520c2435aca94d60132f292edbd53cc975cbe`, Setup anchor
+`4b2a6004fb92b6661166cb73e656cc2888b0a2ef`, and Assisted Installation anchor
+`a130c676fa5924e44034dc8c27f3dc0abfc3bcad`. `v4.1.1` is an older Stable, with
+historical runtime
 Source Commit `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`, Setup anchor
 `d4a044a04df509285ef38c6afc28b5a68a48a0f9`, and Assisted Installation anchor
 `17eb1d370929e884f91c5f1920a2e0868ce4a421`. `v4.1.0` remains an older
@@ -28,45 +32,50 @@ A/B/C/D in one native Windows Codex environment. The real protected Sol/Luna
 state and root identity remained unchanged during acceptance, observed unknown
 paths were zero, and owned acceptance residuals were zero. These facts are
 environment- and scenario-bounded evidence, not a security guarantee or
-universal compatibility claim. v4.1.2 preserves the accepted RC6 product
-payload outside the declared selector and install-manifest changes; after
+universal compatibility claim. v4.1.2 preserved the accepted RC6 product
+payload outside its declared selector and install-manifest changes; after
 explicit Daily selection initialization, an independent one-run compatibility
 smoke passed `CLI`, `Luna capability`, `Selector`, `Delegation`, `Protected
 state`, `Runtime contract`, and final `Compatibility` against that observed
-installed runtime. The v4.1.2 publication is represented by an immutable tag
-and a non-draft, non-prerelease GitHub Release. The immutable `v4.1.1` Stable
-and RC6 historical Prerelease remain unchanged. RC4 remains
+installed runtime. The v4.1.3 publication is represented by an immutable tag
+and a non-draft, non-prerelease GitHub Release. Its source validation and
+fake-home lifecycle do not upgrade the absent real Global v4.1.3 evidence to
+runtime PASS. The immutable `v4.1.2` and `v4.1.1` Stable releases and RC6
+historical Prerelease remain unchanged. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
-## v4.1.3 unreleased candidate security delta
+## v4.1.3 Stable boundary
 
-`v4.1.3` is not yet a public installation target. The candidate accepts only
+`v4.1.3` is the published Stable release and default installation target. The
+release accepts only
 ModelDial API schemas `1.0` and `1.1`; unknown schemas continue through the
 existing Full Snapshot, LKG, and fail-closed source order. Schema `1.1` rows are
 eligible only when their backend score identity is internally consistent. The
-candidate does not trust or merge the overall ranking, capability batches,
+release does not trust or merge the overall ranking, capability batches,
 change feed, or advisory Agent Profiles.
 
 Full Snapshot score and optional cost rows must identify the `codex` /
 `official_login` route in `model_configuration` and retain first-party-controlled
 score and route provenance. This closes a cross-route selection boundary while
-preserving fail-soft reference-cost behavior. The candidate adds no host,
+preserving fail-soft reference-cost behavior. The release adds no host,
 credential, cookie, authorization header, telemetry, cache, background request,
-state migration, or new write path. Public source, Setup, Assisted Installation,
-tag, Release, and README identities remain pending independent verification.
+state migration, or new write path. Its immutable Setup and Assisted
+Installation anchors are `5c29abc9aed340f4a7c45c22a0f8b36242b920bb` and
+`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`.
 
-Candidate Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`
+Stable Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`
 passed exact-SHA CI run `33253340074` on Windows, Ubuntu, and macOS with `363`
 tests all `PASS`. This is repository source validation only; it does not
-establish a real Global install, real authentication, runtime acceptance, tag,
-or Release. Current-master evidence commit
+establish a real Global install, real authentication, or runtime acceptance.
+The annotated tag and non-draft, non-prerelease Release independently establish
+publication. Current-master evidence commit
 `bafc41b50269a0b65aba64594e850f6171a714ac` passed CI run `33253429974` on the
 same three source-validation platforms. No real Global v4.1.3 installer apply
 has been performed.
 
 ## v4.1.2 Stable boundary
 
-`v4.1.2` is the published Stable release and default installation target. Its
+`v4.1.2` is the previous published immutable Stable release. Its
 immutable Setup and Assisted Installation anchors are
 `4b2a6004fb92b6661166cb73e656cc2888b0a2ef` and
 `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; the two documentation commits are

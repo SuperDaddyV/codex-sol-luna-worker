@@ -1,30 +1,32 @@
-# v4.1.3 Candidate Architecture Note
+# v4.1.3 Stable Architecture Note
 
-`v4.1.3` is an unreleased maintenance candidate.
-`v4.1.2` is the current Stable release and default installation target. That
-remains true until a separately verified immutable release chain is published.
+`v4.1.3` is the current Stable release and default installation target.
 Stable runtime Source Commit A is
-`551520c2435aca94d60132f292edbd53cc975cbe`; exact-SHA source CI run
-`32717295801` passed on Windows, Ubuntu, and macOS with `357` tests all
+`71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`; exact-SHA source CI run
+`33253340074` passed on Windows, Ubuntu, and macOS with `363` tests all
 `PASS`. The reviewed Stable Setup contract is pinned at immutable documentation
-Commit `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`, and the public Assisted
+Commit `5c29abc9aed340f4a7c45c22a0f8b36242b920bb`, and the public Assisted
 Installation contract is pinned at immutable documentation Commit
-`a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; both documentation anchors are
+`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`; both documentation anchors are
 distinct from the runtime source.
-`v4.1.1` remains the previous immutable Stable release, with historical runtime
+`v4.1.2` remains the previous immutable Stable release, with historical runtime
+Source Commit `551520c2435aca94d60132f292edbd53cc975cbe`, Setup anchor
+`4b2a6004fb92b6661166cb73e656cc2888b0a2ef`, and Assisted Installation anchor
+`a130c676fa5924e44034dc8c27f3dc0abfc3bcad`. `v4.1.1` is an older Stable, with
+historical runtime
 Source Commit `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`, Setup anchor
 `d4a044a04df509285ef38c6afc28b5a68a48a0f9`, and Assisted Installation anchor
 `17eb1d370929e884f91c5f1920a2e0868ce4a421`. `v4.1.0-rc6` remains an
 immutable historical Prerelease / Preview / Public Beta, and `v4.1.0-rc5` is
 an older historical Preview.
 
-Status: `v4.1.3 — UNRELEASED CANDIDATE`; `v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
+Status: `v4.1.3 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.2 — PREVIOUS IMMUTABLE STABLE`
 
 The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before the Stable transition. The v4.1.2 transaction then upgraded that baseline while preserving the accepted selector, policy, agent, and configuration content outside the declared installer-owned changes. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke passed all seven recorded checks and final Compatibility against the observed installed product runtime. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
 
-## v4.1.3 unreleased candidate boundary
+## v4.1.3 Stable boundary
 
-The candidate is a selector compatibility and provenance maintenance release. It
+The release is a selector compatibility and provenance maintenance release. It
 accepts ModelDial API schemas `1.0` and `1.1` while deliberately retaining the
 v4.1 backend-score contract. For schema `1.1`, only the backward-compatible
 `rankings` backend axis is eligible; canonical rows must declare
@@ -44,18 +46,20 @@ Daily Profile metadata schema `1`, the normalized LKG envelope, five-effort
 winner and lower-effort tie-break semantics, native agents, policy, config,
 concurrency, and installer manifest schema `1` remain unchanged. A valid
 v4.1.2-to-v4.1.3 upgrade is expected to change only the installed selector and
-ownership manifest. Candidate Source Commit A
+ownership manifest. Stable Source Commit A
 `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4` passed exact-SHA CI run
 `33253340074` on Windows, Ubuntu, and macOS with `363` tests all `PASS`;
 evidence commit `bafc41b50269a0b65aba64594e850f6171a714ac` passed CI run
 `33253429974` on the same platforms. Repository fake-home lifecycle and
 read-only live-source checks are recorded separately from real runtime. No real
-Global v4.1.3 apply or candidate fresh-task smoke is claimed. Setup and Assisted
-Installation anchors, tag, Release, and public README target remain pending.
+Global v4.1.3 apply or candidate fresh-task smoke is claimed. The immutable
+Setup and Assisted Installation anchors are recorded above. Stable publication
+is represented by the annotated `v4.1.3` tag and a non-draft,
+non-prerelease GitHub Release; the public README uses the same immutable chain.
 
 ## v4.1.2 Stable boundary
 
-`v4.1.2` is the published Stable release and default public installation target.
+`v4.1.2` is the previous published immutable Stable release.
 Source Commit A is `551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run
 `32717295801` passed on Windows, Ubuntu, and macOS and reported `357` tests all
 `PASS`. Current-master evidence commit

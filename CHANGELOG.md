@@ -1,6 +1,6 @@
 # Changelog
 
-## v4.1.3 (unreleased candidate)
+## v4.1.3 (published Stable release)
 
 - Accepts ModelDial API schemas `1.0` and `1.1` while preserving the v4.1
   backend-score contract. Schema `1.1` requires `defaultRanking =
@@ -24,16 +24,19 @@
   tie-break algorithm, Daily Profile or LKG schema, agent payload, Global
   policy, config, concurrency, installer manifest schema, migration behavior,
   release resolver, or real Global runtime state.
-- Candidate Source Commit A
+- Stable Source Commit A
   `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4` passed exact-SHA CI run
   `33253340074` on Windows, Ubuntu, and macOS with `363` tests all `PASS`.
   This is repository source validation only; it does not establish a real
   Global install, real authentication, runtime acceptance, tag, or Release.
   Current-master evidence commit
   `bafc41b50269a0b65aba64594e850f6171a714ac` passed CI run `33253429974` on
-  the same three source-validation platforms. The Stable Setup content is
-  frozen separately without self-reference; Assisted Installation and public
-  README pins, tag, and Release remain pending.
+  the same three source-validation platforms. The immutable Setup and Assisted
+  Installation anchors are `5c29abc9aed340f4a7c45c22a0f8b36242b920bb` and
+  `23eeba1a5fb21e0483f4140aeca18b483f3e85bf`; neither is the runtime source.
+  The annotated `v4.1.3` tag and non-draft, non-prerelease GitHub Release
+  establish Stable publication. The public bilingual README uses the same
+  immutable chain.
 
 ## v4.1.2 (published Stable release)
 

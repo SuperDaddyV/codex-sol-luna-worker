@@ -1,17 +1,21 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.1` is the previous immutable Stable, while RC6 and RC5 remain historical Prereleases.
+Status: `v4.1.3 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.2` is the previous immutable Stable, while RC6 and RC5 remain historical Prereleases.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.3 candidate — source and fake-home evidence
+## v4.1.3 Stable promotion — source and fake-home evidence
 
-Candidate Source Commit A is
+`v4.1.3` is the published Stable release and default public installation target.
+Stable Source Commit A is
 `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`. Exact-SHA CI run `33253340074`
 passed on Windows, Ubuntu, and macOS and reported `363` tests all `PASS`.
 Current-master evidence commit `bafc41b50269a0b65aba64594e850f6171a714ac`
 passed CI run `33253429974` on the same three source-validation platforms. The
 evidence commit is not Source Commit A and is not an installer source substitute.
+The immutable Setup anchor is `5c29abc9aed340f4a7c45c22a0f8b36242b920bb`;
+the immutable Assisted Installation anchor is
+`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`.
 
 Repository fake-home lifecycle tests cover v4.1.2-to-v4.1.3 dry-run, apply,
 the selector-plus-manifest ownership boundary, transaction backup,
@@ -22,9 +26,9 @@ backend-axis selection and comparable reference-cost projection.
 
 This is repository, fake-home, and read-only network validation only. No real
 Global v4.1.3 installer apply, real authentication test, Daily state write, or
-candidate fresh-task smoke was performed. The public target remains v4.1.2
-until the immutable Setup, Assisted Installation, tag, and non-draft,
-non-prerelease Release chain is completed.
+candidate fresh-task smoke was performed. The v4.1.3 GitHub Release is
+non-draft and non-prerelease, and the public bilingual README uses the
+immutable anchors recorded above.
 
 `V413_SOURCE_SHA = 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`;
 `V413_EXACT_SHA_CI = PASS`;
@@ -32,11 +36,11 @@ non-prerelease Release chain is completed.
 `V413_FAKE_HOME_LIFECYCLE = PASS`;
 `V413_REAL_GLOBAL_APPLY = NOT_RUN`;
 `V413_FRESH_TASK_COMPATIBILITY = NOT_RUN`;
-`V413_PUBLIC_RELEASE = NOT_ESTABLISHED`.
+`V413_PUBLIC_RELEASE = STABLE`.
 
-## v4.1.2 Stable promotion — setup and runtime evidence
+## v4.1.2 previous immutable Stable — historical setup and runtime evidence
 
-`v4.1.2` is the published Stable release and default public installation target.
+`v4.1.2` is the previous published immutable Stable release.
 Source Commit A is
 `551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run `32717295801`
 passed on Windows, Ubuntu, and macOS and reported `357` tests all `PASS`.

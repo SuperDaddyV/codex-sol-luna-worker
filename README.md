@@ -4,7 +4,7 @@ Keep GPT-5.6 Sol focused on planning and acceptance while native GPT-5.6 Luna wo
 
 [简体中文](README.zh-CN.md)
 
-[![Stable: v4.1.2](https://img.shields.io/badge/stable-v4.1.2-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.2)
+[![Stable: v4.1.3](https://img.shields.io/badge/stable-v4.1.3-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.3)
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
@@ -44,9 +44,9 @@ Start a new Codex task with GPT-5.6 Sol and paste this single prompt:
 ```text
 Read and strictly execute the assisted installation contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-Install the pinned v4.1.2 Stable target. Diagnose all independent prerequisites
+Install the pinned v4.1.3 Stable target. Diagnose all independent prerequisites
 in one pass. Apply only the contract's safe automatic recovery. Before any
 package install, administrator elevation, or persistent environment change,
 show one exact official-source recovery proposal and wait for my explicit
@@ -57,7 +57,7 @@ and installer exactly. After installation, tell me how to reload Codex and
 provide the fresh-task smoke continuation.
 ```
 
-The immutable [English Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/a130c676fa5924e44034dc8c27f3dc0abfc3bcad/CODEX_SOL_LUNA_INSTALL_ASSIST.md) is the sole executable authority. The [review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is available for review. The assisted contract pins the separate [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md), which pins runtime Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe`.
+The immutable [English Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md) is the sole executable authority. The [review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is available for review. The assisted contract pins the separate [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md), which pins runtime Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`.
 
 > [!WARNING]
 > Never replace the immutable installation URL with `master`, a tag, or another mutable entry. System changes require explicit approval. The installer fails closed on ownership conflicts and creates a transaction backup before changes, but no installation is risk-free.
@@ -106,11 +106,11 @@ After a Codex update, the `Codex Compatibility Smoke` in `scripts/compatibility_
 - **Rollback:** use the exact transaction backup returned by the installer. A successful rollback restores the verified pre-change state.
 - **Uninstall:** use the installer's manifest-owned uninstall flow; do not hand-edit managed TOML or agent files.
 
-Reload Codex and start a new task after an upgrade, rollback, or uninstall. Commands, stop conditions, ownership rules, and backup behavior are defined in the immutable [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md).
+Reload Codex and start a new task after an upgrade, rollback, or uninstall. Commands, stop conditions, ownership rules, and backup behavior are defined in the immutable [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md).
 
 ## Technical documentation
 
-- [Installation, upgrade, rollback, and uninstall](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/4b2a6004fb92b6661166cb73e656cc2888b0a2ef/CODEX_SOL_LUNA_SETUP.md)
+- [Installation, upgrade, rollback, and uninstall](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md)
 - [Architecture](ARCHITECTURE.md)
 - [Runtime evidence](RUNTIME_TESTS.md)
 - [Security boundaries](SECURITY.md)
