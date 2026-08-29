@@ -24,8 +24,9 @@ Use only these reviewed identities:
   `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md`.
 
 Never substitute mutable `master`, another branch, `target_commitish`, an
-archive, or a different Release. `v4.1.2` remains the previous immutable
-Stable release, and `v4.1.1` and `v4.1.0` remain older immutable Stable releases.
+archive, or a different Release. `v4.1.3` remains the previous immutable
+Stable release, and `v4.1.2`, `v4.1.1`, and `v4.1.0` remain older immutable
+Stable releases.
 `v4.1.0-rc6` remains an immutable historical Prerelease / Preview /
 Public Beta. Do not move or rewrite any tag or Release.
 

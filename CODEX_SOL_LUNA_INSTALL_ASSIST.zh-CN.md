@@ -20,8 +20,8 @@
   `https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md`。
 
 不得替换为 `master`、其他分支、`target_commitish`、归档文件或其他
-Release。`v4.1.2` 继续作为上一版不可变 Stable，`v4.1.1` 和 `v4.1.0`
-继续作为更早的不可变 Stable，`v4.1.0-rc6` 继续作为
+Release。`v4.1.3` 继续作为上一版不可变 Stable，`v4.1.2`、`v4.1.1` 和
+`v4.1.0` 继续作为更早的不可变 Stable，`v4.1.0-rc6` 继续作为
 不可变的历史 Prerelease／Preview／Public Beta；不移动、不改写任何 tag 或
 Release。
 
