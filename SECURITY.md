@@ -6,13 +6,16 @@
 Stable runtime Source Commit A is
 `6a537b445ad6f17a9600c05e655f51a2844bfcc8`; exact-SHA source CI run
 `33264634602` passed on Windows, Ubuntu, and macOS with `366` tests all
-`PASS`. The final bilingual README pins the reviewed
+`PASS`. The current bilingual README pins the reviewed
 `CODEX_SOL_LUNA_INSTALL_ASSIST.md` contract at immutable documentation Commit
-`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`. That contract pins this reviewed
+`7494d47574ac751e76a231033a0ed91686899a07`. That contract pins this reviewed
 `CODEX_SOL_LUNA_SETUP.md` at immutable documentation Commit
 `bf01c438eae66f5ef9a27d401c6ee845f89d5d59`. Neither documentation commit is
 the runtime source or is passed to the installer; no commit is required to
-self-reference its own SHA.
+self-reference its own SHA. The immutable `v4.1.4` tag keeps the release-time
+Assisted anchor `5e1ce80d3ed444834f700ac0154bfe444dec8cd3`; the current anchor changes only
+stale version-lineage text and does not change Setup, source, tag, or Release
+identity.
 `v4.1.3` remains the previous immutable Stable release, with historical runtime
 Source Commit `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`, Setup anchor
 `5c29abc9aed340f4a7c45c22a0f8b36242b920bb`, and Assisted Installation anchor
@@ -68,9 +71,10 @@ Stable Source Commit A `6a537b445ad6f17a9600c05e655f51a2844bfcc8`
 passed exact-SHA CI run `33264634602` on Windows, Ubuntu, and macOS with `366`
 tests all `PASS`. This is repository source validation only; no real Global
 v4.1.4 installer apply, authentication test, Daily state write, or fresh-task
-runtime smoke is claimed. The immutable Setup and Assisted Installation
-anchors are `bf01c438eae66f5ef9a27d401c6ee845f89d5d59` and
-`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`.
+runtime smoke is claimed. The immutable Setup anchor is
+`bf01c438eae66f5ef9a27d401c6ee845f89d5d59`; the current public Assisted anchor
+is `7494d47574ac751e76a231033a0ed91686899a07`, while the immutable release tag
+retains the original Assisted anchor recorded above.
 
 ## v4.1.3 Stable boundary
 
@@ -103,7 +107,7 @@ has been performed.
 
 ## v4.1.2 Stable boundary
 
-`v4.1.2` is the previous published immutable Stable release. Its
+`v4.1.2` is an older published immutable Stable release. Its
 immutable Setup and Assisted Installation anchors are
 `4b2a6004fb92b6661166cb73e656cc2888b0a2ef` and
 `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`; the two documentation commits are
@@ -140,8 +144,8 @@ smoke created no backup.
 
 This evidence is limited to one native Windows Codex environment. CI is source
 validation only, not three-platform real-runtime evidence. The v4.1.2 GitHub
-Release is non-draft and non-prerelease, and the current public
-README／assisted-installation entry uses the immutable v4.1.2 documentation
+Release is non-draft and non-prerelease, and its historical public
+README／assisted-installation entry used the immutable v4.1.2 documentation
 chain.
 
 The Stable release replaces production child-process ambient inheritance with

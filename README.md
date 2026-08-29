@@ -91,7 +91,7 @@ Start a new Codex task with GPT-5.6 Sol and paste this single prompt:
 ```text
 Read and strictly execute the assisted installation contract at:
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/5e1ce80d3ed444834f700ac0154bfe444dec8cd3/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7494d47574ac751e76a231033a0ed91686899a07/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
 Install the pinned v4.1.4 Stable target. Diagnose all independent prerequisites
 in one pass. Apply only the contract's safe automatic recovery. Before any
@@ -104,7 +104,7 @@ and installer exactly. After installation, tell me how to reload Codex and
 provide the fresh-task smoke continuation.
 ```
 
-The pinned [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5e1ce80d3ed444834f700ac0154bfe444dec8cd3/CODEX_SOL_LUNA_INSTALL_ASSIST.md) is the installation entry; the [Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is for review. It fixes installation to the reviewed [v4.1.4 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md) and verified source `6a537b445ad6f17a9600c05e655f51a2844bfcc8`, so Codex does not install from a moving branch.
+The pinned [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/7494d47574ac751e76a231033a0ed91686899a07/CODEX_SOL_LUNA_INSTALL_ASSIST.md) is the installation entry; the [Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is for review. It fixes installation to the reviewed [v4.1.4 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md) and verified source `6a537b445ad6f17a9600c05e655f51a2844bfcc8`, so Codex does not install from a moving branch.
 
 > [!WARNING]
 > Never replace the immutable installation URL with `master`, a tag, or another mutable entry. System changes require explicit approval. The installer fails closed on ownership conflicts and creates a transaction backup before changes, but no installation is risk-free.

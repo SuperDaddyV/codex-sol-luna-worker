@@ -49,7 +49,8 @@ V412_ASSIST_CONTRACT_COMMIT = "a130c676fa5924e44034dc8c27f3dc0abfc3bcad"
 V412_SETUP_CONTRACT_COMMIT = "4b2a6004fb92b6661166cb73e656cc2888b0a2ef"
 V413_ASSIST_CONTRACT_COMMIT = "23eeba1a5fb21e0483f4140aeca18b483f3e85bf"
 V413_SETUP_CONTRACT_COMMIT = "5c29abc9aed340f4a7c45c22a0f8b36242b920bb"
-PINNED_ASSIST_COMMIT = "5e1ce80d3ed444834f700ac0154bfe444dec8cd3"
+V414_RELEASE_ASSIST_CONTRACT_COMMIT = "5e1ce80d3ed444834f700ac0154bfe444dec8cd3"
+PINNED_ASSIST_COMMIT = "7494d47574ac751e76a231033a0ed91686899a07"
 PINNED_SETUP_COMMIT = "bf01c438eae66f5ef9a27d401c6ee845f89d5d59"
 PINNED_ASSIST_BLOB_URL = (
     "https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/"
@@ -538,7 +539,8 @@ class DocumentationTests(unittest.TestCase):
             "unless specifically requested during later troubleshooting",
         ):
             self.assertIn(phrase, bug)
-        self.assertIn("placeholder: v4.1.1", bug)
+        self.assertIn("placeholder: v4.1.4", bug)
+        self.assertNotIn("placeholder: v4.1.1", bug)
         self.assertIn("`Sol/Luna: Sol-only · no independent bounded work`", bug)
         self.assertIn("`Sol/Luna: delegated · luna_max ×2 · parallel`", bug)
         self.assertIn("`No Receipt`", bug)
@@ -559,6 +561,9 @@ class DocumentationTests(unittest.TestCase):
             "More than 1 week",
         ):
             self.assertIn(option, compatibility)
+        self.assertIn("placeholder: v4.1.3 / v4.1.2 / Unknown", compatibility)
+        self.assertIn("placeholder: v4.1.4", compatibility)
+        self.assertNotIn("placeholder: v4.1.1", compatibility)
 
         feature = text(ISSUE_TEMPLATE_DIR / "feature-feedback.yml")
         self.assertIn("name: Feature request / feedback", feature)
@@ -1105,6 +1110,14 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Contract version: `v4.1.4`", setup)
         self.assertIn("V414_PUBLIC_RELEASE = STABLE", runtime)
         self.assertIn("V414_UNINSTALL_TRANSACTION = PASS", runtime)
+        self.assertIn(V414_RELEASE_ASSIST_CONTRACT_COMMIT, combined)
+        self.assertIn(PINNED_ASSIST_COMMIT, combined)
+        self.assertIn("`v4.1.3` remains the previous immutable", text(ASSIST))
+        self.assertIn("`v4.1.2`, `v4.1.1`, and `v4.1.0` remain older", text(ASSIST))
+        self.assertIn("`v4.1.3` 继续作为上一版不可变 Stable", text(ASSIST_ZH))
+        self.assertNotIn("`v4.1.2` 继续作为上一版", text(ASSIST_ZH))
+        self.assertNotRegex(combined, r"v4\.1\.2[^\n]*previous .*Stable")
+        self.assertNotRegex(combined, r"v4\.1\.1[^\n]*previous .*Stable")
         self.assertNotIn("v4.1.4 — UNRELEASED CANDIDATE", combined)
         self.assertNotIn("## v4.1.4 (unreleased candidate)", combined)
 

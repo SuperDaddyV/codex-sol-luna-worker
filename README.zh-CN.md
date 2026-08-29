@@ -91,7 +91,7 @@ Sol/Luna: Sol-only · no independent bounded work
 ```text
 请读取并严格执行以下安装协助合同：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/5e1ce80d3ed444834f700ac0154bfe444dec8cd3/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/7494d47574ac751e76a231033a0ed91686899a07/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
 安装固定的 v4.1.4 Stable 目标。一次性诊断全部彼此独立的前置条件。
 只自动执行合同允许的安全修复。安装软件包、提升管理员权限或持久修改环境前，
@@ -101,7 +101,7 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 安装后告诉我如何重新加载 Codex，并给出新任务 smoke 的续接内容。
 ```
 
-固定的 [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5e1ce80d3ed444834f700ac0154bfe444dec8cd3/CODEX_SOL_LUNA_INSTALL_ASSIST.md) 是安装执行入口；[中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)仅供核对。它把安装固定到经过审查的 [v4.1.4 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md) 和已验证源 `6a537b445ad6f17a9600c05e655f51a2844bfcc8`，避免 Codex 从可变分支安装。
+固定的 [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/7494d47574ac751e76a231033a0ed91686899a07/CODEX_SOL_LUNA_INSTALL_ASSIST.md) 是安装执行入口；[中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)仅供核对。它把安装固定到经过审查的 [v4.1.4 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md) 和已验证源 `6a537b445ad6f17a9600c05e655f51a2844bfcc8`，避免 Codex 从可变分支安装。
 
 > [!WARNING]
 > 不得把不可变安装 URL 改成 `master`、tag 或其他可变入口。系统变更必须获得明确确认。安装器在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。

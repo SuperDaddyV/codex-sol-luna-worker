@@ -73,7 +73,7 @@ body:
     attributes:
       label: Project version
       description: Enter the actual release, tag, or commit under test. The placeholder is only an example.
-      placeholder: v4.1.1
+      placeholder: v4.1.4
     validations:
       required: true
 

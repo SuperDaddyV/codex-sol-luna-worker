@@ -11,8 +11,9 @@ Stable Source Commit A is
 `6a537b445ad6f17a9600c05e655f51a2844bfcc8`. Exact-SHA CI run `33264634602`
 passed on Windows, Ubuntu, and macOS and reported `366` tests all `PASS`.
 The immutable Setup anchor is `bf01c438eae66f5ef9a27d401c6ee845f89d5d59`;
-the immutable Assisted Installation anchor is
-`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`.
+the current public Assisted Installation anchor is
+`7494d47574ac751e76a231033a0ed91686899a07`. The immutable `v4.1.4` tag retains
+the release-time Assisted anchor `5e1ce80d3ed444834f700ac0154bfe444dec8cd3`.
 
 Repository fake-home lifecycle tests cover v4.1.3-to-v4.1.4 dry-run, apply,
 the selector-plus-manifest ownership boundary, transaction backup,
@@ -68,9 +69,9 @@ immutable anchors recorded above.
 `V413_FRESH_TASK_COMPATIBILITY = NOT_RUN`;
 `V413_PUBLIC_RELEASE = STABLE`.
 
-## v4.1.2 previous immutable Stable — historical setup and runtime evidence
+## v4.1.2 older immutable Stable — historical setup and runtime evidence
 
-`v4.1.2` is the previous published immutable Stable release.
+`v4.1.2` is an older published immutable Stable release.
 Source Commit A is
 `551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run `32717295801`
 passed on Windows, Ubuntu, and macOS and reported `357` tests all `PASS`.
@@ -101,9 +102,9 @@ unchanged; the smoke created no backup.
 
 This record is limited to one native Windows Codex environment. Windows,
 Ubuntu, and macOS CI are source validation only, not three-platform real-runtime
-validation. The v4.1.2 GitHub Release is non-draft and non-prerelease, and the
-current public README and assisted-installation entry use the immutable anchors
-recorded above.
+validation. The v4.1.2 GitHub Release is non-draft and non-prerelease, and its
+historical public README and assisted-installation entry used the immutable
+anchors recorded above.
 
 `V412_SOURCE_SHA = 551520c2435aca94d60132f292edbd53cc975cbe`;
 `V412_EXACT_SHA_CI = PASS`;
@@ -114,7 +115,7 @@ recorded above.
 `V412_FRESH_TASK_COMPATIBILITY = PASS`;
 `V412_PUBLIC_RELEASE = STABLE`.
 
-## v4.1.1 previous immutable Stable — historical promotion evidence
+## v4.1.1 older immutable Stable — historical promotion evidence
 
 Stable Source Commit A2 is
 `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; its exact-SHA CI passed on

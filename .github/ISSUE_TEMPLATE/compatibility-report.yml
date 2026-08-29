@@ -52,14 +52,14 @@ body:
     attributes:
       label: From version
       description: Optional. For an upgrade, enter the version you upgraded from.
-      placeholder: v4.1.0 / v4.1.0-rc6 / Unknown
+      placeholder: v4.1.3 / v4.1.2 / Unknown
 
   - type: input
     id: installed_version
     attributes:
       label: Installed version
       description: Enter the version actually installed or tested.
-      placeholder: v4.1.1
+      placeholder: v4.1.4
     validations:
       required: true
 

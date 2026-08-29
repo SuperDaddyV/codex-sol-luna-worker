@@ -22,11 +22,15 @@
   This is repository source validation only; it does not establish a real
   Global install, authentication result, fresh-task runtime result, tag, or
   Release.
-- The immutable Setup and Assisted Installation anchors are
+- The published immutable Setup and Assisted Installation anchors are
   `bf01c438eae66f5ef9a27d401c6ee845f89d5d59` and
   `5e1ce80d3ed444834f700ac0154bfe444dec8cd3`; neither documentation commit is
   the runtime source. The annotated `v4.1.4` tag and non-draft,
   non-prerelease GitHub Release establish Stable publication.
+- A post-release documentation-only correction pins the current public README
+  to Assisted anchor `7494d47574ac751e76a231033a0ed91686899a07`, correcting the
+  previous-versus-older Stable lineage without changing Setup, runtime source,
+  tag, Release, or installer behavior.
 - No real Global v4.1.4 installer apply, authentication test, Daily state
   write, or fresh-task compatibility smoke is claimed.
 
@@ -65,8 +69,8 @@
   Installation anchors are `5c29abc9aed340f4a7c45c22a0f8b36242b920bb` and
   `23eeba1a5fb21e0483f4140aeca18b483f3e85bf`; neither is the runtime source.
   The annotated `v4.1.3` tag and non-draft, non-prerelease GitHub Release
-  establish Stable publication. The public bilingual README uses the same
-  immutable chain.
+  establish Stable publication. That release's historical bilingual README
+  used the same immutable chain.
 
 ## v4.1.2 (published Stable release)
 
@@ -121,7 +125,7 @@
   non-prerelease Stable publication, and its README and assisted-installation
   entries use the immutable documentation anchors above.
 
-## v4.1.1 (previous immutable Stable release)
+## v4.1.1 (older immutable Stable release)
 
 - Added Stable Source Commit A2
   `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`; 332 local tests and exact-SHA CI

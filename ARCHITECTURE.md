@@ -5,10 +5,13 @@ Stable runtime Source Commit A is
 `6a537b445ad6f17a9600c05e655f51a2844bfcc8`; exact-SHA source CI run
 `33264634602` passed on Windows, Ubuntu, and macOS with `366` tests all
 `PASS`. The reviewed Stable Setup contract is pinned at immutable documentation
-Commit `bf01c438eae66f5ef9a27d401c6ee845f89d5d59`, and the public Assisted
-Installation contract is pinned at immutable documentation Commit
-`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`; both documentation anchors are
-distinct from the runtime source.
+Commit `bf01c438eae66f5ef9a27d401c6ee845f89d5d59`, and the current public
+Assisted Installation contract is pinned at immutable documentation Commit
+`7494d47574ac751e76a231033a0ed91686899a07`; both current documentation anchors
+are distinct from the runtime source. The immutable `v4.1.4` tag retains the
+originally published Assisted anchor
+`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`; the newer anchor corrects only its
+release-lineage wording and changes no Setup, source, tag, or Release identity.
 `v4.1.3` remains the previous immutable Stable release, with historical runtime
 Source Commit `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`, Setup anchor
 `5c29abc9aed340f4a7c45c22a0f8b36242b920bb`, and Assisted Installation anchor
@@ -87,11 +90,12 @@ read-only live-source checks are recorded separately from real runtime. No real
 Global v4.1.3 apply or candidate fresh-task smoke is claimed. The immutable
 Setup and Assisted Installation anchors are recorded above. Stable publication
 is represented by the annotated `v4.1.3` tag and a non-draft,
-non-prerelease GitHub Release; the public README uses the same immutable chain.
+non-prerelease GitHub Release; that release's historical README used the same
+immutable chain.
 
 ## v4.1.2 Stable boundary
 
-`v4.1.2` is the previous published immutable Stable release.
+`v4.1.2` is an older published immutable Stable release.
 Source Commit A is `551520c2435aca94d60132f292edbd53cc975cbe`. Exact-SHA CI run
 `32717295801` passed on Windows, Ubuntu, and macOS and reported `357` tests all
 `PASS`. Current-master evidence commit
