@@ -1,5 +1,35 @@
 # Changelog
 
+## v4.1.4 (published Stable release)
+
+- Verifies the uninstall transaction backup before modifying any managed path,
+  matching the documented safety contract already enforced by installation.
+- Routes every exception raised after uninstall backup verification through
+  exact rollback before preserving the original stable installer error. This
+  closes the gap where a path-safety `InstallerError` could bypass rollback
+  after an earlier uninstall operation had already completed.
+- Adds regression coverage proving that backup verification failure preserves
+  the exact installed tree and that an exception after one effective uninstall
+  operation restores the exact pre-uninstall tree.
+- Advances the installer and ModelDial User-Agent to `v4.1.4`. The directly
+  validated v4.1.3-to-v4.1.4 fake-home upgrade changes only
+  `sol-luna-v4/selector.py` and `sol-luna-v4/install-manifest.json`, remains
+  idempotent on second apply, rolls back exactly, and fails closed when the
+  previously owned selector was modified.
+- Stable Source Commit A
+  `6a537b445ad6f17a9600c05e655f51a2844bfcc8` passed exact-SHA CI run
+  `33264634602` on Windows, Ubuntu, and macOS with `366` tests all `PASS`.
+  This is repository source validation only; it does not establish a real
+  Global install, authentication result, fresh-task runtime result, tag, or
+  Release.
+- The immutable Setup and Assisted Installation anchors are
+  `bf01c438eae66f5ef9a27d401c6ee845f89d5d59` and
+  `5e1ce80d3ed444834f700ac0154bfe444dec8cd3`; neither documentation commit is
+  the runtime source. The annotated `v4.1.4` tag and non-draft,
+  non-prerelease GitHub Release establish Stable publication.
+- No real Global v4.1.4 installer apply, authentication test, Daily state
+  write, or fresh-task compatibility smoke is claimed.
+
 ## v4.1.3 (published Stable release)
 
 - Accepts ModelDial API schemas `1.0` and `1.1` while preserving the v4.1

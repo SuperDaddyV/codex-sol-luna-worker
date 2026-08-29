@@ -2,18 +2,22 @@
 
 ## Release boundary
 
-`v4.1.3` is the current Stable release and default installation target.
+`v4.1.4` is the current Stable release and default installation target.
 Stable runtime Source Commit A is
-`71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`; exact-SHA source CI run
-`33253340074` passed on Windows, Ubuntu, and macOS with `363` tests all
+`6a537b445ad6f17a9600c05e655f51a2844bfcc8`; exact-SHA source CI run
+`33264634602` passed on Windows, Ubuntu, and macOS with `366` tests all
 `PASS`. The final bilingual README pins the reviewed
 `CODEX_SOL_LUNA_INSTALL_ASSIST.md` contract at immutable documentation Commit
-`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`. That contract pins this reviewed
+`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`. That contract pins this reviewed
 `CODEX_SOL_LUNA_SETUP.md` at immutable documentation Commit
-`5c29abc9aed340f4a7c45c22a0f8b36242b920bb`. Neither documentation commit is
+`bf01c438eae66f5ef9a27d401c6ee845f89d5d59`. Neither documentation commit is
 the runtime source or is passed to the installer; no commit is required to
 self-reference its own SHA.
-`v4.1.2` remains the previous immutable Stable release, with historical runtime
+`v4.1.3` remains the previous immutable Stable release, with historical runtime
+Source Commit `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`, Setup anchor
+`5c29abc9aed340f4a7c45c22a0f8b36242b920bb`, and Assisted Installation anchor
+`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`. `v4.1.2` is an older Stable, with
+historical runtime
 Source Commit `551520c2435aca94d60132f292edbd53cc975cbe`, Setup anchor
 `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`, and Assisted Installation anchor
 `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`. `v4.1.1` is an older Stable, with
@@ -37,16 +41,40 @@ payload outside its declared selector and install-manifest changes; after
 explicit Daily selection initialization, an independent one-run compatibility
 smoke passed `CLI`, `Luna capability`, `Selector`, `Delegation`, `Protected
 state`, `Runtime contract`, and final `Compatibility` against that observed
-installed runtime. The v4.1.3 publication is represented by an immutable tag
+installed runtime. The v4.1.4 publication is represented by an immutable tag
 and a non-draft, non-prerelease GitHub Release. Its source validation and
-fake-home lifecycle do not upgrade the absent real Global v4.1.3 evidence to
-runtime PASS. The immutable `v4.1.2` and `v4.1.1` Stable releases and RC6
+fake-home lifecycle do not upgrade the absent real Global v4.1.4 evidence to
+runtime PASS. The immutable `v4.1.3`, `v4.1.2`, and `v4.1.1` Stable releases and RC6
 historical Prerelease remain unchanged. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
+## v4.1.4 Stable boundary
+
+`v4.1.4` is the published Stable release and default installation target. It
+closes the uninstall transaction-safety gap found by the final v4.1.3 audit.
+Uninstall now creates and verifies its centralized backup before modifying any
+managed path. Every later exception enters exact rollback before the original
+stable installer error is preserved; a path-safety `InstallerError` can no
+longer bypass rollback after an earlier uninstall operation completed.
+
+Regression tests prove that backup verification failure preserves the exact
+installed tree and that an exception after one effective uninstall operation
+restores the exact pre-uninstall tree. The installer still removes only
+manifest-owned files and blocks, preserves unrelated content, and fails closed
+on ownership or marker conflict. This release adds no new credential, network,
+state, telemetry, migration, or installer ownership authority.
+
+Stable Source Commit A `6a537b445ad6f17a9600c05e655f51a2844bfcc8`
+passed exact-SHA CI run `33264634602` on Windows, Ubuntu, and macOS with `366`
+tests all `PASS`. This is repository source validation only; no real Global
+v4.1.4 installer apply, authentication test, Daily state write, or fresh-task
+runtime smoke is claimed. The immutable Setup and Assisted Installation
+anchors are `bf01c438eae66f5ef9a27d401c6ee845f89d5d59` and
+`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`.
+
 ## v4.1.3 Stable boundary
 
-`v4.1.3` is the published Stable release and default installation target. The
+`v4.1.3` is the previous published immutable Stable release. The
 release accepts only
 ModelDial API schemas `1.0` and `1.1`; unknown schemas continue through the
 existing Full Snapshot, LKG, and fail-closed source order. Schema `1.1` rows are

@@ -4,7 +4,7 @@
 
 [English](README.md)
 
-[![Stable: v4.1.3](https://img.shields.io/badge/stable-v4.1.3-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.3)
+[![Stable: v4.1.4](https://img.shields.io/badge/stable-v4.1.4-blue)](https://github.com/SuperDaddyV/codex-sol-luna-worker/releases/tag/v4.1.4)
 [![Validation](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml/badge.svg?branch=master)](https://github.com/SuperDaddyV/codex-sol-luna-worker/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/SuperDaddyV/codex-sol-luna-worker)](LICENSE)
 
@@ -91,9 +91,9 @@ Sol/Luna: Sol-only · no independent bounded work
 ```text
 请读取并严格执行以下安装协助合同：
 
-https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md
+https://raw.githubusercontent.com/SuperDaddyV/codex-sol-luna-worker/5e1ce80d3ed444834f700ac0154bfe444dec8cd3/CODEX_SOL_LUNA_INSTALL_ASSIST.md
 
-安装固定的 v4.1.3 Stable 目标。一次性诊断全部彼此独立的前置条件。
+安装固定的 v4.1.4 Stable 目标。一次性诊断全部彼此独立的前置条件。
 只自动执行合同允许的安全修复。安装软件包、提升管理员权限或持久修改环境前，
 先给出一份来自官方来源的准确修复方案并等待我的明确确认。获得确认后自动复检并续跑。
 不得修改认证、代理、证书信任、sandbox、组织策略或无关用户配置。
@@ -101,7 +101,7 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 安装后告诉我如何重新加载 Codex，并给出新任务 smoke 的续接内容。
 ```
 
-固定的 [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md) 是安装执行入口；[中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)仅供核对。它把安装固定到经过审查的 [v4.1.3 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md) 和已验证源 `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`，避免 Codex 从可变分支安装。
+固定的 [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5e1ce80d3ed444834f700ac0154bfe444dec8cd3/CODEX_SOL_LUNA_INSTALL_ASSIST.md) 是安装执行入口；[中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)仅供核对。它把安装固定到经过审查的 [v4.1.4 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md) 和已验证源 `6a537b445ad6f17a9600c05e655f51a2844bfcc8`，避免 Codex 从可变分支安装。
 
 > [!WARNING]
 > 不得把不可变安装 URL 改成 `master`、tag 或其他可变入口。系统变更必须获得明确确认。安装器在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
@@ -148,11 +148,11 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 - **回滚：** 使用 installer 返回的精确 transaction backup；成功回滚会恢复经过校验的变更前状态。
 - **卸载：** 使用 installer 的 manifest-owned uninstall 流程，不要手工编辑托管 TOML 或 agent 文件。
 
-升级、回滚或卸载后重新加载 Codex 并新建任务。具体命令、停止条件、ownership 规则和 backup 行为以不可变 [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md)为准。
+升级、回滚或卸载后重新加载 Codex 并新建任务。具体命令、停止条件、ownership 规则和 backup 行为以不可变 [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md)为准。
 
 ## 技术文档
 
-- [安装、升级、回滚与卸载](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md)
+- [安装、升级、回滚与卸载](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/bf01c438eae66f5ef9a27d401c6ee845f89d5d59/CODEX_SOL_LUNA_SETUP.md)
 - [架构说明](ARCHITECTURE.md)
 - [Runtime 证据](RUNTIME_TESTS.md)
 - [安全边界](SECURITY.md)

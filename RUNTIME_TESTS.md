@@ -1,12 +1,42 @@
 # Native Runtime Test Protocol
 
-Status: `v4.1.3 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.2` is the previous immutable Stable, while RC6 and RC5 remain historical Prereleases.
+Status: `v4.1.4 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.3` is the previous immutable Stable, while RC6 and RC5 remain historical Prereleases.
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
-## v4.1.3 Stable promotion — source and fake-home evidence
+## v4.1.4 Stable promotion — source and fake-home evidence
 
-`v4.1.3` is the published Stable release and default public installation target.
+`v4.1.4` is the published Stable release and default public installation target.
+Stable Source Commit A is
+`6a537b445ad6f17a9600c05e655f51a2844bfcc8`. Exact-SHA CI run `33264634602`
+passed on Windows, Ubuntu, and macOS and reported `366` tests all `PASS`.
+The immutable Setup anchor is `bf01c438eae66f5ef9a27d401c6ee845f89d5d59`;
+the immutable Assisted Installation anchor is
+`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`.
+
+Repository fake-home lifecycle tests cover v4.1.3-to-v4.1.4 dry-run, apply,
+the selector-plus-manifest ownership boundary, transaction backup,
+second-apply idempotency, exact rollback, and modified-owned-selector conflict
+with zero writes. Uninstall regression tests prove that backup verification
+failure preserves the exact installed tree and that an exception after one
+effective uninstall operation restores the exact pre-uninstall tree.
+
+This is repository and fake-home validation only. No real Global v4.1.4
+installer apply, authentication test, Daily state write, or fresh-task smoke
+was performed. The v4.1.4 GitHub Release is non-draft and non-prerelease, and
+the public bilingual README uses the immutable anchors recorded above.
+
+`V414_SOURCE_SHA = 6a537b445ad6f17a9600c05e655f51a2844bfcc8`;
+`V414_EXACT_SHA_CI = PASS`;
+`V414_FAKE_HOME_LIFECYCLE = PASS`;
+`V414_UNINSTALL_TRANSACTION = PASS`;
+`V414_REAL_GLOBAL_APPLY = NOT_RUN`;
+`V414_FRESH_TASK_COMPATIBILITY = NOT_RUN`;
+`V414_PUBLIC_RELEASE = STABLE`.
+
+## v4.1.3 previous immutable Stable — historical source and fake-home evidence
+
+`v4.1.3` is the previous published immutable Stable release.
 Stable Source Commit A is
 `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`. Exact-SHA CI run `33253340074`
 passed on Windows, Ubuntu, and macOS and reported `363` tests all `PASS`.
@@ -27,7 +57,7 @@ backend-axis selection and comparable reference-cost projection.
 This is repository, fake-home, and read-only network validation only. No real
 Global v4.1.3 installer apply, real authentication test, Daily state write, or
 candidate fresh-task smoke was performed. The v4.1.3 GitHub Release is
-non-draft and non-prerelease, and the public bilingual README uses the
+non-draft and non-prerelease, and the historical bilingual README used the
 immutable anchors recorded above.
 
 `V413_SOURCE_SHA = 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`;

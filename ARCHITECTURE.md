@@ -1,15 +1,19 @@
-# v4.1.3 Stable Architecture Note
+# v4.1.4 Stable Architecture Note
 
-`v4.1.3` is the current Stable release and default installation target.
+`v4.1.4` is the current Stable release and default installation target.
 Stable runtime Source Commit A is
-`71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`; exact-SHA source CI run
-`33253340074` passed on Windows, Ubuntu, and macOS with `363` tests all
+`6a537b445ad6f17a9600c05e655f51a2844bfcc8`; exact-SHA source CI run
+`33264634602` passed on Windows, Ubuntu, and macOS with `366` tests all
 `PASS`. The reviewed Stable Setup contract is pinned at immutable documentation
-Commit `5c29abc9aed340f4a7c45c22a0f8b36242b920bb`, and the public Assisted
+Commit `bf01c438eae66f5ef9a27d401c6ee845f89d5d59`, and the public Assisted
 Installation contract is pinned at immutable documentation Commit
-`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`; both documentation anchors are
+`5e1ce80d3ed444834f700ac0154bfe444dec8cd3`; both documentation anchors are
 distinct from the runtime source.
-`v4.1.2` remains the previous immutable Stable release, with historical runtime
+`v4.1.3` remains the previous immutable Stable release, with historical runtime
+Source Commit `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`, Setup anchor
+`5c29abc9aed340f4a7c45c22a0f8b36242b920bb`, and Assisted Installation anchor
+`23eeba1a5fb21e0483f4140aeca18b483f3e85bf`. `v4.1.2` is an older Stable, with
+historical runtime
 Source Commit `551520c2435aca94d60132f292edbd53cc975cbe`, Setup anchor
 `4b2a6004fb92b6661166cb73e656cc2888b0a2ef`, and Assisted Installation anchor
 `a130c676fa5924e44034dc8c27f3dc0abfc3bcad`. `v4.1.1` is an older Stable, with
@@ -20,11 +24,39 @@ Source Commit `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`, Setup anchor
 immutable historical Prerelease / Preview / Public Beta, and `v4.1.0-rc5` is
 an older historical Preview.
 
-Status: `v4.1.3 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.2 — PREVIOUS IMMUTABLE STABLE`
+Status: `v4.1.4 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1.3 — PREVIOUS IMMUTABLE STABLE`
 
 The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before the Stable transition. The v4.1.2 transaction then upgraded that baseline while preserving the accepted selector, policy, agent, and configuration content outside the declared installer-owned changes. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke passed all seven recorded checks and final Compatibility against the observed installed product runtime. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
 
+## v4.1.4 Stable boundary
+
+The release closes the uninstall transaction-safety gap found by the final
+v4.1.3 audit. Uninstall now verifies its centralized backup before modifying
+any managed path and routes every later exception through exact rollback before
+preserving the original stable installer error. Regression tests prove that a
+backup verification failure leaves the exact installed tree unchanged and that
+an exception after one effective uninstall operation restores the exact
+pre-uninstall tree.
+
+The installer and ModelDial User-Agent advance to `v4.1.4`; manifest schema
+remains `1`. A valid v4.1.3-to-v4.1.4 fake-home upgrade changes only the
+installed selector and ownership manifest, creates and verifies one normal
+transaction backup, is idempotent on second apply, rolls back exactly, and
+fails closed without writes when the previously owned selector was modified.
+
+Stable Source Commit A
+`6a537b445ad6f17a9600c05e655f51a2844bfcc8` passed exact-SHA CI run
+`33264634602` on Windows, Ubuntu, and macOS with `366` tests all `PASS`.
+Repository and fake-home evidence are not real installed-runtime evidence: no
+real Global v4.1.4 apply, authentication test, Daily state write, or fresh-task
+compatibility smoke is claimed. Stable publication is represented by the
+annotated `v4.1.4` tag and a non-draft, non-prerelease GitHub Release; the
+public README pins the immutable Setup and Assisted Installation anchors shown
+above.
+
 ## v4.1.3 Stable boundary
+
+`v4.1.3` is the previous immutable Stable release.
 
 The release is a selector compatibility and provenance maintenance release. It
 accepts ModelDial API schemas `1.0` and `1.1` while deliberately retaining the
