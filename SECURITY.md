@@ -55,6 +55,12 @@ credential, cookie, authorization header, telemetry, cache, background request,
 state migration, or new write path. Public source, Setup, Assisted Installation,
 tag, Release, and README identities remain pending independent verification.
 
+Candidate Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`
+passed exact-SHA CI run `33253340074` on Windows, Ubuntu, and macOS with `363`
+tests all `PASS`. This is repository source validation only; it does not
+establish a real Global install, real authentication, runtime acceptance, tag,
+or Release. No real Global v4.1.3 installer apply has been performed.
+
 ## v4.1.2 Stable boundary
 
 `v4.1.2` is the published Stable release and default installation target. Its

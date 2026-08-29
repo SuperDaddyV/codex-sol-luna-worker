@@ -67,6 +67,8 @@ V412_RUNTIME_SOURCE_COMMIT = "551520c2435aca94d60132f292edbd53cc975cbe"
 V412_EXACT_CI_RUN = "32717295801"
 V412_MASTER_EVIDENCE_COMMIT = "fac118ac5ca096aaf1ef8d68b79bfc1372998a5a"
 V412_MASTER_CI_RUN = "32717520585"
+V413_RUNTIME_SOURCE_COMMIT = "71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4"
+V413_EXACT_CI_RUN = "33253340074"
 V412_BASELINE_RUNTIME_SOURCE_COMMIT = (
     "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 )
@@ -1046,6 +1048,10 @@ class DocumentationTests(unittest.TestCase):
             architecture,
         )
         self.assertIn("Publication identities", combined)
+        self.assertIn(V413_RUNTIME_SOURCE_COMMIT, combined)
+        self.assertIn(V413_EXACT_CI_RUN, combined)
+        self.assertIn("363", combined)
+        self.assertIn("No real Global v4.1.3 installer apply", security)
         self.assertNotIn("v4.1.3 (published Stable release)", combined)
 
 

@@ -24,8 +24,13 @@
   tie-break algorithm, Daily Profile or LKG schema, agent payload, Global
   policy, config, concurrency, installer manifest schema, migration behavior,
   release resolver, or real Global runtime state.
-- Publication identities, exact-SHA CI, runtime acceptance, Setup and Assisted
-  Installation pins, tag, Release, and public README target remain pending.
+- Candidate Source Commit A
+  `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4` passed exact-SHA CI run
+  `33253340074` on Windows, Ubuntu, and macOS with `363` tests all `PASS`.
+  This is repository source validation only; it does not establish a real
+  Global install, real authentication, runtime acceptance, tag, or Release.
+  Setup and Assisted Installation pins, the public README target, tag, and
+  Release remain pending.
 
 ## v4.1.2 (published Stable release)
 
