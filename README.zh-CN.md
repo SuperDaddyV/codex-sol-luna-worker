@@ -54,7 +54,7 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 安装后告诉我如何重新加载 Codex，并给出新任务 smoke 的续接内容。
 ```
 
-固定的[英文 Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md)是唯一执行权威；[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)仅供审阅。该协助合同会继续固定独立的 [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md)，再由 Setup 固定 runtime Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`。
+固定的 [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md) 是安装执行入口；[中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)仅供核对。它把安装固定到经过审查的 [v4.1.3 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md) 和已验证源 `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`，避免 Codex 从可变分支安装。
 
 > [!WARNING]
 > 不得把不可变安装 URL 改成 `master`、tag 或其他可变入口。系统变更必须获得明确确认。安装器在 ownership 冲突时 fail closed，并在变更前创建事务备份；但任何安装都不能承诺绝对无风险。
@@ -93,9 +93,7 @@ Ready: YES 后严格执行合同固定的 setup contract 和现有安装器。
 
 `Status Healthy` 表示已安装的 Sol/Luna 文件和托管配置通过健康检查。`Agents 5/5 Ready` 与 `Native leaf Ready` 表示五个 Luna profile 均可用，并保持为不能继续委派的 worker。如果当天尚未首次需要委派，健康安装仍可能显示 selection 尚未初始化。
 
-安装后或 Codex 更新后的深入 runtime 证据见 [RUNTIME_TESTS.md](RUNTIME_TESTS.md)；status 结果本身不等于完整 runtime acceptance。
-
-Codex 更新后，使用 `scripts/compatibility_smoke.py` 提供的 `Codex Compatibility Smoke` 做定向检查：`PASS` 表示无需修改项目，`REVIEW REQUIRED` 表示只进入建议的 review。它不能替代 [RUNTIME_TESTS.md](RUNTIME_TESTS.md) 中的 O1–O10 证据。
+安装后或 Codex 更新后，需要更深入检查时，按 [Runtime 检查](RUNTIME_TESTS.md) 执行。先运行 [`Codex Compatibility Smoke`](scripts/compatibility_smoke.py)：`PASS` 表示无需修改项目；`REVIEW REQUIRED` 表示只按报告进入 review。status 本身不等于完整 runtime acceptance。
 
 ## 升级、回滚与卸载
 

@@ -108,11 +108,11 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("[简体中文](README.zh-CN.md)", text(README))
         self.assertIn("[English](README.md)", text(README_ZH))
         self.assertIn(
-            "[review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)",
+            "[Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)",
             text(README),
         )
         self.assertIn(
-            "[安装协助合同中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)",
+            "[中文审阅版](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md)",
             text(README_ZH),
         )
 
@@ -595,7 +595,7 @@ class DocumentationTests(unittest.TestCase):
                 "## FAQ",
             ):
                 self.assertNotIn(removed, content)
-            self.assertEqual(content.count("O1–O10"), 1)
+            self.assertNotIn("O1–O10", content)
             for link in (
                 "CODEX_SOL_LUNA_SETUP.md",
                 "ARCHITECTURE.md",

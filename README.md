@@ -57,7 +57,7 @@ and installer exactly. After installation, tell me how to reload Codex and
 provide the fresh-task smoke continuation.
 ```
 
-The immutable [English Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md) is the sole executable authority. The [review-only Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is available for review. The assisted contract pins the separate [Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md), which pins runtime Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`.
+The pinned [Assisted Installation contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/23eeba1a5fb21e0483f4140aeca18b483f3e85bf/CODEX_SOL_LUNA_INSTALL_ASSIST.md) is the installation entry; the [Chinese translation](CODEX_SOL_LUNA_INSTALL_ASSIST.zh-CN.md) is for review. It fixes installation to the reviewed [v4.1.3 Setup contract](https://github.com/SuperDaddyV/codex-sol-luna-worker/blob/5c29abc9aed340f4a7c45c22a0f8b36242b920bb/CODEX_SOL_LUNA_SETUP.md) and verified source `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`, so Codex does not install from a moving branch.
 
 > [!WARNING]
 > Never replace the immutable installation URL with `master`, a tag, or another mutable entry. System changes require explicit approval. The installer fails closed on ownership conflicts and creates a transaction backup before changes, but no installation is risk-free.
@@ -96,9 +96,7 @@ Check Sol/Luna status.
 
 `Status Healthy` means the installed Sol/Luna files and managed configuration passed the health checks. `Agents 5/5 Ready` and `Native leaf Ready` mean all five Luna profiles are available and remain non-delegating workers. A healthy installation may show today's selection as not initialized until delegation is first needed.
 
-For deeper runtime evidence after installation or a Codex update, follow [RUNTIME_TESTS.md](RUNTIME_TESTS.md); a status result alone is not full runtime acceptance.
-
-After a Codex update, the `Codex Compatibility Smoke` in `scripts/compatibility_smoke.py` is the targeted next check: `PASS` means no project change, while `REVIEW REQUIRED` means follow only the recommended review. It does not replace the O1–O10 evidence in [RUNTIME_TESTS.md](RUNTIME_TESTS.md).
+For deeper checks after installation or a Codex update, follow [Runtime checks](RUNTIME_TESTS.md). Start with [`Codex Compatibility Smoke`](scripts/compatibility_smoke.py): `PASS` means no project change is needed; `REVIEW REQUIRED` means follow only the reported review. A status result alone is not full runtime acceptance.
 
 ## Upgrade, rollback, and uninstall
 

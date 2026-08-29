@@ -639,7 +639,7 @@ class CompatibilitySmokeTests(unittest.TestCase):
             self.assertIn("Codex Compatibility Smoke", content)
             self.assertIn("scripts/compatibility_smoke.py", content)
             self.assertIn("REVIEW REQUIRED", content)
-            self.assertIn("O1–O10", content)
+            self.assertNotIn("O1–O10", content)
         self.assertIn("no project change", english)
         self.assertIn("无需修改项目", chinese)
 
