@@ -38,6 +38,23 @@ and a non-draft, non-prerelease GitHub Release. The immutable `v4.1.1` Stable
 and RC6 historical Prerelease remain unchanged. RC4 remains
 historical release evidence for Receipt reason evidence-gating.
 
+## v4.1.3 unreleased candidate security delta
+
+`v4.1.3` is not yet a public installation target. The candidate accepts only
+ModelDial API schemas `1.0` and `1.1`; unknown schemas continue through the
+existing Full Snapshot, LKG, and fail-closed source order. Schema `1.1` rows are
+eligible only when their backend score identity is internally consistent. The
+candidate does not trust or merge the overall ranking, capability batches,
+change feed, or advisory Agent Profiles.
+
+Full Snapshot score and optional cost rows must identify the `codex` /
+`official_login` route in `model_configuration` and retain first-party-controlled
+score and route provenance. This closes a cross-route selection boundary while
+preserving fail-soft reference-cost behavior. The candidate adds no host,
+credential, cookie, authorization header, telemetry, cache, background request,
+state migration, or new write path. Public source, Setup, Assisted Installation,
+tag, Release, and README identities remain pending independent verification.
+
 ## v4.1.2 Stable boundary
 
 `v4.1.2` is the published Stable release and default installation target. Its

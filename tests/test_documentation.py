@@ -341,6 +341,8 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phase, content)
         self.assertIn("This section specifies the deterministic installation experience", content)
+        self.assertIn("Source Commit A above", content)
+        self.assertNotIn("Source Commit A2 above", content)
         self.assertIn("exact immutable documentation commit", content)
         self.assertIn("No preflight state file is created", content)
         self.assertIn("DAILY_SELECTION_PROOF_REQUIRED", content)
@@ -759,9 +761,15 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("Stable release: `v4.1.2`", text(ASSIST))
         self.assertNotIn("releases/tag/v4.1.1", text(README) + text(README_ZH))
         self.assertNotIn("img.shields.io/badge/stable-v4.1.1", public_installation)
-        for content in stable_docs + (text(README), text(README_ZH)):
-            for unresolved in ("unreleased", "candidate", "not_established"):
-                self.assertNotIn(unresolved, content.lower())
+        stable_public_claims = "\n".join(
+            (text(README), text(README_ZH), text(ROOT / "RUNTIME_TESTS.md"))
+        ).lower()
+        for unresolved in (
+            "unreleased `v4.1.2`",
+            "v4.1.2 candidate",
+            "v4.1.2 not_established",
+        ):
+            self.assertNotIn(unresolved, stable_public_claims)
 
     def test_stable_setup_contract_pins_runtime_source_without_self_reference(self):
         architecture = text(ROOT / "ARCHITECTURE.md")
@@ -1019,6 +1027,26 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(required, content)
         self.assertNotIn("--validation-sandbox --codex-home <CODEX_HOME>", content)
+
+    def test_v413_candidate_boundary_is_explicit_and_unpublished(self):
+        architecture = text(ROOT / "ARCHITECTURE.md")
+        changelog = text(ROOT / "CHANGELOG.md")
+        security = text(ROOT / "SECURITY.md")
+        combined = "\n".join((architecture, changelog, security))
+
+        self.assertIn("v4.1.3 — UNRELEASED CANDIDATE", architecture)
+        self.assertIn("## v4.1.3 (unreleased candidate)", changelog)
+        self.assertIn("## v4.1.3 unreleased candidate security delta", security)
+        self.assertIn("schemas `1.0` and `1.1`", combined)
+        self.assertIn("`rankings` backend axis", architecture)
+        self.assertIn("`overallRankings`, `overallBatch`", architecture)
+        self.assertIn("v4.1.2-to-v4.1.3", changelog)
+        self.assertIn(
+            "v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
+            architecture,
+        )
+        self.assertIn("Publication identities", combined)
+        self.assertNotIn("v4.1.3 (published Stable release)", combined)
 
 
 if __name__ == "__main__":

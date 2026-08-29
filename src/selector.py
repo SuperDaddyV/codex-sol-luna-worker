@@ -25,7 +25,7 @@ EFFORTS = ("low", "medium", "high", "xhigh", "max")
 METADATA_SCHEMA_VERSION = 1
 STATUS_SCHEMA_VERSION = 1
 REFERENCE_COST_METRIC = "modeldial_estimated_reference_cost_usd"
-USER_AGENT = "codex-sol-luna-worker/4.1.2"
+USER_AGENT = "codex-sol-luna-worker/4.1.3"
 ROLE_BY_EFFORT = {effort: f"luna_{effort}" for effort in EFFORTS}
 BJT = timezone(timedelta(hours=8), name="BJT")
 UTC = timezone.utc
@@ -277,10 +277,17 @@ def adapt_modeldial_snapshot(
         effort = configuration.get("reasoning_effort")
         if effort not in EFFORTS:
             continue
+        if (
+            configuration.get("provider_id") != "codex"
+            or configuration.get("route_type") != "official_login"
+        ):
+            continue
         if entry.get("advisor_eligible") is not True:
             raise SnapshotInvalid(f"ModelDial Luna row is not advisor eligible: {effort}")
         if entry.get("score_integrity") != "first_party_controlled":
             raise SnapshotInvalid(f"ModelDial Luna row lacks score integrity: {effort}")
+        if entry.get("route_identity") != "first_party_controlled":
+            raise SnapshotInvalid(f"ModelDial Luna row lacks route integrity: {effort}")
         evidence_group = entry.get("source_evidence_group_id")
         if not isinstance(evidence_group, str) or not evidence_group:
             raise SnapshotInvalid(f"ModelDial Luna row lacks evidence group: {effort}")
@@ -299,29 +306,28 @@ def adapt_modeldial_snapshot(
         "snapshot_hash": payload["batch_sha256"],
     }
     cost_candidates: dict[tuple[str, str], list[float | None]] = {}
-    if payload.get("cost_coverage") == "complete":
-        for entry in entries:
-            if not isinstance(entry, Mapping):
-                continue
-            configuration = entry.get("model_configuration")
-            if not isinstance(configuration, Mapping):
-                continue
-            model = configuration.get("canonical_model_id")
-            effort = configuration.get("reasoning_effort")
-            if model not in (LUNA_MODEL, SOL_MODEL) or effort not in EFFORTS:
-                continue
-            if (
-                entry.get("provider") != "codex"
-                or entry.get("route") != "official_login"
-                or entry.get("advisor_eligible") is not True
-                or entry.get("score_integrity") != "first_party_controlled"
-                or entry.get("route_identity") != "first_party_controlled"
-                or entry.get("cost_coverage") != "complete"
-                or entry.get("source_evidence_group_id") not in evidence_groups
-            ):
-                continue
-            cost = _finite_cost(entry.get("estimated_api_cost_usd"))
-            cost_candidates.setdefault((model, effort), []).append(cost)
+    for entry in entries:
+        if not isinstance(entry, Mapping):
+            continue
+        configuration = entry.get("model_configuration")
+        if not isinstance(configuration, Mapping):
+            continue
+        model = configuration.get("canonical_model_id")
+        effort = configuration.get("reasoning_effort")
+        if model not in (LUNA_MODEL, SOL_MODEL) or effort not in EFFORTS:
+            continue
+        if (
+            configuration.get("provider_id") != "codex"
+            or configuration.get("route_type") != "official_login"
+            or entry.get("advisor_eligible") is not True
+            or entry.get("score_integrity") != "first_party_controlled"
+            or entry.get("route_identity") != "first_party_controlled"
+            or entry.get("cost_coverage") != "complete"
+            or entry.get("source_evidence_group_id") not in evidence_groups
+        ):
+            continue
+        cost = _finite_cost(entry.get("estimated_api_cost_usd"))
+        cost_candidates.setdefault((model, effort), []).append(cost)
     adapted.update(
         _reference_cost_metadata(payload.get("pricing_snapshot_id"), cost_candidates)
     )
@@ -341,8 +347,10 @@ def adapt_modeldial_api(
     schema_version = payload.get("schemaVersion")
     if not isinstance(schema_version, str) or not schema_version.strip():
         raise SnapshotInvalid("API_SCHEMA_INVALID: schemaVersion is missing or malformed")
-    if schema_version != "1.0":
+    if schema_version not in {"1.0", "1.1"}:
         raise SnapshotInvalid("API_SCHEMA_UNSUPPORTED: schemaVersion is not supported")
+    if schema_version == "1.1" and payload.get("defaultRanking") != "overallRankings":
+        raise SnapshotInvalid("ModelDial API v1.1 default ranking is invalid")
 
     source = payload.get("source")
     if not isinstance(source, Mapping) or source.get("kind") != "first_party_snapshot":
@@ -403,10 +411,22 @@ def adapt_modeldial_api(
         effort = ranking.get("reasoningEffort")
         if model not in (LUNA_MODEL, SOL_MODEL) or effort not in EFFORTS:
             continue
+        score = ranking.get("score")
+        if schema_version == "1.1":
+            backend_score = ranking.get("backendScore")
+            if (
+                ranking.get("scoreBasis") != "backend"
+                or isinstance(score, bool)
+                or not isinstance(score, (int, float))
+                or isinstance(backend_score, bool)
+                or not isinstance(backend_score, (int, float))
+                or not math.isfinite(float(score))
+                or not math.isfinite(float(backend_score))
+                or float(score) != float(backend_score)
+            ):
+                raise SnapshotInvalid("ModelDial API v1.1 backend score identity is invalid")
         if model == LUNA_MODEL:
-            rows.append(
-                {"model": LUNA_MODEL, "effort": effort, "score": ranking.get("score")}
-            )
+            rows.append({"model": LUNA_MODEL, "effort": effort, "score": score})
         cost = _finite_cost(ranking.get("estimatedReferenceCostUsd"))
         cost_candidates.setdefault((model, effort), []).append(cost)
 

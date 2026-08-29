@@ -764,7 +764,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             self.assertEqual(tree_hash(target), before)
             self.assertEqual(manifest_path.read_bytes(), rc6_manifest_before)
 
-    def test_v411_to_v412_candidate_upgrades_selector_and_manifest(self):
+    def test_v412_to_v413_candidate_upgrades_selector_and_manifest(self):
         with sandbox() as directory:
             target = Path(directory) / ".codex"
             target.mkdir()
@@ -773,25 +773,25 @@ class InstallerLifecycleTests(unittest.TestCase):
             manifest_path = target / MANIFEST_RELATIVE
             selector_relative = "sol-luna-v4/selector.py"
             selector_path = target / selector_relative
-            v412_selector = selector_path.read_bytes()
-            v411_selector = v412_selector.replace(
+            v413_selector = selector_path.read_bytes()
+            v412_selector = v413_selector.replace(
+                b"codex-sol-luna-worker/4.1.3",
                 b"codex-sol-luna-worker/4.1.2",
-                b"codex-sol-luna-worker/4.1.1",
             )
-            self.assertNotEqual(v411_selector, v412_selector)
-            selector_path.write_bytes(v411_selector)
+            self.assertNotEqual(v412_selector, v413_selector)
+            selector_path.write_bytes(v412_selector)
 
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["version"] = "v4.1.1"
-            manifest["source_commit"] = "ca8e9e4caf5564ffe8d0a11fe376047594f8a748"
+            manifest["version"] = "v4.1.2"
+            manifest["source_commit"] = "551520c2435aca94d60132f292edbd53cc975cbe"
             manifest["owned_files"][selector_relative] = hashlib.sha256(
-                v411_selector
+                v412_selector
             ).hexdigest()
             manifest_path.write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            v411_manifest_before = manifest_path.read_bytes()
+            v412_manifest_before = manifest_path.read_bytes()
             before = tree_hash(target)
 
             dry = dry_run_install(
@@ -838,7 +838,7 @@ class InstallerLifecycleTests(unittest.TestCase):
             installed = json.loads(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(installed["version"], VERSION)
             self.assertEqual(installed["source_commit"], "2" * 40)
-            self.assertEqual(selector_path.read_bytes(), v412_selector)
+            self.assertEqual(selector_path.read_bytes(), v413_selector)
 
             second = call_install(
                 target, generated_at=FIXED_TIME + timedelta(days=2)
@@ -855,8 +855,56 @@ class InstallerLifecycleTests(unittest.TestCase):
             )
             self.assertEqual(rolled_back["status"], "ROLLBACK_EXACT_PASS")
             self.assertEqual(tree_hash(target), before)
-            self.assertEqual(manifest_path.read_bytes(), v411_manifest_before)
-            self.assertEqual(selector_path.read_bytes(), v411_selector)
+            self.assertEqual(manifest_path.read_bytes(), v412_manifest_before)
+            self.assertEqual(selector_path.read_bytes(), v412_selector)
+
+    def test_v412_modified_selector_blocks_v413_upgrade_without_changes(self):
+        with sandbox() as directory:
+            target = Path(directory) / ".codex"
+            target.mkdir()
+            call_install(target)
+
+            manifest_path = target / MANIFEST_RELATIVE
+            selector_relative = "sol-luna-v4/selector.py"
+            selector_path = target / selector_relative
+            v412_selector = selector_path.read_bytes().replace(
+                b"codex-sol-luna-worker/4.1.3",
+                b"codex-sol-luna-worker/4.1.2",
+            )
+            selector_path.write_bytes(v412_selector)
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["version"] = "v4.1.2"
+            manifest["source_commit"] = "551520c2435aca94d60132f292edbd53cc975cbe"
+            manifest["owned_files"][selector_relative] = hashlib.sha256(
+                v412_selector
+            ).hexdigest()
+            manifest_path.write_text(
+                json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            selector_path.write_bytes(v412_selector + b"\n# user change\n")
+            before = tree_hash(target)
+            for action in ("dry-run", "apply"):
+                with self.subTest(action=action):
+                    with self.assertRaises(InstallerError) as raised:
+                        if action == "dry-run":
+                            dry_run_install(
+                                target,
+                                project_root=ROOT,
+                                generated_at=FIXED_TIME + timedelta(days=1),
+                                allow_validation_sandbox=True,
+                            )
+                        else:
+                            call_install(
+                                target,
+                                generated_at=FIXED_TIME + timedelta(days=1),
+                            )
+                    self.assertEqual(
+                        raised.exception.reason_code,
+                        "OWNERSHIP_CONFLICT",
+                    )
+                    self.assertEqual(tree_hash(target), before)
 
     def test_rc6_modified_owned_file_blocks_stable_upgrade_without_changes(self):
         with sandbox() as directory:

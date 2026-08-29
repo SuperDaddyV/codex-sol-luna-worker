@@ -1,5 +1,32 @@
 # Changelog
 
+## v4.1.3 (unreleased candidate)
+
+- Accepts ModelDial API schemas `1.0` and `1.1` while preserving the v4.1
+  backend-score contract. Schema `1.1` requires `defaultRanking =
+  overallRankings`, consumes only the backward-compatible `rankings` backend
+  axis, and rejects canonical rows whose `scoreBasis`, `score`, and
+  `backendScore` do not identify the same backend result.
+- Restores optional Full Snapshot reference-cost comparison after ModelDial
+  moved provider and route identity to
+  `model_configuration.provider_id` and
+  `model_configuration.route_type`. Cost metadata remains fail-soft and cannot
+  affect role selection.
+- Restricts Full Snapshot Luna score selection to the `codex` /
+  `official_login` route with first-party-controlled score and route
+  provenance, preventing a future cross-provider or cross-route row from
+  entering the five-effort selector contract.
+- Adds a sanitized schema `1.1` fixture, backend-versus-overall regression
+  coverage, malformed score-basis cases, API-to-snapshot fallback coverage,
+  installer version/User-Agent synchronization, and v4.1.2-to-v4.1.3
+  fake-home upgrade, ownership, idempotency, backup, and exact rollback tests.
+- Changes no overall-ranking adoption, Agent Profile integration, winner or
+  tie-break algorithm, Daily Profile or LKG schema, agent payload, Global
+  policy, config, concurrency, installer manifest schema, migration behavior,
+  release resolver, or real Global runtime state.
+- Publication identities, exact-SHA CI, runtime acceptance, Setup and Assisted
+  Installation pins, tag, Release, and public README target remain pending.
+
 ## v4.1.2 (published Stable release)
 
 - Rejects filesystem aliases inside installer-owned paths while preserving the

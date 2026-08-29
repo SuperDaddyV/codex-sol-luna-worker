@@ -12,6 +12,14 @@ derived solely to exercise same-batch, same-pricing, same-effort comparison, and
 `batch.entryCount` was adjusted to 10. The publisher-defined batch SHA is
 retained as fixture data; it is not a hash of this modified file.
 
+`api-complete-v1.1.json` is derived from the same official endpoint after its
+schema `1.1` publication, retrieved on 2026-08-29. It retains ten sanitized
+Codex backend rows and five Luna overall rows so offline tests can prove that
+the v4.1 selector deliberately consumes the backend `rankings` axis rather
+than `overallRankings`. Batch counts are adjusted for the truncated fixture;
+publisher-defined hashes remain attribution data rather than hashes of this
+modified file.
+
 `first-party-complete.json` is a wholly sanitized companion fixture derived from
 the documented full-snapshot field shape. Its identifiers, scores, reference
 costs, and evidence group are synthetic and contain no private or live payload.

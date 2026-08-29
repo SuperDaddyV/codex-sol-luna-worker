@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.1",
+  "generatedAt": "2026-08-29T02:44:55Z",
+  "defaultRanking": "overallRankings",
+  "weights": {"backend": 0.5, "frontend": 0.3, "knowledge": 0.2},
+  "source": {
+    "name": "ModelDial Public Radar",
+    "kind": "first_party_snapshot",
+    "methodologyUrl": "https://modeldial.com/method",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "batch": {
+    "id": "snapshot-2026-08-28T22-00-00Z",
+    "revision": 1,
+    "publishedAt": "2026-08-28T22:00:00Z",
+    "questionPackVersion": "coding-fast-v4.10",
+    "graderVersion": "scoring-mode:semantic_q1_q5_equal_v2",
+    "evaluationProfile": "full",
+    "scoreBaselineId": "coding-fast-v4.10:semantic_q1_q5_equal_v2",
+    "pricingSnapshotId": "pricing-v1-e55d664fdf938dbe8b739073d8f87d15fa1ea3ebae3c18ff3edc81cd91979fcf",
+    "entryCount": 10,
+    "sha256": "sha256:3e3dd6dd7d6192f454c431038854d05c57ecb36ad7e490585b980c1b24457ba3"
+  },
+  "overallBatch": {
+    "id": "overall-daf76f59c440e11ec1244628",
+    "publishedAt": "2026-08-29T02:44:55Z",
+    "sha256": "sha256:1afea9d690e9e25bda4610b6aade5b97dddad8e534f7f157807a43ce453186b5",
+    "entryCount": 5,
+    "sources": {
+      "backend": {"batchId": "snapshot-2026-08-28T22-00-00Z", "publishedAt": "2026-08-28T22:00:00Z", "sha256": "sha256:3e3dd6dd7d6192f454c431038854d05c57ecb36ad7e490585b980c1b24457ba3"},
+      "frontend": {"batchId": "fixture-frontend", "publishedAt": "2026-08-29T02:44:55Z", "sha256": "sha256:b15eef266517b846319d4693d7721d73e662c887b0b885b98e38052e4d0f151f"},
+      "knowledge": {"batchId": "fixture-knowledge", "publishedAt": "2026-08-29T00:02:43Z", "sha256": "sha256:e17dabd5846b9662aedc1292eec5884422625e3dac52f93703e3b00debac3977"}
+    }
+  },
+  "overallRankings": [
+    {"rank": 13, "backendRank": 22, "id": "cloudflare-reference:gpt-5.6-luna:max", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / Max", "reasoningEffort": "max", "route": "official_login", "score": 63.3, "scoreBasis": "overall", "maxScore": 100, "backendScore": 60, "frontendScore": 91, "knowledgeScore": 30, "overallScore": 63.3, "elapsedMs": 3195555, "estimatedReferenceCostUsd": 0.167287, "decisionTags": [], "targetLabels": []},
+    {"rank": 21, "backendRank": 21, "id": "cloudflare-reference:gpt-5.6-luna:xhigh", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / XHigh", "reasoningEffort": "xhigh", "route": "official_login", "score": 53.5, "scoreBasis": "overall", "maxScore": 100, "backendScore": 61, "frontendScore": 60, "knowledgeScore": 25, "overallScore": 53.5, "elapsedMs": 2877322, "estimatedReferenceCostUsd": 0.119562, "decisionTags": [], "targetLabels": []},
+    {"rank": 22, "backendRank": 30, "id": "cloudflare-reference:gpt-5.6-luna:medium", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / Medium", "reasoningEffort": "medium", "route": "official_login", "score": 50, "scoreBasis": "overall", "maxScore": 100, "backendScore": 49, "frontendScore": 65, "knowledgeScore": 30, "overallScore": 50, "elapsedMs": 2927682, "estimatedReferenceCostUsd": 0.031036, "decisionTags": [], "targetLabels": []},
+    {"rank": 25, "backendRank": 24, "id": "cloudflare-reference:gpt-5.6-luna:high", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / High", "reasoningEffort": "high", "route": "official_login", "score": 48, "scoreBasis": "overall", "maxScore": 100, "backendScore": 58, "frontendScore": 40, "knowledgeScore": 35, "overallScore": 48, "elapsedMs": 2884313, "estimatedReferenceCostUsd": 0.068939, "decisionTags": [], "targetLabels": []},
+    {"rank": 30, "backendRank": 29, "id": "cloudflare-reference:gpt-5.6-luna:low", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / Low", "reasoningEffort": "low", "route": "official_login", "score": 32.9, "scoreBasis": "overall", "maxScore": 100, "backendScore": 51, "frontendScore": 18, "knowledgeScore": 10, "overallScore": 32.9, "elapsedMs": 2494478, "estimatedReferenceCostUsd": 0.020612, "decisionTags": [], "targetLabels": []}
+  ],
+  "rankings": [
+    {"rank": 2, "backendRank": 2, "id": "cloudflare-reference:gpt-5.6-sol:max", "provider": "codex", "model": "gpt-5.6-sol", "displayName": "gpt-5.6-sol / Max", "reasoningEffort": "max", "route": "official_login", "score": 82, "scoreBasis": "backend", "maxScore": 100, "backendScore": 82, "frontendScore": 95, "knowledgeScore": 90, "overallScore": 87.5, "elapsedMs": 3445429, "estimatedReferenceCostUsd": 2.47548, "decisionTags": [], "targetLabels": []},
+    {"rank": 3, "backendRank": 3, "id": "cloudflare-reference:gpt-5.6-sol:xhigh", "provider": "codex", "model": "gpt-5.6-sol", "displayName": "gpt-5.6-sol / XHigh", "reasoningEffort": "xhigh", "route": "official_login", "score": 81, "scoreBasis": "backend", "maxScore": 100, "backendScore": 81, "frontendScore": 88, "knowledgeScore": 90, "overallScore": 84.9, "elapsedMs": 3495814, "estimatedReferenceCostUsd": 1.136414, "decisionTags": [], "targetLabels": []},
+    {"rank": 4, "backendRank": 4, "id": "cloudflare-reference:gpt-5.6-sol:high", "provider": "codex", "model": "gpt-5.6-sol", "displayName": "gpt-5.6-sol / High", "reasoningEffort": "high", "route": "official_login", "score": 77, "scoreBasis": "backend", "maxScore": 100, "backendScore": 77, "frontendScore": 94, "knowledgeScore": 80, "overallScore": 82.7, "elapsedMs": 3503557, "estimatedReferenceCostUsd": 0.911612, "decisionTags": [], "targetLabels": []},
+    {"rank": 6, "backendRank": 6, "id": "cloudflare-reference:gpt-5.6-sol:medium", "provider": "codex", "model": "gpt-5.6-sol", "displayName": "gpt-5.6-sol / Medium", "reasoningEffort": "medium", "route": "official_login", "score": 75, "scoreBasis": "backend", "maxScore": 100, "backendScore": 75, "frontendScore": 67, "knowledgeScore": 70, "overallScore": 71.6, "elapsedMs": 3407893, "estimatedReferenceCostUsd": 0.592068, "decisionTags": [], "targetLabels": []},
+    {"rank": 9, "backendRank": 9, "id": "cloudflare-reference:gpt-5.6-sol:low", "provider": "codex", "model": "gpt-5.6-sol", "displayName": "gpt-5.6-sol / Low", "reasoningEffort": "low", "route": "official_login", "score": 68, "scoreBasis": "backend", "maxScore": 100, "backendScore": 68, "frontendScore": 74, "knowledgeScore": 85, "overallScore": 73.2, "elapsedMs": 3036189, "estimatedReferenceCostUsd": 0.454348, "decisionTags": [], "targetLabels": []},
+    {"rank": 21, "backendRank": 21, "id": "cloudflare-reference:gpt-5.6-luna:xhigh", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / XHigh", "reasoningEffort": "xhigh", "route": "official_login", "score": 61, "scoreBasis": "backend", "maxScore": 100, "backendScore": 61, "frontendScore": 60, "knowledgeScore": 25, "overallScore": 53.5, "elapsedMs": 2877322, "estimatedReferenceCostUsd": 0.119562, "decisionTags": [], "targetLabels": []},
+    {"rank": 22, "backendRank": 22, "id": "cloudflare-reference:gpt-5.6-luna:max", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / Max", "reasoningEffort": "max", "route": "official_login", "score": 60, "scoreBasis": "backend", "maxScore": 100, "backendScore": 60, "frontendScore": 91, "knowledgeScore": 30, "overallScore": 63.3, "elapsedMs": 3195555, "estimatedReferenceCostUsd": 0.167287, "decisionTags": [], "targetLabels": []},
+    {"rank": 24, "backendRank": 24, "id": "cloudflare-reference:gpt-5.6-luna:high", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / High", "reasoningEffort": "high", "route": "official_login", "score": 58, "scoreBasis": "backend", "maxScore": 100, "backendScore": 58, "frontendScore": 40, "knowledgeScore": 35, "overallScore": 48, "elapsedMs": 2884313, "estimatedReferenceCostUsd": 0.068939, "decisionTags": [], "targetLabels": []},
+    {"rank": 29, "backendRank": 29, "id": "cloudflare-reference:gpt-5.6-luna:low", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / Low", "reasoningEffort": "low", "route": "official_login", "score": 51, "scoreBasis": "backend", "maxScore": 100, "backendScore": 51, "frontendScore": 18, "knowledgeScore": 10, "overallScore": 32.9, "elapsedMs": 2494478, "estimatedReferenceCostUsd": 0.020612, "decisionTags": [], "targetLabels": []},
+    {"rank": 30, "backendRank": 30, "id": "cloudflare-reference:gpt-5.6-luna:medium", "provider": "codex", "model": "gpt-5.6-luna", "displayName": "gpt-5.6-luna / Medium", "reasoningEffort": "medium", "route": "official_login", "score": 49, "scoreBasis": "backend", "maxScore": 100, "backendScore": 49, "frontendScore": 65, "knowledgeScore": 30, "overallScore": 50, "elapsedMs": 2927682, "estimatedReferenceCostUsd": 0.031036, "decisionTags": [], "targetLabels": []}
+  ],
+  "links": {
+    "self": "https://modeldial.com/api/v1/radar/latest.json",
+    "agentProfile": "https://modeldial.com/api/v1/radar/agent-profile.json",
+    "changes": "https://modeldial.com/api/v1/radar/changes.json",
+    "index": "https://modeldial.com/api/v1/radar/index.json",
+    "fullSnapshot": "https://modeldial.com/data/reference-snapshots/latest.json",
+    "agentGuide": "https://modeldial.com/modeldial-skill/SKILL.md",
+    "openApi": "https://modeldial.com/openapi-v1.json"
+  }
+}

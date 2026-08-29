@@ -267,7 +267,7 @@ behavior.
 
 This section specifies the deterministic installation experience for the
 reviewed `v4.1.2` Stable target. It is subordinate to the exact setup contract
-and Source Commit A2 above and is not authority to publish, retag, or move a
+and Source Commit A above and is not authority to publish, retag, or move a
 Release. The bilingual README must pin this English contract through a separate
 exact immutable documentation commit; that commit is not the runtime source.
 

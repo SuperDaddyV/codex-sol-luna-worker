@@ -1,6 +1,8 @@
-# v4.1.2 Stable Architecture Note
+# v4.1.3 Candidate Architecture Note
 
-`v4.1.2` is the current Stable release and default installation target.
+`v4.1.3` is an unreleased maintenance candidate.
+`v4.1.2` is the current Stable release and default installation target. That
+remains true until a separately verified immutable release chain is published.
 Stable runtime Source Commit A is
 `551520c2435aca94d60132f292edbd53cc975cbe`; exact-SHA source CI run
 `32717295801` passed on Windows, Ubuntu, and macOS with `357` tests all
@@ -16,9 +18,35 @@ Source Commit `ca8e9e4caf5564ffe8d0a11fe376047594f8a748`, Setup anchor
 immutable historical Prerelease / Preview / Public Beta, and `v4.1.0-rc5` is
 an older historical Preview.
 
-Status: `v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
+Status: `v4.1.3 — UNRELEASED CANDIDATE`; `v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`
 
 The documented-environment RC5 O1-O10 record remains bounded historical evidence; its Final O4/O9 re-certification was not obtained due to `CODEX_ROLLOUT_EVIDENCE_COMPATIBILITY`, with no confirmed product-runtime regression. RC6 independently passed its recorded real Global upgrade, fresh-task O1-O10 acceptance, Final O4/O9 re-certification, and Runtime Cases A/B/C/D in one native Windows Codex environment before the Stable transition. The v4.1.2 transaction then upgraded that baseline while preserving the accepted selector, policy, agent, and configuration content outside the declared installer-owned changes. After explicit Daily selection initialization, an independent one-run fresh-task compatibility smoke passed all seven recorded checks and final Compatibility against the observed installed product runtime. This evidence remains environment- and scenario-bounded. RC4 remains historical release evidence for Receipt reason evidence-gating.
+
+## v4.1.3 unreleased candidate boundary
+
+The candidate is a selector compatibility and provenance maintenance release. It
+accepts ModelDial API schemas `1.0` and `1.1` while deliberately retaining the
+v4.1 backend-score contract. For schema `1.1`, only the backward-compatible
+`rankings` backend axis is eligible; canonical rows must declare
+`scoreBasis = backend`, and `score` must equal `backendScore`. The selector does
+not consume `overallRankings`, `overallBatch`, capability publications,
+`changes.json`, or advisory Agent Profiles.
+
+The official Full Snapshot fallback uses the same `codex` / `official_login`
+route identity for score selection and optional reference-cost comparison. It
+reads provider and route identity from `model_configuration.provider_id` and
+`model_configuration.route_type`, requires first-party-controlled score and
+route provenance, and keeps reference-cost validation fail-soft and
+selection-neutral.
+
+The source order remains API v1 -> Full Snapshot -> valid LKG -> fail closed.
+Daily Profile metadata schema `1`, the normalized LKG envelope, five-effort
+winner and lower-effort tie-break semantics, native agents, policy, config,
+concurrency, and installer manifest schema `1` remain unchanged. A valid
+v4.1.2-to-v4.1.3 upgrade is expected to change only the installed selector and
+ownership manifest. Publication identities, exact-SHA CI, real Global runtime
+evidence, Setup and Assisted Installation anchors, tag, Release, and public
+README target remain pending and must not be invented in the source candidate.
 
 ## v4.1.2 Stable boundary
 
@@ -79,7 +107,7 @@ Otherwise:
     -> invalid or unavailable: NO_LUNA_PROFILE_AVAILABLE
 ```
 
-The API adapter accepts only schema `1.0` from the published [OpenAPI 3.1 contract](https://modeldial.com/openapi-v1.json), first-party provenance, a coherent batch, and exactly one row for each canonical Luna effort through the `codex` / `gpt-5.6-luna` / `official_login` route. A valid API response stops acquisition. Sources are never merged or arbitrated. Radar HTML runtime fallback is removed in v4.1.
+The API adapter accepts schemas `1.0` and `1.1` from the published [OpenAPI 3.1 contract](https://modeldial.com/openapi-v1.json), first-party provenance, a coherent backend batch, and exactly one row for each canonical Luna effort through the `codex` / `gpt-5.6-luna` / `official_login` route. Schema `1.1` must preserve backend score identity as defined above. A valid API response stops acquisition. Sources are never merged or arbitrated. Radar HTML runtime fallback is removed in v4.1.
 
 ## Stable boundary
 

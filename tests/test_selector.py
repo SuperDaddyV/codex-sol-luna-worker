@@ -108,6 +108,59 @@ class ModelDialApiAdapterTests(unittest.TestCase):
         self.assertEqual(adapted["source_mode"], "modeldial_api_v1")
         self.assertEqual(adapted["source_url"], MODELDIAL_API_URL)
 
+    def test_complete_api_v11_payload_uses_backend_axis(self):
+        payload = load_fixture("api-complete-v1.1.json")
+        adapted = adapt_modeldial_api(
+            payload,
+            now=datetime(2026, 8, 29, 12, tzinfo=BJT),
+        )
+        profile = select_snapshot(adapted)
+        self.assertEqual(adapted["snapshot_id"], payload["batch"]["id"])
+        self.assertEqual(profile["selected_effort"], "xhigh")
+        self.assertEqual(profile["selected_score"], 61.0)
+        self.assertEqual(profile["reference_cost_comparison"]["reduction_pct"], 89.5)
+        overall_scores = {
+            row["reasoningEffort"]: row["score"]
+            for row in payload["overallRankings"]
+            if row["model"] == "gpt-5.6-luna"
+        }
+        self.assertGreater(overall_scores["max"], overall_scores["xhigh"])
+
+    def test_v11_default_ranking_contract_is_required(self):
+        for value in (None, "rankings"):
+            with self.subTest(value=value):
+                payload = load_fixture("api-complete-v1.1.json")
+                if value is None:
+                    del payload["defaultRanking"]
+                else:
+                    payload["defaultRanking"] = value
+                with self.assertRaises(SnapshotInvalid):
+                    adapt_modeldial_api(payload)
+
+    def test_v11_backend_score_identity_is_required(self):
+        scenarios = {
+            "wrong-basis": ("scoreBasis", "overall"),
+            "missing-backend-score": ("backendScore", None),
+            "boolean-backend-score": ("backendScore", True),
+            "nonfinite-backend-score": ("backendScore", float("nan")),
+            "mismatched-backend-score": ("backendScore", 60),
+        }
+        for scenario, (field, value) in scenarios.items():
+            with self.subTest(scenario=scenario):
+                payload = load_fixture("api-complete-v1.1.json")
+                luna_xhigh = next(
+                    row
+                    for row in payload["rankings"]
+                    if row["model"] == "gpt-5.6-luna"
+                    and row["reasoningEffort"] == "xhigh"
+                )
+                if scenario == "missing-backend-score":
+                    del luna_xhigh[field]
+                else:
+                    luna_xhigh[field] = value
+                with self.assertRaises(SnapshotInvalid):
+                    adapt_modeldial_api(payload)
+
     def test_schema_missing_or_malformed_is_invalid(self):
         for value in (None, "", 1):
             with self.subTest(value=value):
@@ -339,6 +392,7 @@ class ModelDialFullSnapshotCostTests(unittest.TestCase):
         scenarios = (
             "wrong-provider",
             "wrong-route",
+            "uncontrolled-route",
             "pricing-missing",
             "evidence-mismatch",
             "duplicate",
@@ -354,8 +408,10 @@ class ModelDialFullSnapshotCostTests(unittest.TestCase):
                     and entry["model_configuration"]["reasoning_effort"] == "high"
                 )
                 if scenario == "wrong-provider":
-                    sol_high["provider"] = "other"
+                    sol_high["model_configuration"]["provider_id"] = "other"
                 elif scenario == "wrong-route":
+                    sol_high["model_configuration"]["route_type"] = "api_key"
+                elif scenario == "uncontrolled-route":
                     sol_high["route_identity"] = "uncontrolled"
                 elif scenario == "pricing-missing":
                     payload["pricing_snapshot_id"] = None
@@ -377,7 +433,7 @@ class ModelDialFullSnapshotCostTests(unittest.TestCase):
 
 class SelectorTests(unittest.TestCase):
     def test_modeldial_request_uses_current_user_agent(self):
-        self.assertEqual(USER_AGENT, "codex-sol-luna-worker/4.1.2")
+        self.assertEqual(USER_AGENT, "codex-sol-luna-worker/4.1.3")
         response = MagicMock()
         response.__enter__.return_value = response
         response.__exit__.return_value = None
@@ -678,11 +734,40 @@ class SelectorTests(unittest.TestCase):
                 payload, now=datetime(2026, 8, 11, 9, tzinfo=BJT)
             )
 
+    def test_first_party_snapshot_rejects_wrong_luna_route_provenance(self):
+        scenarios = (
+            ("provider_id", "other"),
+            ("route_type", "api_key"),
+            ("route_identity", "uncontrolled"),
+        )
+        for field, value in scenarios:
+            with self.subTest(field=field):
+                payload = load_fixture("first-party-complete.json")
+                luna_max = next(
+                    entry
+                    for entry in payload["entries"]
+                    if entry["model_configuration"]["canonical_model_id"]
+                    == "gpt-5.6-luna"
+                    and entry["model_configuration"]["reasoning_effort"] == "max"
+                )
+                if field == "route_identity":
+                    luna_max[field] = value
+                else:
+                    luna_max["model_configuration"][field] = value
+                with self.assertRaises(SnapshotInvalid):
+                    adapt_modeldial_snapshot(
+                        payload, now=datetime(2026, 8, 11, 9, tzinfo=BJT)
+                    )
+
     @patch("src.selector._fetch_bytes")
     def test_api_success_does_not_fetch_snapshot(self, fetch):
-        fetch.return_value = (encoded_fixture("api-complete.json"), MODELDIAL_API_URL)
+        fetch.return_value = (
+            encoded_fixture("api-complete-v1.1.json"),
+            MODELDIAL_API_URL,
+        )
         adapted = fetch_modeldial_snapshot()
         self.assertEqual(adapted["source_mode"], "modeldial_api_v1")
+        self.assertEqual(select_snapshot(adapted)["selected_effort"], "xhigh")
         fetch.assert_called_once_with(
             MODELDIAL_API_URL,
             expected_type="application/json",
@@ -690,7 +775,7 @@ class SelectorTests(unittest.TestCase):
         )
 
     @patch("src.selector._fetch_bytes")
-    def test_api_http_failure_falls_back_to_snapshot(self, fetch):
+    def test_api_http_failure_falls_back_with_reference_cost(self, fetch):
         fetch.side_effect = [
             OSError("offline"),
             (encoded_fixture("first-party-complete.json"), MODELDIAL_SNAPSHOT_URL),
@@ -698,6 +783,10 @@ class SelectorTests(unittest.TestCase):
         adapted = fetch_modeldial_snapshot()
         self.assertEqual(adapted["source_mode"], "live_json")
         self.assertEqual(fetch.call_count, 2)
+        profile = select_snapshot(adapted)
+        self.assertEqual(
+            profile["reference_cost_comparison"]["reduction_pct"], 94.0
+        )
 
     @patch("src.selector._fetch_bytes")
     def test_invalid_api_json_falls_back_to_snapshot(self, fetch):
