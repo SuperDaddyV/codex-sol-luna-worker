@@ -44,9 +44,14 @@ Daily Profile metadata schema `1`, the normalized LKG envelope, five-effort
 winner and lower-effort tie-break semantics, native agents, policy, config,
 concurrency, and installer manifest schema `1` remain unchanged. A valid
 v4.1.2-to-v4.1.3 upgrade is expected to change only the installed selector and
-ownership manifest. Publication identities, exact-SHA CI, real Global runtime
-evidence, Setup and Assisted Installation anchors, tag, Release, and public
-README target remain pending and must not be invented in the source candidate.
+ownership manifest. Candidate Source Commit A
+`71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4` passed exact-SHA CI run
+`33253340074` on Windows, Ubuntu, and macOS with `363` tests all `PASS`;
+evidence commit `bafc41b50269a0b65aba64594e850f6171a714ac` passed CI run
+`33253429974` on the same platforms. Repository fake-home lifecycle and
+read-only live-source checks are recorded separately from real runtime. No real
+Global v4.1.3 apply or candidate fresh-task smoke is claimed. Setup and Assisted
+Installation anchors, tag, Release, and public README target remain pending.
 
 ## v4.1.2 Stable boundary
 

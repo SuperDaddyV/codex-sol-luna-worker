@@ -59,7 +59,10 @@ Candidate Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`
 passed exact-SHA CI run `33253340074` on Windows, Ubuntu, and macOS with `363`
 tests all `PASS`. This is repository source validation only; it does not
 establish a real Global install, real authentication, runtime acceptance, tag,
-or Release. No real Global v4.1.3 installer apply has been performed.
+or Release. Current-master evidence commit
+`bafc41b50269a0b65aba64594e850f6171a714ac` passed CI run `33253429974` on the
+same three source-validation platforms. No real Global v4.1.3 installer apply
+has been performed.
 
 ## v4.1.2 Stable boundary
 

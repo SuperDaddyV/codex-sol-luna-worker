@@ -1,48 +1,46 @@
-# Codex Sol + Luna Worker — v4.1.2 Stable Execution Setup Contract
+# Codex Sol + Luna Worker — v4.1.3 Stable Execution Setup Contract
 
-Contract version: `v4.1.2`.
+Contract version: `v4.1.3`.
 
 Release status:
 
-- `v4.1.2` is the Stable release target and default installation target;
-- Stable Source Commit A is `551520c2435aca94d60132f292edbd53cc975cbe`;
-- exact-SHA CI run `32717295801` passed on Windows, Ubuntu, and macOS and reported `357` tests all `PASS`;
-- current-master evidence commit `fac118ac5ca096aaf1ef8d68b79bfc1372998a5a` and CI run `32717520585` also passed on all three CI platforms;
-- the recorded runtime evidence is bounded to one native Windows Codex environment and does not by itself establish a tag or Release;
-- `v4.1.1` remains the previous immutable Stable release;
-- `v4.1.0` remains an older immutable Stable release;
+- `v4.1.3` is the Stable release target and default installation target;
+- Stable Source Commit A is `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`;
+- exact-SHA CI run `33253340074` passed on Windows, Ubuntu, and macOS and reported `363` tests all `PASS`;
+- current-master evidence commit `bafc41b50269a0b65aba64594e850f6171a714ac` and CI run `33253429974` also passed on all three CI platforms;
+- no real Global v4.1.3 installer apply or candidate fresh-task runtime smoke was performed;
+- `v4.1.2` remains the previous immutable Stable release;
+- `v4.1.1` and `v4.1.0` remain older immutable Stable releases;
 - `v4.1.0-rc6` remains an immutable historical Prerelease / Preview / Public Beta;
 - `v4.1.0-rc5` is an older historical Preview.
 
 The bilingual README and assisted-installation entry pin this Setup contract
 through later exact immutable documentation commits. No document commit is
 required to self-reference its own SHA. Stable publication is independently
-established by the immutable `v4.1.2` tag and a non-draft, non-prerelease
+established by the immutable `v4.1.3` tag and a non-draft, non-prerelease
 GitHub Release rather than by this document alone.
 
-The recorded detached-source transaction reports `DRY_RUN_PASS`
-with `writes NO`, `effective_changes 2`, and five-effort capability `PASS`;
-`UPGRADED` with `configuration_preserved true`, `effective_changes 2`, only
-the selector and `install-manifest` changed, and one transaction backup; and a
-second `CURRENT_INSTALLATION_PASS` with `writes NO`, `effective_changes 0`, and
-`backup NONE`. A legal Daily role/effort was proved without recording the
-day-specific effort, and the same-day Profile and LKG were not rewritten. The
-single fresh-task compatibility smoke ran once for about `169.4` seconds with
-`codex-cli 0.146.0`, exited `0`, and passed `CLI`, `Luna capability`,
-`Selector`, `Delegation`, `Protected state`, `Runtime contract`, and final
-`Compatibility`. Protected hashes for `AGENTS.md`, configuration, five agents,
-selector, manifest, Profile, LKG, and lock were unchanged before and after the
-smoke; the smoke created no backup.
+Repository fake-home lifecycle validation proves that a clean v4.1.2-to-v4.1.3
+upgrade plans and changes only the selector and ownership manifest, creates its
+normal transaction backup, is idempotent on second apply, rolls back exactly,
+and fails closed without writes when the previously owned selector was modified.
+The source and evidence commits passed the same `363`-test three-platform CI
+gate. Read-only live checks on 2026-08-29 separately proved that both the API
+v1.1 path and Full Snapshot fallback selected the backend-axis result and
+projected comparable reference-cost metadata. Those observations are
+time-bounded source compatibility evidence, not real installed-runtime
+acceptance. No real Global v4.1.3 apply, authentication test, Daily state write,
+or candidate fresh-task smoke is claimed.
 
 > [!IMPORTANT]
-> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. `v4.1.2` is the Stable release target and default installation target; `v4.1.1` is the previous immutable Stable, `v4.1.0` is an older Stable, and RC6 remains a historical Prerelease. Never silently expand permissions, installation scope, or network access.
+> This is an independent community project. It is not affiliated with, sponsored by, or endorsed by OpenAI or ModelDial. The user must review this contract before execution. `v4.1.3` is the Stable release target and default installation target; `v4.1.2` is the previous immutable Stable, `v4.1.1` and `v4.1.0` are older Stable releases, and RC6 remains a historical Prerelease. Never silently expand permissions, installation scope, or network access.
 
 This document is the transactional setup contract used by the separately pinned assisted-installation contract. Orchestrate `scripts/install.py`; do not reproduce its merge, ownership, backup, migration, rollback, or uninstall logic with ad hoc shell commands.
 
 Stable runtime Source Commit A:
 
 ```text
-551520c2435aca94d60132f292edbd53cc975cbe
+71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 ```
 
 This setup contract installs the immutable Stable runtime payload from Source
@@ -51,17 +49,17 @@ immutable assisted-installation and README documentation commits. A
 documentation commit is not the runtime payload source and is never passed to
 the installer.
 
-The Stable release advances the installer payload from the real Global baseline
-`v4.1.0-rc6` to `v4.1.2`; manifest schema remains `1`. The recorded apply
-changes only `sol-luna-v4/selector.py` and
-`sol-luna-v4/install-manifest.json`, while configuration, five agents, Profile,
-LKG, and lock remain protected. The installation assistant, compatibility smoke,
-and acceptance harness are repository tooling and do not modify product runtime
-by themselves. The acceptance contract consists of this setup contract,
+The Stable release advances the installer payload from `v4.1.2` to `v4.1.3`;
+manifest schema remains `1`. Repository fake-home validation requires an
+upgrade to change only `sol-luna-v4/selector.py` and
+`sol-luna-v4/install-manifest.json`, while configuration, policy, five agents,
+Profile, LKG, and lock remain protected. The installation assistant,
+compatibility smoke, and acceptance harness are repository tooling and do not
+modify product runtime by themselves. The acceptance contract consists of this setup contract,
 `RUNTIME_TESTS.md`, `ARCHITECTURE.md`, and `SECURITY.md`; those documents may
 change when the acceptance design changes.
 
-`V411_TO_V412_INSTALLED_BEHAVIOR_CHANGED = YES`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
+`V412_TO_V413_INSTALLED_BEHAVIOR_CHANGED = YES`; `ACCEPTANCE_CONTRACT_CHANGED = YES`.
 
 `SETUP_CONTRACT_SELF_REFERENCE_REQUIRED = NO`.
 
@@ -191,7 +189,7 @@ Do not install or upgrade Python. If either check fails, stop with `BLOCKED: PYT
 The installer source must be exactly the approved Stable Runtime Source Commit A:
 
 ```text
-551520c2435aca94d60132f292edbd53cc975cbe
+71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 ```
 
 Do not substitute `master`, `main`, `origin/master`, `latest`, a floating branch, mutable `target_commitish`, or any other commit. The commit containing this setup contract is a separate documentation anchor and is not an installer source.
@@ -200,11 +198,11 @@ Git is required. After the Installation Preflight reports `Ready: YES`, create a
 
 ```text
 git clone --no-checkout https://github.com/SuperDaddyV/codex-sol-luna-worker.git <TEMP_SOURCE>
-git -C <TEMP_SOURCE> checkout --detach 551520c2435aca94d60132f292edbd53cc975cbe
+git -C <TEMP_SOURCE> checkout --detach 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 git -C <TEMP_SOURCE> rev-parse HEAD
 ```
 
-Require `git rev-parse HEAD` to equal `551520c2435aca94d60132f292edbd53cc975cbe` exactly. Inspect `git status --short` and require a clean checkout before installation. Confirm `scripts/install.py` declares installer `VERSION = "v4.1.2"` before running it.
+Require `git rev-parse HEAD` to equal `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4` exactly. Inspect `git status --short` and require a clean checkout before installation. Confirm `scripts/install.py` declares installer `VERSION = "v4.1.3"` before running it.
 
 Do not execute installer code from a mutable branch. This contract defines no archive fallback. If the exact commit cannot be verified after the Git preflight passed, stop with `BLOCKED: IMMUTABLE_SOURCE_UNVERIFIED` rather than adding a downloader.
 
@@ -257,7 +255,7 @@ From `<TEMP_SOURCE>`, display the current help and then run the real dry-run aga
 
 ```text
 <PYTHON> scripts/install.py --help
-<PYTHON> scripts/install.py --dry-run --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
+<PYTHON> scripts/install.py --dry-run --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 ```
 
 Dry-run is non-mutating. Report each stable agent action (`create`, `identical`, or `conflict`), the future artifact inventory, target platform, and conflicts. Supplement it with the read-only inspection from Section 7 to summarize expected shared-file modifications, legacy removals, preserved unowned content, and the chosen mode. Do not claim that the current dry-run output is a byte-for-byte preview of every transactional merge; the apply path performs the definitive ownership validation.
@@ -275,7 +273,7 @@ Capture the `backup` value returned by the installer. Treat it as the only rollb
 For a classified clean install, run from the immutable checkout:
 
 ```text
-<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
+<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 ```
 
 The explicit target is mandatory. Do not pass `--validation-sandbox` for a real user global installation; that option only permits repository-local test targets below `.tmp/installer-validation/`.
@@ -287,7 +285,7 @@ Accept `INSTALLED` as the expected clean-install result. Record created and modi
 Use migration only when the read-only inspection proves that `sol-luna-router/install-manifest.json` has the exact supported schema version `3.2` and no conflicting v4 state. Run:
 
 ```text
-<PYTHON> scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
+<PYTHON> scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 ```
 
 Do not accept similar, malformed, missing, or guessed versions. The migration does not contact ModelDial, convert a legacy Daily Profile or LKG, or delete unowned audit bundles. It uses the same transaction backup, validates v4 payloads and shared merges, writes the v4 manifest last as the commit marker, and then attempts independently retryable cleanup of the old manifest.
@@ -299,7 +297,7 @@ Accept `INSTALLED` with completed cleanup as the normal result. `LEGACY_MANIFEST
 For a valid installer-owned v4 installation, run the same apply command without `--migrate-v3`:
 
 ```text
-<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
+<PYTHON> scripts/install.py --apply --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 ```
 
 Interpret the real result:
@@ -312,22 +310,22 @@ Interpret the real result:
 
 Do not use `--migrate-v3` merely because historical files remain beside a valid v4 installation.
 
-For v4.1.2 Stable, the recorded real Global baseline was `v4.1.0-rc6`
-with Source Commit A `50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49`. Its detached
-exact-Source-A dry-run returned `DRY_RUN_PASS`, `writes NO`,
-`effective_changes 2`, and five-effort capability `PASS`. The authorized apply
-returned `UPGRADED`, preserved configuration, reported `effective_changes 2`,
-changed only `sol-luna-v4/selector.py` and
-`sol-luna-v4/install-manifest.json`, and created one normal transaction backup.
-The second apply returned `CURRENT_INSTALLATION_PASS`, `writes NO`,
-`effective_changes 0`, and `backup NONE`.
+For v4.1.3 Stable, the directly validated upgrade baseline is a repository
+fake-home v4.1.2 installation. Dry-run and apply must report exactly two
+effective changes: `sol-luna-v4/selector.py` and
+`sol-luna-v4/install-manifest.json`. Apply must create and verify one normal
+transaction backup; the second apply must be a zero-write, zero-backup current
+installation result; exact rollback must restore the v4.1.2 fake-home tree.
+If the previously owned v4.1.2 selector differs from its manifest hash, both
+dry-run and apply must fail closed with `OWNERSHIP_CONFLICT` and make no change.
+No real Global v4.1.3 transaction result is claimed by this contract.
 
 The installed selector, installer-managed Global `AGENTS.md` block, five Luna
 agents, `config.toml`, Daily Profile, LKG, lock, and unrelated user
 configuration are protected unless the installer explicitly reports an owned
 Stable change. If the dry-run reports any other effective change, stop before
 apply. Do not create a parallel backup system or hand-edit the two expected
-files. The v4.1.1 Stable entry and RC6 historical evidence remain separate and
+files. The v4.1.2 Stable entry and its historical runtime evidence remain separate and
 immutable; the installer does not create or modify a Git tag or GitHub Release.
 
 An existing valid `v4.1.0-rc5` installation remains a historical migration
@@ -346,7 +344,7 @@ The installer copies the selector but does not need live ModelDial access and do
 
 The selector requires the canonical five efforts, chooses the highest score, and breaks a tie toward the lower effort. If invoked with a restricted `--supported` set, it can choose the best locally supported alternative and record capability degradation. The normal installation capability gate requires all five efforts, so the installed policy uses the complete default set.
 
-Selection occurs once per Beijing calendar day. A valid same-day Profile, including an RC5-created Profile using the same schema, is reused byte-for-byte without a new live fetch. On a new day, the selector tries the anonymous official ModelDial API v1 endpoint, then the official full snapshot JSON, then a valid last-known-good record. A valid API response stops acquisition; sources are never merged, and v4.1 has no Radar HTML runtime fallback. First use with neither valid live data nor valid fallback fails closed with `NO_LUNA_PROFILE_AVAILABLE`. `ultra` is never allowed. Do not write a particular day's score into configuration or documentation as a permanent fact.
+Selection occurs once per Beijing calendar day. A valid same-day Profile, including an RC5-created Profile using the same schema, is reused byte-for-byte without a new live fetch. On a new day, the selector tries the anonymous official ModelDial API v1 endpoint, then the official full snapshot JSON, then a valid last-known-good record. API schemas `1.0` and `1.1` are accepted; schema `1.1` deliberately consumes only the backward-compatible backend `rankings` axis and requires internally consistent backend score identity. The selector does not consume `overallRankings`, capability publications, the change feed, or advisory Agent Profiles. A valid API response stops acquisition; sources are never merged, and v4.1 has no Radar HTML runtime fallback. First use with neither valid live data nor valid fallback fails closed with `NO_LUNA_PROFILE_AVAILABLE`. `ultra` is never allowed. Do not write a particular day's score into configuration or documentation as a permanent fact.
 
 Stable preserves the existing `--print-role` contract and the RC5/RC6 structured selection metadata:
 
@@ -393,7 +391,7 @@ Before any prerelease apply, show a clear prerelease / Public Beta risk notice. 
 This installed-policy feature does not authorize the current setup run to
 replace the approved Stable Source Commit A. Every Stable installer
 command in this contract remains pinned to
-`551520c2435aca94d60132f292edbd53cc975cbe`; a published Stable command must
+`71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`; a published Stable command must
 be sourced from its separately reviewed immutable Release chain.
 
 ## 16. Validation
@@ -411,13 +409,37 @@ After apply, perform read-only inspection and require all of the following:
 3. `config.toml` parses and the managed v4 block enables agents with maximum direct concurrency 3;
 4. the managed v4 block exists exactly once in `AGENTS.md`, contains the installed absolute selector and state command, and includes the non-trivial-task Delegation Receipt policy without forcing delegation or extra Receipt work;
 5. the selector file compiles and its `--help` command succeeds;
-6. `sol-luna-v4/install-manifest.json` parses, reports `v4.1.2`, records source commit `551520c2435aca94d60132f292edbd53cc975cbe`, and records the expected owned files and blocks;
+6. `sol-luna-v4/install-manifest.json` parses, reports `v4.1.3`, records source commit `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`, and records the expected owned files and blocks;
 7. installer-reported created, modified, removed, and preserved content matches the selected mode;
 8. no active configuration or Hook definition still invokes the legacy Sol/Luna Router.
 
 Historical directories, trusted metadata, backups, or audit evidence may remain without being runtime dependencies. Do not delete them during validation. Do not expose unrelated configuration values in the report.
 
-### v4.1.2 Stable evidence
+### v4.1.3 Stable source and fake-home evidence
+
+Stable Source Commit A `71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`
+passed exact-SHA CI run `33253340074` on Windows, Ubuntu, and macOS; each
+platform reported `363` tests all `PASS`. Current-master evidence commit
+`bafc41b50269a0b65aba64594e850f6171a714ac` passed CI run `33253429974` on the
+same three source-validation platforms. The evidence commit is not Source
+Commit A and is not an alternate installer identity.
+
+Repository fake-home lifecycle tests cover v4.1.2-to-v4.1.3 dry-run, apply,
+two-file ownership scope, transaction backup, second-apply idempotency, exact
+rollback, and modified-owned-selector conflict with zero writes. Read-only live
+checks on 2026-08-29 exercised the current ModelDial API v1.1 response and the
+Full Snapshot fallback independently; both selected the backend-axis result and
+projected the same comparable reference-cost metadata. Live values can change
+and are not embedded as a permanent installation promise.
+
+This evidence is repository, fake-home, and read-only network validation. It is
+not a real Global v4.1.3 installer apply, real authentication test, Daily state
+write, candidate fresh-task smoke, or universal compatibility claim. This
+contract does not by itself establish a tag or GitHub Release; publication
+requires the separately verified immutable `v4.1.3` tag and non-draft,
+non-prerelease Release.
+
+### Historical v4.1.2 Stable evidence
 
 Candidate Source Commit A `551520c2435aca94d60132f292edbd53cc975cbe`
 passed exact-SHA CI run `32717295801` on Windows, Ubuntu, and macOS; the run
@@ -598,9 +620,9 @@ INSTALL_RUNTIME_PASS / BLOCKED
 
 Do not claim runtime PASS before the fresh-task smoke test. If setup stops before mutation, say so explicitly. If mutation committed but runtime validation is pending, report installation and runtime as separate states.
 
-## 22. v4.1.2 Stable assisted installation handoff
+## 22. v4.1.3 Stable assisted installation handoff
 
-Sections 0–21 are the reviewed `v4.1.2` Stable transactional setup contract.
+Sections 0–21 are the reviewed `v4.1.3` Stable transactional setup contract.
 The separately pinned English assisted-installation contract is the default
 user-facing entry and pins this Setup contract through an exact immutable
 documentation commit. The README pins that assisted contract through a later
@@ -620,8 +642,8 @@ contract uses:
 <PYTHON> scripts/install_assist.py check --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py plan --codex-home <CODEX_HOME>
 <PYTHON> scripts/install_assist.py recover --codex-home <CODEX_HOME> --approve <PLAN_ID>
-<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
-<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit 551520c2435aca94d60132f292edbd53cc975cbe
+<PYTHON> scripts/install_assist.py install --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
+<PYTHON> scripts/install_assist.py install --apply --codex-home <CODEX_HOME> --source-commit 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4
 ```
 
 The `install` command verifies the exact clean detached source, runs the five

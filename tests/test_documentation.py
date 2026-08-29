@@ -69,6 +69,8 @@ V412_MASTER_EVIDENCE_COMMIT = "fac118ac5ca096aaf1ef8d68b79bfc1372998a5a"
 V412_MASTER_CI_RUN = "32717520585"
 V413_RUNTIME_SOURCE_COMMIT = "71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4"
 V413_EXACT_CI_RUN = "33253340074"
+V413_MASTER_EVIDENCE_COMMIT = "bafc41b50269a0b65aba64594e850f6171a714ac"
+V413_MASTER_CI_RUN = "33253429974"
 V412_BASELINE_RUNTIME_SOURCE_COMMIT = (
     "50ff886d1004ac3dd43b1f4ce531a2a8af8f7a49"
 )
@@ -395,14 +397,14 @@ class DocumentationTests(unittest.TestCase):
         self.assertNotIn(PREVIOUS_STABLE_RUNTIME_SOURCE_COMMIT, content)
         self.assertNotIn(PREVIOUS_STABLE_SETUP_COMMIT, content)
 
-    def test_setup_records_v412_stable_evidence_and_handoff(self):
+    def test_setup_records_v413_stable_evidence_and_handoff(self):
         content = text(SETUP)
         architecture = text(ROOT / "ARCHITECTURE.md")
         security = text(ROOT / "SECURITY.md")
-        handoff = content.index("## 22. v4.1.2 Stable assisted installation handoff")
+        handoff = content.index("## 22. v4.1.3 Stable assisted installation handoff")
         self.assertGreater(handoff, content.index("## 21. Final Report"))
         for phrase in (
-            "Sections 0–21 are the reviewed `v4.1.2` Stable transactional setup contract",
+            "Sections 0–21 are the reviewed `v4.1.3` Stable transactional setup contract",
             "scripts/install_assist.py",
             "scripts/install_recovery_catalog.json",
             "clean detached Stable Source Commit A checkout",
@@ -416,12 +418,12 @@ class DocumentationTests(unittest.TestCase):
             "P3 standalone bootstrap remains out of scope",
         ):
             self.assertIn(phrase, content)
-        self.assertIn(V412_RUNTIME_SOURCE_COMMIT, content[:handoff])
-        self.assertNotIn("<V4_1_2_SOURCE_COMMIT>", content)
+        self.assertIn(V413_RUNTIME_SOURCE_COMMIT, content[:handoff])
+        self.assertNotIn("<V4_1_3_SOURCE_COMMIT>", content)
         self.assertIn("pins this Setup contract", content)
         self.assertIn("The public README pins this contract", content)
         for phrase in (
-            "v4.1.2",
+            "v4.1.3",
             "exact recovery plan + SHA-256 Plan ID",
             "scripts/install_recovery_catalog.json",
             "explicit Daily selector initialization and proof",
@@ -429,7 +431,7 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, architecture + content)
         for phrase in (
-            "v4.1.2 Stable boundary",
+            "v4.1.3 unreleased candidate security delta",
             "executes approved recovery as argument vectors without a",
             "five-effort Luna probe is ephemeral",
             "P3",
@@ -440,18 +442,16 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, security)
         for value in (
-            V412_RUNTIME_SOURCE_COMMIT,
-            V412_EXACT_CI_RUN,
-            V412_MASTER_EVIDENCE_COMMIT,
-            V412_MASTER_CI_RUN,
-            V412_BASELINE_RUNTIME_SOURCE_COMMIT,
-            "DRY_RUN_PASS",
-            "UPGRADED",
-            "CURRENT_INSTALLATION_PASS",
-            "169.4",
-            "0.146.0",
+            V413_RUNTIME_SOURCE_COMMIT,
+            V413_EXACT_CI_RUN,
+            V413_MASTER_EVIDENCE_COMMIT,
+            V413_MASTER_CI_RUN,
+            "363",
+            "V413_FAKE_HOME_LIFECYCLE = PASS",
+            "V413_REAL_GLOBAL_APPLY = NOT_RUN",
+            "V413_FRESH_TASK_COMPATIBILITY = NOT_RUN",
         ):
-            self.assertIn(value, content)
+            self.assertIn(value, content + text(ROOT / "RUNTIME_TESTS.md"))
 
     def test_stable_feedback_forms_and_guidance(self):
         self.assertEqual(
@@ -607,14 +607,14 @@ class DocumentationTests(unittest.TestCase):
                 self.assertNotIn(placeholder, content)
 
         setup = text(SETUP)
-        self.assertIn("Contract version: `v4.1.2`", setup)
+        self.assertIn("Contract version: `v4.1.3`", setup)
         self.assertIn(
-            "`v4.1.2` is the Stable release target and default installation target",
+            "`v4.1.3` is the Stable release target and default installation target",
             setup,
         )
-        self.assertIn(V412_RUNTIME_SOURCE_COMMIT, setup)
-        self.assertIn("`v4.1.1` remains the previous immutable Stable release", setup)
-        self.assertIn("`v4.1.0` remains an older immutable Stable release", setup)
+        self.assertIn(V413_RUNTIME_SOURCE_COMMIT, setup)
+        self.assertIn("`v4.1.2` remains the previous immutable Stable release", setup)
+        self.assertIn("`v4.1.1` and `v4.1.0` remain older immutable Stable releases", setup)
         self.assertIn("`v4.1.0-rc6` remains an immutable historical Prerelease", setup)
         self.assertIn("`v4.1.0-rc5` is an older historical Preview", setup)
         for path in source_docs:
@@ -645,7 +645,7 @@ class DocumentationTests(unittest.TestCase):
             text(ROOT / "ARCHITECTURE.md"),
         )
         self.assertIn(
-            "For v4.1.2 Stable, the recorded real Global baseline was `v4.1.0-rc6`",
+            "For v4.1.3 Stable, the directly validated upgrade baseline is a repository",
             setup,
         )
         self.assertNotIn("REAL GLOBAL RUNTIME NOT RUN", combined)
@@ -808,20 +808,20 @@ class DocumentationTests(unittest.TestCase):
             "v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
             architecture,
         )
-        self.assertIn("Contract version: `v4.1.2`", setup)
-        self.assertGreaterEqual(setup.count(V412_RUNTIME_SOURCE_COMMIT), 7)
+        self.assertIn("Contract version: `v4.1.3`", setup)
+        self.assertGreaterEqual(setup.count(V413_RUNTIME_SOURCE_COMMIT), 7)
         self.assertNotIn(RC6_SETUP_CONTRACT_COMMIT, setup)
-        self.assertIn("`v4.1.1` remains the previous immutable Stable release", setup)
-        self.assertIn("`v4.1.0` remains an older immutable Stable release", setup)
+        self.assertIn("`v4.1.2` remains the previous immutable Stable release", setup)
+        self.assertIn("`v4.1.1` and `v4.1.0` remain older immutable Stable releases", setup)
         self.assertIn("`v4.1.0-rc6` remains an immutable historical Prerelease", setup)
         self.assertIn("`v4.1.0-rc5` is an older historical Preview", setup)
         self.assertIn(
-            "`v4.1.2` is the Stable release target and default installation target",
+            "`v4.1.3` is the Stable release target and default installation target",
             setup,
         )
         self.assertNotIn("RC6 is not tagged", setup)
         self.assertNotIn("RC6 is not published", setup)
-        self.assertIn("recorded real Global baseline was `v4.1.0-rc6`", setup)
+        self.assertIn("No real Global v4.1.3 transaction result is claimed", setup)
         self.assertIn("Final O4/O9 re-certification", setup)
         self.assertIn(
             "only `sol-luna-v4/selector.py`",
@@ -836,9 +836,9 @@ class DocumentationTests(unittest.TestCase):
             "安装固定的 v4.1.2 Stable 目标",
             text(README_ZH),
         )
-        self.assertIn(f"checkout --detach {V412_RUNTIME_SOURCE_COMMIT}", setup)
+        self.assertIn(f"checkout --detach {V413_RUNTIME_SOURCE_COMMIT}", setup)
         self.assertIn(
-            f"Require `git rev-parse HEAD` to equal `{V412_RUNTIME_SOURCE_COMMIT}` exactly",
+            f"Require `git rev-parse HEAD` to equal `{V413_RUNTIME_SOURCE_COMMIT}` exactly",
             setup,
         )
         installer_commands = [
@@ -849,7 +849,7 @@ class DocumentationTests(unittest.TestCase):
         ]
         self.assertEqual(len(installer_commands), 4)
         for command in installer_commands:
-            self.assertIn(f"--source-commit {V412_RUNTIME_SOURCE_COMMIT}", command)
+            self.assertIn(f"--source-commit {V413_RUNTIME_SOURCE_COMMIT}", command)
 
         for placeholder in (
             "<APPROVED_40_HEX_COMMIT>",
@@ -998,11 +998,11 @@ class DocumentationTests(unittest.TestCase):
         content = text(SETUP)
         for command in (
             "scripts/install.py --dry-run --codex-home <CODEX_HOME> "
-            f"--source-commit {V412_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {V413_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --codex-home <CODEX_HOME> "
-            f"--source-commit {V412_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {V413_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --apply --migrate-v3 --codex-home <CODEX_HOME> "
-            f"--source-commit {V412_RUNTIME_SOURCE_COMMIT}",
+            f"--source-commit {V413_RUNTIME_SOURCE_COMMIT}",
             "scripts/install.py --rollback <BACKUP_PATH> --codex-home <CODEX_HOME>",
             "scripts/install.py --uninstall --codex-home <CODEX_HOME>",
         ):
@@ -1034,7 +1034,9 @@ class DocumentationTests(unittest.TestCase):
         architecture = text(ROOT / "ARCHITECTURE.md")
         changelog = text(ROOT / "CHANGELOG.md")
         security = text(ROOT / "SECURITY.md")
-        combined = "\n".join((architecture, changelog, security))
+        runtime = text(ROOT / "RUNTIME_TESTS.md")
+        setup = text(SETUP)
+        combined = "\n".join((architecture, changelog, security, runtime, setup))
 
         self.assertIn("v4.1.3 — UNRELEASED CANDIDATE", architecture)
         self.assertIn("## v4.1.3 (unreleased candidate)", changelog)
@@ -1047,11 +1049,15 @@ class DocumentationTests(unittest.TestCase):
             "v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET",
             architecture,
         )
-        self.assertIn("Publication identities", combined)
+        self.assertIn("Setup and Assisted", architecture)
         self.assertIn(V413_RUNTIME_SOURCE_COMMIT, combined)
         self.assertIn(V413_EXACT_CI_RUN, combined)
+        self.assertIn(V413_MASTER_EVIDENCE_COMMIT, combined)
+        self.assertIn(V413_MASTER_CI_RUN, combined)
         self.assertIn("363", combined)
         self.assertIn("No real Global v4.1.3 installer apply", security)
+        self.assertIn("Contract version: `v4.1.3`", setup)
+        self.assertIn("V413_PUBLIC_RELEASE = NOT_ESTABLISHED", runtime)
         self.assertNotIn("v4.1.3 (published Stable release)", combined)
 
 

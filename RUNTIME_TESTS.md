@@ -4,6 +4,36 @@ Status: `v4.1.2 — CURRENT STABLE RELEASE / DEFAULT INSTALLATION TARGET`; `v4.1
 
 These results describe only the recorded environments and scenarios below. They do not imply runtime validation across every operating system, Codex client, account, or user environment.
 
+## v4.1.3 candidate — source and fake-home evidence
+
+Candidate Source Commit A is
+`71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`. Exact-SHA CI run `33253340074`
+passed on Windows, Ubuntu, and macOS and reported `363` tests all `PASS`.
+Current-master evidence commit `bafc41b50269a0b65aba64594e850f6171a714ac`
+passed CI run `33253429974` on the same three source-validation platforms. The
+evidence commit is not Source Commit A and is not an installer source substitute.
+
+Repository fake-home lifecycle tests cover v4.1.2-to-v4.1.3 dry-run, apply,
+the selector-plus-manifest ownership boundary, transaction backup,
+second-apply idempotency, exact rollback, and modified-owned-selector conflict
+with zero writes. Read-only live checks on 2026-08-29 exercised the ModelDial
+API v1.1 and Full Snapshot paths independently and confirmed the intended
+backend-axis selection and comparable reference-cost projection.
+
+This is repository, fake-home, and read-only network validation only. No real
+Global v4.1.3 installer apply, real authentication test, Daily state write, or
+candidate fresh-task smoke was performed. The public target remains v4.1.2
+until the immutable Setup, Assisted Installation, tag, and non-draft,
+non-prerelease Release chain is completed.
+
+`V413_SOURCE_SHA = 71894e2ef5007c9ba3e6f9d9efbf91cbdad302b4`;
+`V413_EXACT_SHA_CI = PASS`;
+`V413_CURRENT_MASTER_EVIDENCE_CI = PASS`;
+`V413_FAKE_HOME_LIFECYCLE = PASS`;
+`V413_REAL_GLOBAL_APPLY = NOT_RUN`;
+`V413_FRESH_TASK_COMPATIBILITY = NOT_RUN`;
+`V413_PUBLIC_RELEASE = NOT_ESTABLISHED`.
+
 ## v4.1.2 Stable promotion — setup and runtime evidence
 
 `v4.1.2` is the published Stable release and default public installation target.

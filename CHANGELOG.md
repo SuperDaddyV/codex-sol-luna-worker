@@ -29,8 +29,11 @@
   `33253340074` on Windows, Ubuntu, and macOS with `363` tests all `PASS`.
   This is repository source validation only; it does not establish a real
   Global install, real authentication, runtime acceptance, tag, or Release.
-  Setup and Assisted Installation pins, the public README target, tag, and
-  Release remain pending.
+  Current-master evidence commit
+  `bafc41b50269a0b65aba64594e850f6171a714ac` passed CI run `33253429974` on
+  the same three source-validation platforms. The Stable Setup content is
+  frozen separately without self-reference; Assisted Installation and public
+  README pins, tag, and Release remain pending.
 
 ## v4.1.2 (published Stable release)
 
