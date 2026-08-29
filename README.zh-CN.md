@@ -20,12 +20,59 @@ Codex Sol + Luna Worker 在 Codex 中建立清晰的职责分工：
 
 Sol 始终掌握控制权：它判断任务是否适合委派，并在验收前复核每一份 Luna 结果。
 
+## Sol 与 Luna 如何协作
+
+Luna 不会接管整个任务。Sol 始终负责理解目标、拆分工作、处理歧义、设定验收标准和给出最终答复。Luna 只接收范围清楚的执行子任务，然后把结果和证据交回 Sol。
+
+```mermaid
+flowchart TD
+    U[用户提出任务] --> S[Sol 规划、拆分并设定验收标准]
+    S --> J{是否有值得委派的独立边界任务}
+    J -->|否| O[Sol 直接完成]
+    J -->|是| T[Sol 向 Luna 下达 Task Contract]
+    T --> N{有几个独立子任务}
+    N -->|一个| L[一个 Luna 执行]
+    N -->|两个或三个| P[多个直属 Luna 并行执行]
+    T -->|Sol 另有独立工作时| W[Sol 继续工作]
+    L --> R[结果和证据交回 Sol]
+    P --> R
+    W --> R
+    O --> F[Sol 给出最终答复]
+    R --> V[Sol 复核、整合和验收]
+    V --> F
+```
+
+- **并行：** 当工作真正互不依赖时，Sol 和 Luna 可以同时工作，最多可同时运行三个直属 Luna。
+- **串行：** 如果后一步依赖前一步，Sol 会等待所需结果，再继续或启动下一个 worker。
+- **Sol-only：** 任务过小、核心是架构或判断、需求尚有歧义，或无法安全拆分时，由 Sol 直接完成。
+
+以下情况更可能使用 Luna：
+
+- 工作量足以抵消委派开销；
+- 子任务有清楚的目标、范围、约束、验收标准和验证方法；
+- 实现、定向检查、测试、构建或重复性工作可以安全分离；
+- 当天有效的 Daily Luna role 可用。
+
+存在依赖或重叠修改时，仍可能串行委派，但不会并行执行。简单问答、少量读取、一行修改、架构决策和最终评定通常由 Sol 完成。
+
+没有必须使用的“魔法关键词”。提示词中的独立范围越清楚，越有可能委派；是否委派仍由 Sol 判断。
+
+Daily Selector 决定的是“**今天使用哪一档 Luna effort**”，不是“**当前任务是否必须委派**”。它会从 `low`、`medium`、`high`、`xhigh` 和 `max` 中选择；Luna 永远不使用 `ultra`。
+
+Sol 和 Luna 共享当前工作区，因此 Sol 会避免让多个 writer 并行修改重叠文件。每个 Luna 都是 native leaf：它不能继续创建子代理，最终复核始终属于 Sol。
+
+对于非简单任务，最后一行会说明本次执行方式：
+
+```text
+Sol/Luna: delegated · luna_high ×2 · parallel
+Sol/Luna: Sol-only · task too small
+Sol/Luna: Sol-only · no independent bounded work
+```
+
 ## 核心价值
 
 - **原生 Agent：** 使用 Codex custom agents 和 subagents，不需要 Hook Router 或自建编排引擎。
 - **自动 Daily Luna：** 按北京时间每天从五档 Luna effort 中选择一个；日常提示词无需指定 role 或 effort。
-- **独立任务委派：** 思考与最终决策留给 Sol，边界清楚的执行交给 Luna。
-- **有限并行：** 最多同时运行三个直属 Luna，只并行真正独立的任务；Luna 是 native leaf，不能继续委派。
 - **配置保护和可恢复：** 保留无关用户配置，遇到冲突 fail closed，并通过事务备份支持受控回滚和安全卸载。
 
 ## 系统要求

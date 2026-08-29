@@ -122,6 +122,7 @@ class DocumentationTests(unittest.TestCase):
                 README,
                 (
                     "What it is",
+                    "How Sol and Luna work together",
                     "Core value",
                     "Requirements",
                     "Install with Codex",
@@ -137,6 +138,7 @@ class DocumentationTests(unittest.TestCase):
                 README_ZH,
                 (
                     "这是什么",
+                    "Sol 与 Luna 如何协作",
                     "核心价值",
                     "系统要求",
                     "使用 Codex 安装",
@@ -162,6 +164,48 @@ class DocumentationTests(unittest.TestCase):
             self.assertLessEqual(len(content.splitlines()), 180)
             self.assertEqual(content.count("> [!WARNING]"), 1)
             self.assertNotIn("historical_preview", content)
+
+    def test_readmes_explain_delegation_parallelism_and_user_receipts(self):
+        english = text(README)
+        chinese = text(README_ZH)
+
+        for content in (english, chinese):
+            self.assertEqual(content.count("```mermaid"), 1)
+            self.assertIn("flowchart TD", content)
+            self.assertIn("Task Contract", content)
+            self.assertIn("Daily Selector", content)
+            self.assertIn("`ultra`", content)
+            self.assertIn("Sol/Luna: delegated · luna_high ×2 · parallel", content)
+            self.assertIn("Sol/Luna: Sol-only · task too small", content)
+            self.assertIn(
+                "Sol/Luna: Sol-only · no independent bounded work", content
+            )
+
+        for phrase in (
+            "Luna does not take over the whole task",
+            "**Parallel:**",
+            "**Sequential:**",
+            "**Sol-only:**",
+            "There is no magic keyword",
+            "which Luna effort to use today",
+            "share the current workspace",
+            "cannot create more subagents",
+            "Luna never uses `ultra`",
+        ):
+            self.assertIn(phrase, english)
+
+        for phrase in (
+            "Luna 不会接管整个任务",
+            "**并行：**",
+            "**串行：**",
+            "**Sol-only：**",
+            "没有必须使用的“魔法关键词”",
+            "今天使用哪一档 Luna effort",
+            "共享当前工作区",
+            "不能继续创建子代理",
+            "Luna 永远不使用 `ultra`",
+        ):
+            self.assertIn(phrase, chinese)
 
     def test_stable_installation_entry_declares_hard_prerequisites(self):
         english = text(README)

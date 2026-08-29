@@ -20,12 +20,59 @@ Codex Sol + Luna Worker adds a simple division of responsibility to Codex:
 
 Sol remains in control: it decides whether delegation is appropriate and reviews every Luna result before acceptance.
 
+## How Sol and Luna work together
+
+Luna does not take over the whole task. Sol remains responsible for understanding the goal, decomposing the work, resolving ambiguity, setting acceptance criteria, and giving the final answer. Luna receives only a clear, bounded execution task and returns its result and evidence to Sol.
+
+```mermaid
+flowchart TD
+    U[User request] --> S[Sol plans, decomposes, and sets acceptance]
+    S --> J{Independent bounded work worth delegating?}
+    J -->|No| O[Sol completes the work]
+    J -->|Yes| T[Sol gives Luna a Task Contract]
+    T --> N{How many independent subtasks?}
+    N -->|One| L[One Luna executes]
+    N -->|Two or three| P[Direct Luna workers execute in parallel]
+    T -->|If Sol has other independent work| W[Sol continues working]
+    L --> R[Results and evidence return to Sol]
+    P --> R
+    W --> R
+    O --> F[Sol gives the final answer]
+    R --> V[Sol reviews, integrates, and accepts]
+    V --> F
+```
+
+- **Parallel:** Sol and Luna may work at the same time, and up to three direct Luna workers may run together, when their work is genuinely independent.
+- **Sequential:** if one step depends on another, Sol waits for the required result before continuing or starting the next worker.
+- **Sol-only:** Sol works directly when the task is small, dominated by architecture or judgment, ambiguous, or unsafe to split.
+
+Luna is likely to be used when:
+
+- the work is substantial enough to justify delegation;
+- the subtask has a clear goal, scope, constraints, acceptance criteria, and verification;
+- implementation, targeted inspection, tests, builds, or repetitive work can be separated safely; and
+- a valid Daily Luna role is available.
+
+Dependent work or overlapping edits may still be handled sequentially, but they are not run in parallel. Simple questions, trivial reads, one-line changes, architecture decisions, and the final assessment normally remain with Sol.
+
+There is no magic keyword that forces delegation. Clear independent scopes make it more likely; Sol still decides whether delegation is appropriate.
+
+The Daily Selector answers **which Luna effort to use today**, not **whether the current task should be delegated**. It selects one of `low`, `medium`, `high`, `xhigh`, or `max`; Luna never uses `ultra`.
+
+Sol and Luna share the current workspace, so Sol avoids parallel writers on overlapping files. Every Luna is a native leaf: it cannot create more subagents, and Sol always owns final review.
+
+For a substantive task, the final line explains what happened:
+
+```text
+Sol/Luna: delegated · luna_high ×2 · parallel
+Sol/Luna: Sol-only · task too small
+Sol/Luna: Sol-only · no independent bounded work
+```
+
 ## Core value
 
 - **Native agents:** uses Codex custom agents and subagents, without a Hook Router or custom orchestration engine.
 - **Automatic Daily Luna:** selects one of five Luna effort profiles for the Beijing calendar day; routine prompts do not name a role or effort.
-- **Independent-task delegation:** keeps reasoning and final decisions with Sol while moving clear execution to Luna.
-- **Limited parallelism:** allows at most three direct Luna workers, only for genuinely independent tasks; Luna workers are native leaves and cannot delegate again.
 - **Configuration protection and recovery:** preserves unrelated user configuration, fails closed on conflicts, and uses transaction backups for supported rollback and safe uninstall.
 
 ## Requirements
